@@ -5,6 +5,38 @@ CREATE TABLE IF NOT EXISTS users (
 	account_type INT NOT NULL
 );
 
+CREATE TABLE IF NOT EXISTS projects (
+	id INT AUTO_INCREMENT PRIMARY KEY,
+	user_id INT,
+	name VARCHAR(255) NOT NULL,
+	description TEXT NOT NULL,
+	approved BOOLEAN DEFAULT false,
+	FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS teams (
+	id INT AUTO_INCREMENT PRIMARY KEY,
+	name VARCHAR(25) NOT NULL,
+	user_id INT NOT NULL,
+	project_id INT NOT NULL,
+	FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+	FOREIGN KEY (project_id) REFERENCES projects(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS team_members (
+	team_id INT NOT NULL,
+	user_id INT NOT NULL,
+	PRIMARY KEY (team_id, user_id),
+	FOREIGN KEY (team_id) REFERENCES teams(id) ON DELETE CASCADE,
+	FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+);
+
 -- schema rollback
+
+DROP TABLE team_members;
+
+DROP TABLE teams;
+
+DROP TABLE projects;
 
 DROP TABLE users;

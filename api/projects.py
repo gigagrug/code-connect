@@ -33,7 +33,7 @@ def create_project(request, engine):
                 approved = True
 
             insert_query = text(
-                    "INSERT INTO projects (user, name, description, approved) VALUES (:user_id, :name, :description, :approved)"
+                    "INSERT INTO projects (user_id, name, description, approved) VALUES (:user_id, :name, :description, :approved)"
             )
             params = {
                 "user_id": user_id,
@@ -77,7 +77,7 @@ def update_project(project_id, request, engine):
             user_query = text("SELECT id FROM users WHERE email = :email")
             user_id = connection.execute(user_query, {"email": session['email']}).fetchone().id
             
-            update_query = text("UPDATE projects SET name = :name, description = :description WHERE id = :project_id AND user = :user_id")
+            update_query = text("UPDATE projects SET name = :name, description = :description WHERE id = :project_id AND user_id = :user_id")
             params = {"name": new_name, "description": new_description, "project_id": project_id, "user_id": user_id}
             connection.execute(update_query, params)
             connection.commit()
@@ -128,7 +128,7 @@ def delete_project(project_id, engine):
             user_query = text("SELECT id FROM users WHERE email = :email")
             user_id = connection.execute(user_query, {"email": session['email']}).fetchone().id
 
-            delete_query = text("DELETE FROM projects WHERE id = :project_id AND user = :user_id")
+            delete_query = text("DELETE FROM projects WHERE id = :project_id AND user_id = :user_id")
             connection.execute(delete_query, {"project_id": project_id, "user_id": user_id})
             connection.commit()
             flash("Project deleted successfully.", "success")
@@ -152,7 +152,7 @@ def get_projects_for_user(engine):
             
             user_id = user_result.id
 
-            project_query = text("SELECT id, name, description FROM projects WHERE user = :user_id")
+            project_query = text("SELECT id, name, description FROM projects WHERE user_id = :user_id")
             projects = connection.execute(project_query, {"user_id": user_id}).fetchall()
             return projects
 
@@ -166,7 +166,7 @@ def get_all_projects(engine):
             query = text("""
                 SELECT p.id, p.name, p.description, p.approved, u.email, u.account_type 
                 FROM projects p
-                JOIN users u ON p.user = u.id
+                JOIN users u ON p.user_id = u.id
                 ORDER BY p.id DESC
             """)
             projects = connection.execute(query).fetchall()
@@ -181,7 +181,7 @@ def get_project_by_id(project_id, engine):
             query = text("""
                 SELECT p.id, p.name, p.description, p.approved, u.email, u.account_type
                 FROM projects p
-                JOIN users u ON p.user = u.id
+                JOIN users u ON p.user_id = u.id
                 WHERE p.id = :project_id
             """)
             result = connection.execute(query, {"project_id": project_id}).fetchone()

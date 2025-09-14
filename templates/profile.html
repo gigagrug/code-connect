@@ -1,7 +1,7 @@
 {% extends "./frags/shell.html" %}
 
 {% block content %}
-  <div class="card container mx-auto mt-10 max-w-lg p-5">
+  <div class="card mx-auto mt-10 max-w-xl p-5">
     <h2 class="text text-3xl font-bold">Welcome, <span class="text-blue-600">{{ session.email }}</span>!</h2>
     <div class="p-4">
       <h3 class="text text-xl font-semibold">Account Details</h3>
@@ -23,14 +23,53 @@
       <a href="/logout" class="w-full rounded-lg bg-red-500 px-4 py-2 text-center font-bold text-white transition duration-300 ease-in-out hover:bg-red-600"> Log Out </a>
     </div>
   </div>
-
+  {% if session['email'] and session.get('account_type') in [0, 1, 2] %}
+    <div class="card mx-auto mt-5 mb-12 max-w-xl p-5">
+      <h3 class="mb-4 text-center text-2xl font-semibold text-gray-900 dark:text-white">Create a New Project</h3>
+      <form action="/projects/create" method="POST">
+        <div class="mb-4">
+          <label for="name" class="mb-2 block text-sm font-medium text-gray-900 dark:text-white">Project Name</label>
+          <input type="text" name="name" id="name" class="input text" placeholder="My Awesome Project" required />
+        </div>
+        <div class="mb-6">
+          <label for="description" class="mb-2 block text-sm font-medium text-gray-900 dark:text-white">Description</label>
+          <textarea name="description" id="description" class="input text field-sizing-content min-h-[100px]" placeholder="A description of what your project is about." required></textarea>
+        </div>
+        <button type="submit" class="w-full rounded-lg bg-blue-700 px-5 py-2.5 text-center text-sm font-medium text-white hover:bg-blue-800 focus:ring-4 focus:ring-blue-300 focus:outline-none dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800">Create Project</button>
+      </form>
+    </div>
+  {% endif %}
+  {% if session['email'] and session.get('account_type') in [0] %}
+    <div class="card mx-auto mt-5 mb-12 max-w-xl p-5">
+      <h3 class="text mb-4 text-center text-2xl font-semibold">Create a Group</h3>
+      <form action="/group/create" method="POST">
+        <div class="mb-4">
+          <label for="name" class="text mb-2 block text-sm font-medium">Group Name</label>
+          <input type="text" name="group_name" id="name" class="input text" placeholder="Team 1" required />
+        </div>
+        <button type="submit" class="w-full rounded-lg bg-blue-700 px-5 py-2.5 text-center text-sm font-medium text-white hover:bg-blue-800 focus:ring-4 focus:ring-blue-300 focus:outline-none dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800">Create Group</button>
+      </form>
+    </div>
+  {% endif %}
+  {% if session['email'] and session.get('account_type') in [0] %}
+    <div class="card mx-auto mt-5 mb-12 max-w-xl p-5">
+      <h3 class="text mb-4 text-center text-2xl font-semibold">Create User</h3>
+      <form action="/user/create" method="POST">
+        <div class="mb-4">
+          <label for="name" class="text mb-2 block text-sm font-medium">User Email</label>
+          <input type="text" name="user_email" id="name" class="input text" placeholder="user@go.stockton.edu" required />
+        </div>
+        <button type="submit" class="w-full rounded-lg bg-blue-700 px-5 py-2.5 text-center text-sm font-medium text-white hover:bg-blue-800 focus:ring-4 focus:ring-blue-300 focus:outline-none dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800">Create User</button>
+      </form>
+    </div>
+  {% endif %}
   <div class="mt-5 grid grid-cols-1 gap-8 md:grid-cols-2 lg:grid-cols-3">
     {% if projects %}
       {% for project in projects %}
         <a href="/project/{{ project.id }}" class="card block transform transition-transform duration-300 hover:-translate-y-1">
           <div class="p-6">
-            <h3 class="mb-2 text-xl font-semibold text-gray-900 dark:text-white">{{ project.name }}</h3>
-            <p class="mb-4 h-16 text-gray-600 dark:text-gray-400">{{ project.description }}</p>
+            <h3 class="text mb-2 truncate text-xl font-semibold">{{ project.name }}</h3>
+            <p class="text mb-4 line-clamp-3">{{ project.description }}</p>
           </div>
         </a>
       {% endfor %}

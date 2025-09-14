@@ -3,13 +3,34 @@ url = env("SCHEMA_DB_URL")
 
 table projects (
   id int NOT NULL AUTO_INCREMENT,
-  user int DEFAULT NULL,
+  user_id int DEFAULT NULL,
   name varchar(255) NOT NULL,
-  description varchar(255) NOT NULL,
+  description text NOT NULL,
   approved tinyint(1) DEFAULT '0',
   PRIMARY KEY (id),
-  KEY user (user),
-  CONSTRAINT projects_ibfk_1 FOREIGN KEY (user) REFERENCES users (id) ON DELETE CASCADE
+  KEY user_id (user_id),
+  CONSTRAINT projects_ibfk_1 FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE
+)
+
+table team_members (
+  team_id int NOT NULL,
+  user_id int NOT NULL,
+  PRIMARY KEY (team_id,user_id),
+  KEY user_id (user_id),
+  CONSTRAINT team_members_ibfk_1 FOREIGN KEY (team_id) REFERENCES teams (id) ON DELETE CASCADE,
+  CONSTRAINT team_members_ibfk_2 FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE
+)
+
+table teams (
+  id int NOT NULL AUTO_INCREMENT,
+  name varchar(25) NOT NULL,
+  user_id int NOT NULL,
+  project_id int NOT NULL,
+  PRIMARY KEY (id),
+  KEY user_id (user_id),
+  KEY project_id (project_id),
+  CONSTRAINT teams_ibfk_1 FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE,
+  CONSTRAINT teams_ibfk_2 FOREIGN KEY (project_id) REFERENCES projects (id) ON DELETE CASCADE
 )
 
 table users (
