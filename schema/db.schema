@@ -1,0 +1,22 @@
+db = "mysql"
+url = env("SCHEMA_DB_URL")
+
+table projects (
+  id int NOT NULL AUTO_INCREMENT,
+  user int DEFAULT NULL,
+  name varchar(255) NOT NULL,
+  description varchar(255) NOT NULL,
+  approved tinyint(1) DEFAULT '0',
+  PRIMARY KEY (id),
+  KEY user (user),
+  CONSTRAINT projects_ibfk_1 FOREIGN KEY (user) REFERENCES users (id) ON DELETE CASCADE
+)
+
+table users (
+  id int NOT NULL AUTO_INCREMENT,
+  email varchar(150) NOT NULL,
+  password varchar(255) NOT NULL,
+  account_type int NOT NULL,
+  PRIMARY KEY (id),
+  UNIQUE KEY email (email)
+)

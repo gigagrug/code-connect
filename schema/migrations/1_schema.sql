@@ -1,0 +1,10 @@
+CREATE TABLE IF NOT EXISTS users (
+	id INT AUTO_INCREMENT PRIMARY KEY,
+	email VARCHAR(150) NOT NULL UNIQUE,
+	password VARCHAR(255) NOT NULL,
+	account_type INT NOT NULL
+);
+
+-- schema rollback
+
+DROP TABLE users;

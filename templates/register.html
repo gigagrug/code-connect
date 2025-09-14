@@ -1,0 +1,24 @@
+{% extends "./frags/shell.html" %}
+
+{% block content %}
+  <form action="/register" method="POST" class="card text mx-auto mt-6 max-w-[500px] space-y-4 p-5">
+    <h1 class="mb-2 text-center text-2xl font-bold">Register</h1>
+    <label class="mb-2 block text-sm font-bold" for="account_type"> Account Type </label>
+    <select id="account_type" name="account_type" class="input">
+      <option value="" disabled selected>Select Account Type</option>
+      <option value="0">Instructor</option>
+      <option value="1">Business</option>
+    </select>
+    <label class="mb-2 block text-sm font-bold" for="reg_email"> Email </label>
+    <input name="email" class="input" id="reg_email" type="email" placeholder="your@email.com" />
+    <label class="mb-2 block text-sm font-bold" for="reg_pwd">Password</label>
+    <input name="password" class="input" id="reg_pwd" type="password" placeholder="*****" />
+    <label class="mb-2 block text-sm font-bold" for="reg_pwd2">Reenter Password</label>
+    <input name="password2" class="input" id="reg_pwd2" type="password" placeholder="*****" />
+    <button type="submit" class="inline-flex w-full items-center justify-center rounded-lg bg-blue-600 px-5 py-2.5 text-white hover:bg-blue-800 focus:ring-blue-300 disabled:bg-neutral-700">Register</button>
+    <p class="text-neutral-500">
+      Already have an account?
+      <a href="/login" class="font-medium text-blue-600 hover:underline">Login</a>
+    </p>
+  </form>
+{% endblock %}

@@ -1,0 +1,64 @@
+{% extends "./frags/shell.html" %}
+
+{% block content %}
+  <div class="container mx-auto px-4 py-8">
+    <h2 class="text mb-6 text-center text-3xl font-bold">Explore All Projects</h2>
+
+    {% if session['email'] and session.get('account_type') in [0, 1, 2] %}
+      <div class="card mx-auto mb-12 max-w-xl md:p-8">
+        <h3 class="mb-4 text-center text-2xl font-semibold text-gray-900 dark:text-white">Create a New Project</h3>
+        <form action="/projects/create" method="POST">
+          <div class="mb-4">
+            <label for="name" class="mb-2 block text-sm font-medium text-gray-900 dark:text-white">Project Name</label>
+            <input type="text" name="name" id="name" class="input text" placeholder="My Awesome Project" required />
+          </div>
+          <div class="mb-6">
+            <label for="description" class="mb-2 block text-sm font-medium text-gray-900 dark:text-white">Description</label>
+            <textarea name="description" id="description" rows="3" class="input text" placeholder="A short description of what your project is about." required></textarea>
+          </div>
+          <button type="submit" class="w-full rounded-lg bg-blue-700 px-5 py-2.5 text-center text-sm font-medium text-white hover:bg-blue-800 focus:ring-4 focus:ring-blue-300 focus:outline-none dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800">Publish Project</button>
+        </form>
+      </div>
+    {% endif %}
+
+    <div class="grid grid-cols-1 gap-8 md:grid-cols-2 lg:grid-cols-3">
+      {% if projects %}
+        {% for project in projects %}
+          <a href="/project/{{ project.id }}" class="card block transform transition-transform duration-300 hover:-translate-y-1">
+            <div class="p-6">
+              {% if project.approved == 1 %}
+                <span class="me-2 rounded bg-green-100 px-2.5 py-0.5 text-sm font-medium text-green-800 dark:bg-green-900 dark:text-green-300">Approved</span>
+              {% else %}
+                <span class="me-2 rounded bg-yellow-100 px-2.5 py-0.5 text-sm font-medium text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300">Pending Approval</span>
+              {% endif %}
+							<h3 class="mb-2 text-xl font-semibold text-gray-900 dark:text-white">{{ project.name }}</h3>
+              <p class="mb-4 h-16 text-gray-600 dark:text-gray-400">{{ project.description }}</p>
+              <div class="border-t border-gray-200 pt-4 dark:border-gray-700">
+                <p class="text-sm text-gray-500 dark:text-gray-300">
+                  <span class="me-2">Created by: <span class="font-medium text-blue-600 dark:text-blue-400">{{ project.email }}</span></span>
+                  Account Type:
+                  <span class="font-medium text-blue-600 dark:text-blue-400">
+                    {% if project.account_type == 0 %}
+                      Instructor
+                    {% elif project.account_type == 1 %}
+                      Business
+                    {% elif project.account_type == 2 %}
+                      Alumni
+                    {% elif project.account_type == 3 %}
+                      Student
+                    {% endif %}
+                  </span>
+                </p>
+              </div>
+            </div>
+          </a>
+        {% endfor %}
+      {% else %}
+        <div class="col-span-full py-12 text-center">
+          <h3 class="text-xl text-gray-700 dark:text-gray-300">No Projects Yet</h3>
+          <p class="mt-2 text-gray-500 dark:text-gray-400">Be the first one to create a project!</p>
+        </div>
+      {% endif %}
+    </div>
+  </div>
+{% endblock %}

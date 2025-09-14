@@ -1,0 +1,44 @@
+{% extends "./frags/shell.html" %}
+
+{% block content %}
+  <div class="card container mx-auto mt-10 max-w-lg p-5">
+    <h2 class="text text-3xl font-bold">Welcome, <span class="text-blue-600">{{ session.email }}</span>!</h2>
+    <div class="p-4">
+      <h3 class="text text-xl font-semibold">Account Details</h3>
+      <p class="text"><strong>Email:</strong> {{ session.email }}</p>
+      <p class="text">
+        <strong>Account Type:</strong>
+        {% if session.account_type == 0 %}
+          Instructor
+        {% elif session.account_type == 1 %}
+          Business
+        {% elif session.account_type == 2 %}
+          Alumni
+        {% elif session.account_type == 3 %}
+          Student
+        {% endif %}
+      </p>
+    </div>
+    <div>
+      <a href="/logout" class="w-full rounded-lg bg-red-500 px-4 py-2 text-center font-bold text-white transition duration-300 ease-in-out hover:bg-red-600"> Log Out </a>
+    </div>
+  </div>
+
+  <div class="mt-5 grid grid-cols-1 gap-8 md:grid-cols-2 lg:grid-cols-3">
+    {% if projects %}
+      {% for project in projects %}
+        <a href="/project/{{ project.id }}" class="card block transform transition-transform duration-300 hover:-translate-y-1">
+          <div class="p-6">
+            <h3 class="mb-2 text-xl font-semibold text-gray-900 dark:text-white">{{ project.name }}</h3>
+            <p class="mb-4 h-16 text-gray-600 dark:text-gray-400">{{ project.description }}</p>
+          </div>
+        </a>
+      {% endfor %}
+    {% else %}
+      <div class="col-span-full py-12 text-center">
+        <h3 class="text-xl text-gray-700 dark:text-gray-300">No Projects Yet</h3>
+        <p class="mt-2 text-gray-500 dark:text-gray-400">Be the first one to create a project!</p>
+      </div>
+    {% endif %}
+  </div>
+{% endblock %}
