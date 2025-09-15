@@ -87,19 +87,3 @@ def login_user(request, engine):
         flash("An error occurred during login. Please try again later.", "danger")
 
     return redirect(url_for('login'))
-
-def get_all_projects(engine):
-    """Fetches all projects from all users to display publicly."""
-    try:
-        with engine.connect() as connection:
-            query = text("""
-                SELECT p.name, p.description, u.email 
-                FROM projects p
-                JOIN users u ON p.user = u.id
-                ORDER BY p.id DESC
-            """)
-            projects = connection.execute(query).fetchall()
-            return projects
-    except Exception as e:
-        print(f"Database error fetching all projects: {e}")
-        return []
