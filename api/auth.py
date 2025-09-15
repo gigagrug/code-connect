@@ -103,19 +103,3 @@ def get_all_projects(engine):
     except Exception as e:
         print(f"Database error fetching all projects: {e}")
         return []
-
-_posts = [
-    {"id": 1, "title": "First Post", "content": "This is the first post."},
-    {"id": 2, "title": "Second Post", "content": "This is the second post."},
-    {"id": 3, "title": "3 Post", "content": "This is the 3 post."},
-    {"id": 4, "title": "4 Post", "content": "This is the 3 post."},
-]
-
-def get_all_posts():
-    return _posts
-
-def get_post_by_id(post_id):
-    for post in _posts:
-        if post["id"] == post_id:
-            return post
-    return None
