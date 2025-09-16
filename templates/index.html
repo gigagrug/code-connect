@@ -17,6 +17,9 @@
             <textarea name="description" id="description" class="input text field-sizing-content min-h-[100px]" placeholder="A description of what your project is about." required></textarea>
           </div>
           <button type="submit" class="w-full rounded-lg bg-blue-700 px-5 py-2.5 text-center text-sm font-medium text-white hover:bg-blue-800 focus:ring-4 focus:ring-blue-300 focus:outline-none dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800">Publish Project</button>
+          {% for message in get_flashed_messages() %}
+            <div class="text-red-500">{{ message }}</div>
+          {% endfor %}
         </form>
       </div>
     {% endif %}
