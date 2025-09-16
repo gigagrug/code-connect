@@ -1,6 +1,6 @@
 import bcrypt
 from sqlalchemy import text
-from flask import flash, redirect, url_for, session
+from flask import request, flash, redirect, url_for, session
 
 def register_user(request, engine):
     email = request.form.get('email')
@@ -67,14 +67,16 @@ def login_user(request, engine):
 
     try:
         with engine.connect() as connection:
-            query = text("SELECT email, password, account_type FROM users WHERE email = :email")
-            result = connection.execute(query, {"email": email}).fetchone()
+            query = text("SELECT id, email, password, account_type FROM users WHERE email = :email")
+            result = connection.execute(query, {"email": email}).mappings().first()
 
             if result:
                 hashed_password_from_db = result.password.encode('utf-8')
                 submitted_password_bytes = password.encode('utf-8')
                 
                 if bcrypt.checkpw(submitted_password_bytes, hashed_password_from_db):
+                    session.clear()
+                    session['user_id'] = result.id
                     session['email'] = result.email
                     session['account_type'] = result.account_type
                     flash(f"Welcome back, {email}!", "success")

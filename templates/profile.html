@@ -23,7 +23,8 @@
       <a href="/logout" class="w-full rounded-lg bg-red-500 px-4 py-2 text-center font-bold text-white transition duration-300 ease-in-out hover:bg-red-600"> Log Out </a>
     </div>
   </div>
-  {% if session['email'] and session.get('account_type') in [0, 1, 2] %}
+
+  {% if session.get('account_type') in [0, 1, 2] %}
     <div class="card mx-auto mt-5 mb-12 max-w-xl p-5">
       <h3 class="mb-4 text-center text-2xl font-semibold text-gray-900 dark:text-white">Create a New Project</h3>
       <form action="/projects/create" method="POST">
@@ -35,48 +36,58 @@
           <label for="description" class="mb-2 block text-sm font-medium text-gray-900 dark:text-white">Description</label>
           <textarea name="description" id="description" class="input text field-sizing-content min-h-[100px]" placeholder="A description of what your project is about." required></textarea>
         </div>
-        <button type="submit" class="w-full rounded-lg bg-blue-700 px-5 py-2.5 text-center text-sm font-medium text-white hover:bg-blue-800 focus:ring-4 focus:ring-blue-300 focus:outline-none dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800">Create Project</button>
+        <button type="submit" class="w-full rounded-lg bg-blue-700 px-5 py-2.5 text-center text-sm font-medium text-white hover:bg-blue-800">Create Project</button>
       </form>
     </div>
   {% endif %}
-  {% if session['email'] and session.get('account_type') in [0] %}
-    <div class="card mx-auto mt-5 mb-12 max-w-xl p-5">
-      <h3 class="text mb-4 text-center text-2xl font-semibold">Create a Group</h3>
-      <form action="/group/create" method="POST">
-        <div class="mb-4">
-          <label for="name" class="text mb-2 block text-sm font-medium">Group Name</label>
-          <input type="text" name="group_name" id="name" class="input text" placeholder="Team 1" required />
-        </div>
-        <button type="submit" class="w-full rounded-lg bg-blue-700 px-5 py-2.5 text-center text-sm font-medium text-white hover:bg-blue-800 focus:ring-4 focus:ring-blue-300 focus:outline-none dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800">Create Group</button>
-      </form>
-    </div>
-  {% endif %}
-  {% if session['email'] and session.get('account_type') in [0] %}
-    <div class="card mx-auto mt-5 mb-12 max-w-xl p-5">
-      <h3 class="text mb-4 text-center text-2xl font-semibold">Create User</h3>
-      <form action="/user/create" method="POST">
-        <div class="mb-4">
-          <label for="name" class="text mb-2 block text-sm font-medium">User Email</label>
-          <input type="text" name="user_email" id="name" class="input text" placeholder="user@go.stockton.edu" required />
-        </div>
-        <button type="submit" class="w-full rounded-lg bg-blue-700 px-5 py-2.5 text-center text-sm font-medium text-white hover:bg-blue-800 focus:ring-4 focus:ring-blue-300 focus:outline-none dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800">Create User</button>
-      </form>
-    </div>
-  {% endif %}
-  <div class="mt-5 grid grid-cols-1 gap-8 md:grid-cols-2 lg:grid-cols-3">
-    {% if projects %}
-      {% for project in projects %}
-        <a href="/project/{{ project.id }}" class="card block transform transition-transform duration-300 hover:-translate-y-1">
-          <div class="p-6">
-            <h3 class="text mb-2 truncate text-xl font-semibold">{{ project.name }}</h3>
-            <p class="text mb-4 line-clamp-3">{{ project.description }}</p>
+
+  <div class="container mx-auto p-4">
+    {% if session.account_type == 3 %}
+      <h2 class="text mb-6 text-center text-3xl font-bold">Your Team Assignments</h2>
+      <div class="space-y-6">
+        {% for item in assignments %}
+          <div class="card p-6">
+            <a href="/project/{{ item.project_id }}" class="hover:underline"><h3 class="text mb-2 text-2xl font-semibold">{{ item.project_name }}</h3></a>
+            <p class="text mb-4 line-clamp-3">{{ item.project_description }}</p>
+            <div class="rounded-lg bg-gray-100 p-4 dark:bg-gray-700">
+              <h4 class="text font-bold">Your Team: {{ item.team_name }}</h4>
+              <ul class="text mt-2 list-inside list-disc">
+                {% for member in item.members %}<li>{{ member.email }}{% if member.email == session.email %}<span class="text-xs text-blue-400"> (You)</span>{% endif %}</li>{% endfor %}
+              </ul>
+            </div>
           </div>
-        </a>
-      {% endfor %}
+        {% else %}
+          <div class="col-span-full py-12 text-center">
+            <h3 class="text-xl text-gray-700 dark:text-gray-300">No Assigned Projects</h3>
+            <p class="mt-2 text-gray-500 dark:text-gray-400">You have not been assigned to a team for any approved projects yet.</p>
+          </div>
+        {% endfor %}
+      </div>
     {% else %}
-      <div class="col-span-full py-12 text-center">
-        <h3 class="text-xl text-gray-700 dark:text-gray-300">No Projects Yet</h3>
-        <p class="mt-2 text-gray-500 dark:text-gray-400">Be the first one to create a project!</p>
+      <h2 class="text mb-6 text-center text-3xl font-bold">Your Created Projects</h2>
+      <div class="grid grid-cols-1 gap-8 md:grid-cols-2 lg:grid-cols-3">
+        {% for project in projects %}
+          <a href="/project/{{ project.id }}" class="card block transform transition-transform duration-300 hover:-translate-y-1">
+            <div class="p-6">
+              <div class="mb-2">
+                {% if project.status == 2 %}
+                  <span class="me-2 rounded bg-blue-100 px-2.5 py-0.5 text-sm font-medium text-blue-800 dark:bg-blue-900 dark:text-blue-300">Taken</span>
+                {% elif project.status == 1 %}
+                  <span class="me-2 rounded bg-green-100 px-2.5 py-0.5 text-sm font-medium text-green-800 dark:bg-green-900 dark:text-green-300">Approved</span>
+                {% else %}
+                  <span class="me-2 rounded bg-yellow-100 px-2.5 py-0.5 text-sm font-medium text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300">Pending Approval</span>
+                {% endif %}
+              </div>
+              <h3 class="text mb-2 truncate text-xl font-semibold">{{ project.name }}</h3>
+              <p class="text mb-4 line-clamp-3">{{ project.description }}</p>
+            </div>
+          </a>
+        {% else %}
+          <div class="col-span-full py-12 text-center">
+            <h3 class="text-xl text-gray-700 dark:text-gray-300">No Projects Yet</h3>
+            <p class="mt-2 text-gray-500 dark:text-gray-400">Use the form above to create a project!</p>
+          </div>
+        {% endfor %}
       </div>
     {% endif %}
   </div>

@@ -10,7 +10,7 @@ CREATE TABLE IF NOT EXISTS projects (
 	user_id INT,
 	name VARCHAR(255) NOT NULL,
 	description TEXT NOT NULL,
-	approved BOOLEAN DEFAULT false,
+	status INT DEFAULT 0,
 	FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 );
 

@@ -6,7 +6,7 @@ table projects (
   user_id int DEFAULT NULL,
   name varchar(255) NOT NULL,
   description text NOT NULL,
-  approved tinyint(1) DEFAULT '0',
+  status int DEFAULT '0',
   PRIMARY KEY (id),
   KEY user_id (user_id),
   CONSTRAINT projects_ibfk_1 FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE
