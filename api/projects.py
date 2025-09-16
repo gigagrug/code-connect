@@ -1,5 +1,5 @@
 from sqlalchemy import text
-from flask import flash, redirect, url_for, session
+from flask import flash, redirect, url_for, session, request
 
 def create_project(request, engine):
     if 'user_id' not in session:
@@ -18,7 +18,6 @@ def create_project(request, engine):
         flash("Project name and description are required.", "danger")
         return redirect(url_for('profile'))
 
-    # Status is 1 (approved) if created by an instructor, otherwise 0 (pending)
     status = 1 if session.get('account_type') == 0 else 0
 
     try:
@@ -50,7 +49,6 @@ def approve_project(project_id, engine):
         flash("Project not found.", "danger")
         return redirect(url_for('index'))
 
-    # If status is 0 (pending), approve it (set to 1). Otherwise, unapprove it (set to 0).
     new_status = 1 if project.status == 0 else 0
     
     try:
@@ -109,11 +107,66 @@ def get_all_projects(engine):
         print(f"Database error fetching all projects: {e}")
         return []
 
+def check_if_user_can_edit_links(user_id, project, engine):
+    """Checks if a user is the project owner or a student in an assigned team."""
+    if not user_id:
+        return False
+    
+    if user_id == project.user_id:
+        return True
+    
+    with engine.connect() as conn:
+        query = text("""
+            SELECT 1 FROM team_members tm
+            JOIN teams t ON tm.team_id = t.id
+            WHERE tm.user_id = :user_id AND t.project_id = :project_id
+            LIMIT 1
+        """)
+        result = conn.execute(query, {"user_id": user_id, "project_id": project.id}).first()
+        return result is not None
+
+
+def update_project_links(project_id, engine):
+    """Updates the project and github links for a project."""
+    user_id = session.get('user_id')
+    project = get_project_by_id(project_id, engine)
+
+    if not project:
+        flash("Project not found.", "danger")
+        return redirect(url_for('index'))
+
+    # Use the helper to check permission
+    if not check_if_user_can_edit_links(user_id, project, engine):
+        flash("You do not have permission to edit these links.", "danger")
+        return redirect(url_for('project_page', project_id=project_id))
+    
+    project_link = request.form.get('project_link', '')
+    github_link = request.form.get('github_link', '')
+
+    try:
+        with engine.connect() as conn:
+            query = text("UPDATE projects SET project_link = :project_link, github_link = :github_link WHERE id = :project_id")
+            conn.execute(query, {
+                "project_link": project_link,
+                "github_link": github_link,
+                "project_id": project_id
+            })
+            conn.commit()
+        flash("Project links updated successfully!", "success")
+    except Exception as e:
+        flash(f"An error occurred: {e}", "danger")
+
+    return redirect(url_for('project_page', project_id=project_id))
+
+
 def get_project_by_id(project_id, engine):
     try:
         with engine.connect() as connection:
             query = text("""
-                SELECT p.id, p.name, p.description, p.status, u.email, u.account_type
+                SELECT 
+                    p.id, p.name, p.description, p.status, 
+                    p.project_link, p.github_link,
+                    u.email, u.account_type, u.id as user_id
                 FROM projects p
                 JOIN users u ON p.user_id = u.id
                 WHERE p.id = :project_id
@@ -209,3 +262,42 @@ def delete_project(project_id, engine):
         flash(f"An error occurred while deleting the project: {e}", "danger")
         return redirect(url_for('project_page', project_id=project_id))
     return redirect(url_for('index'))
+
+def check_if_user_can_chat(user_id, project_id, engine):
+    """
+    Checks if a user can chat in a project room.
+    Returns True if the user is:
+    1. The project owner.
+    2. A student in a team assigned to the project.
+    3. An instructor of a student in a team assigned to the project.
+    """
+    if not user_id:
+        return False
+
+    with engine.connect() as conn:
+        # Check 1: Is the user the project owner?
+        owner_query = text("SELECT 1 FROM projects WHERE id = :project_id AND user_id = :user_id")
+        if conn.execute(owner_query, {"project_id": project_id, "user_id": user_id}).first():
+            return True
+
+        # Check 2: Is the user a student in a team on this project?
+        student_member_query = text("""
+            SELECT 1 FROM team_members tm
+            JOIN teams t ON tm.team_id = t.id
+            WHERE tm.user_id = :user_id AND t.project_id = :project_id
+        """)
+        if conn.execute(student_member_query, {"user_id": user_id, "project_id": project_id}).first():
+            return True
+
+        # Check 3: Is the user an instructor of a student on this project?
+        instructor_query = text("""
+            SELECT 1 FROM users AS instructor
+            JOIN users AS student ON instructor.id = student.instructor_id
+            JOIN team_members tm ON student.id = tm.user_id
+            JOIN teams t ON tm.team_id = t.id
+            WHERE instructor.id = :user_id AND t.project_id = :project_id
+        """)
+        if conn.execute(instructor_query, {"user_id": user_id, "project_id": project_id}).first():
+            return True
+
+    return False

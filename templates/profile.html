@@ -18,12 +18,45 @@
           Student
         {% endif %}
       </p>
+
+      {% if session.account_type == 3 and student_info.instructor_id %}
+        <p class="text"><strong>Assigned Instructor:</strong> {{ student_info.instructor_email }}</p>
+      {% endif %}
     </div>
     <div>
       <a href="/logout" class="w-full rounded-lg bg-red-500 px-4 py-2 text-center font-bold text-white transition duration-300 ease-in-out hover:bg-red-600"> Log Out </a>
     </div>
   </div>
 
+  {% if session.account_type == 3 %}
+    {% if not student_info.instructor_id %}
+      <div class="card mx-auto mt-5 mb-12 max-w-xl p-5">
+        <h3 class="mb-4 text-center text-2xl font-semibold">Join an Instructor</h3>
+        {% if pending_request %}
+          <p class="text text-center">Your request to join <strong>{{ pending_request.instructor_email }}</strong> is pending.</p>
+          <form action="{{ url_for('cancel_request_route') }}" method="POST" class="mt-4">
+            <button type="submit" class="w-full rounded-lg bg-yellow-500 px-5 py-2.5 text-center text-sm font-medium text-white hover:bg-yellow-600">Cancel Request</button>
+          </form>
+        {% elif instructors %}
+          <p class="text mb-4 text-center">You are not currently assigned to an instructor. Send a request to join one.</p>
+          <form action="{{ url_for('request_instructor_route') }}" method="POST">
+            <div class="mb-4">
+              <label for="instructor_id" class="text mb-2 block text-sm font-medium">Select Instructor</label>
+              <select name="instructor_id" id="instructor_id" class="input text card shadow-none" required>
+                <option value="" disabled selected>Choose an instructor...</option>
+                {% for instructor in instructors %}
+                  <option value="{{ instructor.id }}">{{ instructor.email }}</option>
+                {% endfor %}
+              </select>
+            </div>
+            <button type="submit" class="w-full rounded-lg bg-blue-700 px-5 py-2.5 text-center text-sm font-medium text-white hover:bg-blue-800">Send Request</button>
+          </form>
+        {% endif %}
+      </div>
+    {% endif %}
+  {% endif %}
+
+  {# For Project Creators: Show the "Create Project" form #}
   {% if session.get('account_type') in [0, 1, 2] %}
     <div class="card mx-auto mt-5 mb-12 max-w-xl p-5">
       <h3 class="mb-4 text-center text-2xl font-semibold text-gray-900 dark:text-white">Create a New Project</h3>
@@ -42,6 +75,7 @@
   {% endif %}
 
   <div class="container mx-auto p-4">
+    {# For Students: Show team assignments #}
     {% if session.account_type == 3 %}
       <h2 class="text mb-6 text-center text-3xl font-bold">Your Team Assignments</h2>
       <div class="space-y-6">
@@ -63,6 +97,8 @@
           </div>
         {% endfor %}
       </div>
+
+      {# For Project Creators: Show their created projects #}
     {% else %}
       <h2 class="text mb-6 text-center text-3xl font-bold">Your Created Projects</h2>
       <div class="grid grid-cols-1 gap-8 md:grid-cols-2 lg:grid-cols-3">
@@ -80,6 +116,20 @@
               </div>
               <h3 class="text mb-2 truncate text-xl font-semibold">{{ project.name }}</h3>
               <p class="text mb-4 line-clamp-3">{{ project.description }}</p>
+              <div class="border-t border-gray-200 pt-4 dark:border-gray-700">
+                <p class="text-sm text-gray-500 dark:text-gray-300">
+                  Account Type:
+                  <span class="font-medium text-blue-600 dark:text-blue-400">
+                    {% if project.account_type == 0 %}
+                      Instructor
+                    {% elif project.account_type == 1 %}
+                      Business
+                    {% elif project.account_type == 2 %}
+                      Alumni
+                    {% endif %}
+                  </span>
+                </p>
+              </div>
             </div>
           </a>
         {% else %}

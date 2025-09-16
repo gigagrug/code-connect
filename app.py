@@ -3,9 +3,12 @@ import bcrypt
 import sqlalchemy
 from sqlalchemy import text
 from flask import Flask, render_template, request, redirect, url_for, flash, session
+from flask_socketio import SocketIO
 from api.auth import *
 from api.projects import *
 from api.mgt import *
+from api.invite import *
+from api.chat import init_chat
 
 db_url = os.getenv("DB_URL")
 if not db_url:
@@ -22,6 +25,9 @@ except Exception as e:
 app = Flask(__name__)
 app.secret_key = os.getenv("FLASK_SECRET_KEY", 'a_default_dev_secret_key')
 
+socketio = SocketIO(app)
+
+init_chat(socketio, engine)
 
 @app.route('/')
 def index():
@@ -36,11 +42,36 @@ def project_create_route():
 def project_page(project_id):
     project = get_project_by_id(project_id, engine)
     if project:
+        can_chat = check_if_user_can_chat(session.get('user_id'), project_id, engine)
+        chat_history = []
+        if can_chat:
+            with engine.connect() as conn:
+                history_query = text("""
+                    SELECT 
+                        c.id AS message_id,
+                        u.email, 
+                        c.message_text, 
+                        c.timestamp
+                    FROM chat_messages c JOIN users u ON c.user_id = u.id
+                    WHERE c.project_id = :project_id ORDER BY c.timestamp ASC
+                """)
+                chat_history = conn.execute(history_query, {"project_id": project_id}).all()
+
         teams = get_teams_for_project(project_id, engine)
-        return render_template('project.html', project=project, teams=teams)
+        can_edit_links = check_if_user_can_edit_links(session.get('user_id'), project, engine)
+        return render_template('project.html', 
+                               project=project, 
+                               teams=teams,
+                               can_edit_links=can_edit_links,
+                               can_chat=can_chat,
+                               chat_history=chat_history)
     else:
         flash("Project not found.", "danger")
         return redirect(url_for('index'))
+
+@app.route('/project/<int:project_id>/links', methods=['POST'])
+def project_links_route(project_id):
+    return update_project_links(project_id, engine)
 
 @app.route('/project/<int:project_id>/update', methods=['POST'])
 def project_update_route(project_id):
@@ -59,64 +90,14 @@ def profile():
     if 'user_id' not in session:
         flash("You need to be logged in to view this page.", "warning")
         return redirect(url_for('login'))
-    
-    if session['account_type'] == 3:
-        assignments = get_projects_for_student(engine)
-        return render_template('profile.html', assignments=assignments)
-    else:
-        projects = get_projects_for_user(engine)
-        return render_template('profile.html', projects=projects)
+    return get_profile_data(engine)
 
 @app.route('/userMgt')
 def user_mgt():
     if 'user_id' not in session or session.get('account_type') != 0:
         flash("Access restricted to instructors.", "danger")
         return redirect(url_for('profile'))
-
-    with engine.connect() as conn:
-        instructor_id = session['user_id']
-
-        # This query now fetches approved (status=1) projects for the dropdown
-        projects_query = text("SELECT * FROM projects WHERE status = 1")
-        projects_result = conn.execute(projects_query)
-        projects = projects_result.mappings().all()
-
-        students_query = text("SELECT id, email FROM users WHERE account_type = 3")
-        students_result = conn.execute(students_query)
-        all_students = students_result.mappings().all()
-
-        teams_query = text("""
-            SELECT t.id, t.name, t.project_id, p.name AS project_name
-            FROM teams t
-            JOIN projects p ON t.project_id = p.id
-            WHERE t.user_id = :user_id
-        """)
-        teams_result = conn.execute(teams_query, {"user_id": instructor_id})
-        teams = teams_result.mappings().all()
-
-        team_members_query = text("SELECT team_id, user_id FROM team_members")
-        team_members_result = conn.execute(team_members_query)
-        team_members_map = {}
-        for row in team_members_result.mappings().all():
-            if row['team_id'] not in team_members_map:
-                team_members_map[row['team_id']] = []
-            team_members_map[row['team_id']].append(row['user_id'])
-        
-        assigned_student_ids = {item for sublist in team_members_map.values() for item in sublist}
-        unassigned_students = [s for s in all_students if s['id'] not in assigned_student_ids]
-
-        teams_with_members = []
-        for team in teams:
-            team_members_ids = team_members_map.get(team['id'], [])
-            members = [s for s in all_students if s['id'] in team_members_ids]
-            teams_with_members.append({**team, 'members': members})
-
-    return render_template(
-        'userMgt.html',
-        projects=projects,
-        unassigned_students=unassigned_students,
-        teams_with_members=teams_with_members
-    )
+    return get_user_mgt_data(engine)
 
 @app.route('/register', methods=['POST', 'GET'])
 def register():
@@ -160,6 +141,17 @@ def delete_group_route(team_id):
 def update_group_route(team_id):
     return update_group(team_id, engine)
 
+@app.route('/request/instructor', methods=['POST'])
+def request_instructor_route():
+    return send_instructor_request(engine)
+
+@app.route('/request/cancel', methods=['POST'])
+def cancel_request_route():
+    return cancel_instructor_request(engine)
+
+@app.route('/request/handle/<int:request_id>', methods=['POST'])
+def handle_request_route(request_id):
+    return handle_instructor_request(request_id, engine)
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000, debug=True)

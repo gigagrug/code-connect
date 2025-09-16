@@ -1,6 +1,7 @@
 import bcrypt
 from sqlalchemy import text
-from flask import request, flash, redirect, url_for, session
+from flask import request, flash, redirect, url_for, session, render_template
+from .projects import get_projects_for_user, get_projects_for_student
 
 def register_user(request, engine):
     email = request.form.get('email')
@@ -89,3 +90,39 @@ def login_user(request, engine):
         flash("An error occurred during login. Please try again later.", "danger")
 
     return redirect(url_for('login'))
+
+def get_profile_data(engine):
+    if session['account_type'] == 3:
+        student_id = session['user_id']
+        with engine.connect() as conn:
+            student_query = text("""
+                SELECT s.instructor_id, i.email AS instructor_email
+                FROM users s LEFT JOIN users i ON s.instructor_id = i.id
+                WHERE s.id = :student_id
+            """)
+            student_info = conn.execute(student_query, {"student_id": student_id}).first()
+
+            pending_request = None
+            instructors = []
+            
+            if not student_info.instructor_id:
+                req_query = text("""
+                    SELECT r.id, u.email AS instructor_email
+                    FROM instructor_requests r JOIN users u ON r.instructor_id = u.id
+                    WHERE r.student_id = :student_id AND r.status = 0
+                """)
+                pending_request = conn.execute(req_query, {"student_id": student_id}).first()
+
+                if not pending_request:
+                    inst_query = text("SELECT id, email FROM users WHERE account_type = 0 ORDER BY email")
+                    instructors = conn.execute(inst_query).all()
+
+            assignments = get_projects_for_student(engine)
+            return render_template('profile.html', 
+                                   assignments=assignments, 
+                                   student_info=student_info,
+                                   instructors=instructors,
+                                   pending_request=pending_request)
+    else:
+        projects = get_projects_for_user(engine)
+        return render_template('profile.html', projects=projects)

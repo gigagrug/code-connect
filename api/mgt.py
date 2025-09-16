@@ -1,6 +1,7 @@
 import bcrypt
-from flask import request, redirect, url_for, flash, session, jsonify
+from flask import request, redirect, url_for, flash, session, jsonify, render_template
 from sqlalchemy import text
+from .projects import get_projects_for_user, get_projects_for_student
 
 def instructor_only():
     if 'account_type' not in session or session['account_type'] != 0:
@@ -13,19 +14,34 @@ def create_user_by_instructor(engine):
         return redirect(url_for('user_mgt'))
 
     email = request.form.get('user_email')
+    instructor_id = session.get('user_id') # Get the instructor's ID
+
     if not email:
         flash("Email is required.", "danger")
         return redirect(url_for('user_mgt'))
+    
+    if not instructor_id:
+        flash("Could not identify instructor. Please log in again.", "warning")
+        return redirect(url_for('login'))
 
     default_password = "changeme"
     hashed_password = bcrypt.hashpw(default_password.encode('utf-8'), bcrypt.gensalt())
     
     try:
         with engine.connect() as conn:
-            query = text("INSERT INTO users (email, password, account_type) VALUES (:email, :password, 3)")
-            conn.execute(query, {"email": email, "password": hashed_password.decode('utf-8')})
+            # Updated query to include instructor_id
+            query = text(
+                "INSERT INTO users (email, password, account_type, instructor_id) "
+                "VALUES (:email, :password, 3, :instructor_id)"
+            )
+            params = {
+                "email": email,
+                "password": hashed_password.decode('utf-8'),
+                "instructor_id": instructor_id
+            }
+            conn.execute(query, params)
             conn.commit()
-        flash(f"User {email} created successfully with a default password.", "success")
+        flash(f"Student {email} created and assigned to you successfully.", "success")
     except Exception as e:
         flash(f"Error creating user: {e}", "danger")
     
@@ -45,13 +61,10 @@ def create_group(engine):
     
     try:
         with engine.connect() as conn:
-            # Begin a transaction
             with conn.begin():
-                # Insert the new team
                 insert_team_query = text("INSERT INTO teams (name, user_id, project_id) VALUES (:name, :user_id, :project_id)")
                 conn.execute(insert_team_query, {"name": group_name, "user_id": user_id, "project_id": project_id})
                 
-                # Update the project's status to 2 (Taken)
                 update_project_query = text("UPDATE projects SET status = 2 WHERE id = :project_id")
                 conn.execute(update_project_query, {"project_id": project_id})
         
@@ -101,9 +114,7 @@ def delete_group(team_id, engine):
 
     try:
         with engine.connect() as conn:
-            # Begin a transaction
             with conn.begin():
-                # First, find the project_id associated with this team
                 project_id_query = text("SELECT project_id FROM teams WHERE id = :team_id")
                 result = conn.execute(project_id_query, {"team_id": team_id}).mappings().first()
                 if not result:
@@ -111,15 +122,12 @@ def delete_group(team_id, engine):
                     return redirect(url_for('user_mgt'))
                 project_id = result['project_id']
 
-                # Delete the team
                 delete_team_query = text("DELETE FROM teams WHERE id = :team_id")
                 conn.execute(delete_team_query, {"team_id": team_id})
 
-                # Check if any other teams are assigned to the same project
                 count_query = text("SELECT COUNT(id) as team_count FROM teams WHERE project_id = :project_id")
                 team_count_result = conn.execute(count_query, {"project_id": project_id}).mappings().first()
                 
-                # If this was the last team, revert project status to 1 (Approved)
                 if team_count_result['team_count'] == 0:
                     update_project_query = text("UPDATE projects SET status = 1 WHERE id = :project_id")
                     conn.execute(update_project_query, {"project_id": project_id})
@@ -149,3 +157,53 @@ def update_group(team_id, engine):
         flash(f"Error updating group: {e}", "danger")
         
     return redirect(url_for('user_mgt'))
+
+def get_user_mgt_data(engine):
+    """Prepares all necessary data for the User Management page."""
+    with engine.connect() as conn:
+        instructor_id = session['user_id']
+
+        requests_query = text("""
+            SELECT r.id, u.email AS student_email
+            FROM instructor_requests r JOIN users u ON r.student_id = u.id
+            WHERE r.instructor_id = :instructor_id AND r.status = 0
+        """)
+        join_requests = conn.execute(requests_query, {"instructor_id": instructor_id}).all()
+
+        projects_query = text("SELECT * FROM projects WHERE status = 1")
+        projects = conn.execute(projects_query).mappings().all()
+
+        students_query = text("SELECT id, email FROM users WHERE account_type = 3 AND instructor_id = :instructor_id")
+        all_students = conn.execute(students_query, {"instructor_id": instructor_id}).mappings().all()
+
+        teams_query = text("""
+            SELECT t.id, t.name, t.project_id, p.name AS project_name
+            FROM teams t JOIN projects p ON t.project_id = p.id
+            WHERE t.user_id = :user_id
+        """)
+        teams = conn.execute(teams_query, {"user_id": instructor_id}).mappings().all()
+
+        team_members_query = text("SELECT team_id, user_id FROM team_members")
+        team_members_result = conn.execute(team_members_query).mappings().all()
+        team_members_map = {}
+        for row in team_members_result:
+            if row['team_id'] not in team_members_map:
+                team_members_map[row['team_id']] = []
+            team_members_map[row['team_id']].append(row['user_id'])
+        
+        assigned_student_ids = {item for sublist in team_members_map.values() for item in sublist}
+        unassigned_students = [s for s in all_students if s['id'] not in assigned_student_ids]
+
+        teams_with_members = []
+        for team in teams:
+            team_members_ids = team_members_map.get(team['id'], [])
+            members = [s for s in all_students if s['id'] in team_members_ids]
+            teams_with_members.append({**team, 'members': members})
+
+    return render_template(
+        'userMgt.html',
+        projects=projects,
+        unassigned_students=unassigned_students,
+        teams_with_members=teams_with_members,
+        join_requests=join_requests
+    )
