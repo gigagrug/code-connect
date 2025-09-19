@@ -1,0 +1,153 @@
+{% extends "./frags/shell.html" %}
+
+{% block content %}
+  <div class="container mx-auto p-4">
+    {% if join_requests %}
+      <div class="card mx-auto mb-8 max-w-4xl p-5">
+        <h3 class="text mb-4 text-center text-2xl font-semibold">Student Join Requests</h3>
+        <div class="space-y-3">
+          {% for req in join_requests %}
+            <div class="flex items-center justify-between rounded-lg bg-gray-100 p-3 dark:bg-gray-800">
+              <p class="text">Request from <strong>{{ req.student_email }}</strong></p>
+              <div class="flex gap-2">
+                <form action="{{ url_for('handle_request_route', request_id=req.id) }}" method="POST">
+                  <input type="hidden" name="action" value="accept" />
+                  <button type="submit" class="rounded-md bg-green-600 px-3 py-1 text-sm text-white hover:bg-green-700">Accept</button>
+                </form>
+                <form action="{{ url_for('handle_request_route', request_id=req.id) }}" method="POST" onsubmit="return confirm('Are you sure you want to deny {{ req.student_email }} ')">
+                  <input type="hidden" name="action" value="deny" />
+                  <button type="submit" class="rounded-md bg-red-600 px-3 py-1 text-sm text-white hover:bg-red-700">Deny</button>
+                </form>
+              </div>
+            </div>
+          {% endfor %}
+        </div>
+      </div>
+    {% endif %}
+    <div class="grid grid-cols-1 gap-8 lg:grid-cols-3">
+      <div class="space-y-6 lg:col-span-1">
+        <div class="card p-5">
+          <h3 class="text mb-4 text-center text-2xl font-semibold">Create Student</h3>
+          <form action="{{ url_for('create_user_route') }}" method="POST">
+            <div class="mb-4">
+              <label for="user_email" class="text mb-2 block text-sm font-medium">Student Email</label>
+              <input type="email" name="user_email" id="user_email" class="input text" placeholder="student@example.edu" required />
+            </div>
+            <button type="submit" class="w-full rounded-lg bg-blue-700 px-5 py-2.5 text-center text-sm font-medium text-white hover:bg-blue-800">Create User</button>
+          </form>
+        </div>
+
+        <div class="card p-5">
+          <h3 class="text mb-4 text-center text-2xl font-semibold">Create Group</h3>
+          <form action="{{ url_for('create_group_route') }}" method="POST">
+            <div class="mb-4">
+              <label for="group_name" class="text mb-2 block text-sm font-medium">Group Name</label>
+              <input type="text" name="group_name" id="group_name" class="input text" placeholder="Team Alpha" required />
+            </div>
+            <div class="mb-4">
+              <label for="project_id" class="text mb-2 block text-sm font-medium">Assign to Project</label>
+              <select name="project_id" id="project_id" class="input text card shadow-none" required>
+                <option value="" disabled selected>Select a project</option>
+                {% for project in projects %}
+                  <option value="{{ project.id }}">{{ project.name }}</option>
+                {% endfor %}
+              </select>
+            </div>
+            <button type="submit" class="w-full rounded-lg bg-blue-700 px-5 py-2.5 text-center text-sm font-medium text-white hover:bg-blue-800">Create Group</button>
+          </form>
+        </div>
+
+        <div class="card p-5">
+          <h3 class="text mb-4 text-2xl font-semibold">Unassigned Students</h3>
+          <div id="unassigned-list" class="user-list min-h-[100px] rounded-md bg-gray-100 p-2 dark:bg-gray-700" data-team-id="null">
+            {% for student in unassigned_students %}
+              <div class="user-item my-1 flex cursor-grab items-center justify-between rounded bg-white p-2 shadow-sm dark:bg-gray-800" data-user-id="{{ student.id }}">
+                <span class="text">{{ student.email }}</span>
+                <form action="{{ url_for('delete_user_route', user_id=student.id) }}" method="POST" onsubmit="return confirm('Are you sure you want to delete this user?');">
+                  <button type="submit" class="text-red-500 hover:text-red-700">&times;</button>
+                </form>
+              </div>
+            {% endfor %}
+          </div>
+        </div>
+      </div>
+
+      <div class="lg:col-span-2">
+        <div class="card p-5">
+          <h3 class="text mb-4 text-2xl font-semibold">Groups & Members</h3>
+          <div class="space-y-4">
+            {% for team in teams_with_members %}
+              <div class="rounded-lg border p-4 dark:border-gray-600">
+                <div class="mb-2 flex items-center justify-between">
+                  <form action="{{ url_for('update_group_route', team_id=team.id) }}" method="POST" class="flex-grow">
+                    <input type="text" name="group_name" value="{{ team.name }}" class="text border-b-2 border-transparent bg-transparent text-xl font-bold outline-none focus:border-blue-500" />
+                  </form>
+                  <div class="mr-4 text-sm text-gray-500">Project: {{ team.project_name }}</div>
+                  <form action="{{ url_for('delete_group_route', team_id=team.id) }}" method="POST" onsubmit="return confirm('Are you sure you want to delete this group?');">
+                    <button type="submit" class="ml-2 rounded-md bg-red-500 px-2 py-1 text-xs text-white hover:bg-red-600">Delete Group</button>
+                  </form>
+                </div>
+                <div class="user-list min-h-[80px] rounded-md bg-gray-100 p-2 dark:bg-gray-700" data-team-id="{{ team.id }}">
+                  {% for member in team.members %}
+                    <div class="user-item my-1 flex cursor-grab items-center justify-between rounded bg-white p-2 shadow-sm dark:bg-gray-800" data-user-id="{{ member.id }}">
+                      <span class="text">{{ member.email }}</span>
+                      <form action="{{ url_for('delete_user_route', user_id=member.id) }}" method="POST" onsubmit="return confirm('Are you sure you want to delete this user?');">
+                        <button type="submit" class="text-red-500 hover:text-red-700">&times;</button>
+                      </form>
+                    </div>
+                  {% endfor %}
+                </div>
+              </div>
+            {% else %}
+              <p class="text-gray-500">No groups created yet. Use the form to create one.</p>
+            {% endfor %}
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js"></script>
+
+  <script>
+    document.addEventListener("DOMContentLoaded", function () {
+      const lists = document.querySelectorAll(".user-list");
+
+      lists.forEach((list) => {
+        new Sortable(list, {
+          group: "shared",
+          animation: 150,
+          onEnd: function (evt) {
+            const item = evt.item;
+            const userId = item.dataset.userId;
+            const toList = evt.to;
+            const teamId = toList.dataset.teamId === "null" ? null : parseInt(toList.dataset.teamId);
+
+            fetch('{{ url_for("assign_user_route") }}', {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+              },
+              body: JSON.stringify({
+                user_id: userId,
+                team_id: teamId,
+              }),
+            })
+              .then((response) => response.json())
+              .then((data) => {
+                if (!data.success) {
+                  console.error("Failed to update team assignment:", data.message);
+                  // Optional: Move the item back on failure
+                  evt.from.appendChild(item);
+                }
+              })
+              .catch((error) => {
+                console.error("Error:", error);
+                evt.from.appendChild(item);
+              });
+          },
+        });
+      });
+    });
+  </script>
+{% endblock %}
