@@ -8,7 +8,7 @@ from api.auth import *
 from api.projects import *
 from api.mgt import *
 from api.invite import *
-from api.chat import init_chat
+from api.chat import *
 
 db_url = os.getenv("DB_URL")
 if not db_url:
@@ -29,10 +29,18 @@ socketio = SocketIO(app)
 
 init_chat(socketio, engine)
 
+# Admin
+
+
+# Users
 @app.route('/')
 def index():
-    projects = get_all_projects(engine)
+    projects = get_all_projects(engine, page=1, per_page=25)
     return render_template('index.html', projects=projects)
+
+@app.route('/api/projects')
+def projects_api_route():
+    return get_projects_api(engine)
 
 @app.route('/projects/create', methods=['POST'])
 def project_create_route():
@@ -129,6 +137,10 @@ def create_group_route():
 def assign_user_route():
     return assign_user_to_team(engine)
 
+@app.route('/group/<int:team_id>/assign_project', methods=['POST'])
+def assign_project_route(team_id):
+    return assign_project_to_group(team_id, engine)
+
 @app.route('/user/<int:user_id>/delete', methods=['POST'])
 def delete_user_route(user_id):
     return delete_user(user_id, engine)
@@ -152,6 +164,10 @@ def cancel_request_route():
 @app.route('/request/handle/<int:request_id>', methods=['POST'])
 def handle_request_route(request_id):
     return handle_instructor_request(request_id, engine)
+
+@app.route('/request/dismiss/<int:request_id>', methods=['POST'])
+def dismiss_request_route(request_id):
+    return dismiss_denied_request(request_id, engine)
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000, debug=True)

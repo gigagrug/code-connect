@@ -4,7 +4,7 @@
   <div class="container mx-auto px-4 py-8">
     <h2 class="text mb-6 text-center text-3xl font-bold">Explore All Projects</h2>
 
-    {% if session['email'] and session.get('account_type') in [0, 1, 2] %}
+    {% if session['email'] and session.get('role') == 1 %}
       <div class="card mx-auto mb-12 max-w-xl md:p-8">
         <h3 class="mb-4 text-center text-2xl font-semibold text-gray-900 dark:text-white">Create a New Project</h3>
         <form action="/projects/create" method="POST">
@@ -21,7 +21,7 @@
       </div>
     {% endif %}
 
-    <div class="grid grid-cols-1 gap-8 md:grid-cols-2 lg:grid-cols-3">
+    <div id="projects-grid" class="grid grid-cols-1 gap-8 md:grid-cols-2 lg:grid-cols-3">
       {% for project in projects %}
         <a href="/project/{{ project.id }}" class="card block transform transition-transform duration-300 hover:-translate-y-1">
           <div class="p-6">
@@ -55,5 +55,100 @@
         </a>
       {% endfor %}
     </div>
+
+    <div id="loader" class="text-center text-2xl py-8" style="display: none;">
+      Loading...
+    </div>
   </div>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      const projectsGrid = document.getElementById('projects-grid');
+      const loader = document.getElementById('loader');
+      let currentPage = 1;
+      let isLoading = false;
+      let noMoreProjects = false;
+
+      // Helper function to create the status badge HTML
+      const getStatusBadge = (status) => {
+        if (status === 2) {
+          return `<span class="me-2 rounded bg-blue-100 px-2.5 py-0.5 text-sm font-medium text-blue-800 dark:bg-blue-900 dark:text-blue-300">Taken</span>`;
+        } else if (status === 1) {
+          return `<span class="me-2 rounded bg-green-100 px-2.5 py-0.5 text-sm font-medium text-green-800 dark:bg-green-900 dark:text-green-300">Approved</span>`;
+        } else {
+          return `<span class="me-2 rounded bg-yellow-100 px-2.5 py-0.5 text-sm font-medium text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300">Pending Approval</span>`;
+        }
+      };
+      
+      // Helper function to get account type text
+      const getAccountType = (type) => {
+          if (type === 0) return 'Instructor';
+          if (type === 1) return 'Business';
+          if (type === 2) return 'Alumni';
+          return 'N/A';
+      };
+
+      // Function to create a project card from data
+      const createProjectCard = (project) => {
+        const card = document.createElement('a');
+        card.href = `/project/${project.id}`;
+        card.className = 'card block transform transition-transform duration-300 hover:-translate-y-1';
+        card.innerHTML = `
+          <div class="p-6">
+            <div class="mb-2">${getStatusBadge(project.status)}</div>
+            <h3 class="text mb-2 truncate text-xl font-semibold">${project.name}</h3>
+            <p class="text mb-4 line-clamp-3">${project.description}</p>
+            <div class="border-t border-gray-200 pt-4 dark:border-gray-700">
+              <p class="text-sm text-gray-500 dark:text-gray-300">
+                <span class="me-2">Created by: <span class="font-medium text-blue-600 dark:text-blue-400">${project.email}</span></span>
+                Account Type: <span class="font-medium text-blue-600 dark:text-blue-400">${getAccountType(project.account_type)}</span>
+              </p>
+            </div>
+          </div>
+        `;
+        return card;
+      };
+
+      // Function to load more projects
+      const loadMoreProjects = async () => {
+        if (isLoading || noMoreProjects) return;
+
+        isLoading = true;
+        loader.style.display = 'block';
+        currentPage++;
+
+        try {
+          const response = await fetch(`/api/projects?page=${currentPage}`);
+          const newProjects = await response.json();
+
+          if (newProjects.length === 0) {
+            noMoreProjects = true;
+            loader.innerHTML = "You've reached the end!";
+            return;
+          }
+
+          newProjects.forEach(project => {
+            const card = createProjectCard(project);
+            projectsGrid.appendChild(card);
+          });
+        } catch (error) {
+          console.error('Failed to load more projects:', error);
+          loader.innerHTML = "Failed to load projects.";
+        } finally {
+          isLoading = false;
+          if (!noMoreProjects) {
+            loader.style.display = 'none';
+          }
+        }
+      };
+
+      // Listen for scroll events
+      window.addEventListener('scroll', () => {
+        // Load more projects when the user is 100px from the bottom
+        if (window.innerHeight + window.scrollY >= document.body.offsetHeight - 100) {
+          loadMoreProjects();
+        }
+      });
+    });
+  </script>
 {% endblock %}

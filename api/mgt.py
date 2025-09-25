@@ -52,26 +52,56 @@ def create_group(engine):
         return redirect(url_for('user_mgt'))
 
     group_name = request.form.get('group_name')
-    project_id = request.form.get('project_id')
     user_id = session.get('user_id')
 
-    if not all([group_name, project_id, user_id]):
-        flash("Group Name and Project are required.", "danger")
+    if not all([group_name, user_id]):
+        flash("Group Name is required.", "danger")
         return redirect(url_for('user_mgt'))
     
     try:
         with engine.connect() as conn:
-            with conn.begin():
-                insert_team_query = text("INSERT INTO teams (name, user_id, project_id) VALUES (:name, :user_id, :project_id)")
-                conn.execute(insert_team_query, {"name": group_name, "user_id": user_id, "project_id": project_id})
-                
-                update_project_query = text("UPDATE projects SET status = 2 WHERE id = :project_id")
-                conn.execute(update_project_query, {"project_id": project_id})
-        
-        flash("Group created and project marked as taken.", "success")
+            insert_team_query = text("INSERT INTO teams (name, user_id) VALUES (:name, :user_id)")
+            conn.execute(insert_team_query, {"name": group_name, "user_id": user_id})
+            conn.commit()
+        flash("Group created successfully.", "success")
     except Exception as e:
         flash(f"Error creating group: {e}", "danger")
 
+    return redirect(url_for('user_mgt'))
+
+def assign_project_to_group(team_id, engine):
+    if not instructor_only():
+        return redirect(url_for('user_mgt'))
+    
+    project_id = request.form.get('project_id')
+    if not project_id:
+        flash("No project selected.", "warning")
+        return redirect(url_for('user_mgt'))
+
+    try:
+        with engine.connect() as conn:
+            with conn.begin(): # Start a transaction
+                # 1. Find the old project_id for this team, if any
+                old_project_query = text("SELECT project_id FROM teams WHERE id = :team_id")
+                result = conn.execute(old_project_query, {"team_id": team_id}).scalar_one_or_none()
+
+                # 2. If an old project existed, set its status back to available
+                if result:
+                    update_old_project = text("UPDATE projects SET status = 1 WHERE id = :project_id")
+                    conn.execute(update_old_project, {"project_id": result})
+
+                # 3. Assign the new project to the team
+                update_team_query = text("UPDATE teams SET project_id = :project_id WHERE id = :team_id")
+                conn.execute(update_team_query, {"project_id": project_id, "team_id": team_id})
+
+                # 4. Set the new project's status to taken
+                update_new_project = text("UPDATE projects SET status = 2 WHERE id = :project_id")
+                conn.execute(update_new_project, {"project_id": project_id})
+        
+        flash("Project assigned to group successfully.", "success")
+    except Exception as e:
+        flash(f"Error assigning project: {e}", "danger")
+        
     return redirect(url_for('user_mgt'))
 
 def assign_user_to_team(engine):
@@ -163,6 +193,7 @@ def get_user_mgt_data(engine):
     with engine.connect() as conn:
         instructor_id = session['user_id']
 
+        # --- UNCHANGED ---
         requests_query = text("""
             SELECT r.id, u.email AS student_email
             FROM instructor_requests r JOIN users u ON r.student_id = u.id
@@ -170,15 +201,24 @@ def get_user_mgt_data(engine):
         """)
         join_requests = conn.execute(requests_query, {"instructor_id": instructor_id}).all()
 
+        # --- NEW QUERY FOR DENIED REQUESTS ---
+        denied_query = text("""
+            SELECT r.id, u.email AS student_email
+            FROM instructor_requests r JOIN users u ON r.student_id = u.id
+            WHERE r.instructor_id = :instructor_id AND r.status = 2
+        """)
+        denied_requests = conn.execute(denied_query, {"instructor_id": instructor_id}).all()
+
+        # --- UNCHANGED (rest of the function) ---
         projects_query = text("SELECT * FROM projects WHERE status = 1")
         projects = conn.execute(projects_query).mappings().all()
 
         students_query = text("SELECT id, email FROM users WHERE account_type = 3 AND instructor_id = :instructor_id")
         all_students = conn.execute(students_query, {"instructor_id": instructor_id}).mappings().all()
-
+ 
         teams_query = text("""
             SELECT t.id, t.name, t.project_id, p.name AS project_name
-            FROM teams t JOIN projects p ON t.project_id = p.id
+            FROM teams t LEFT JOIN projects p ON t.project_id = p.id
             WHERE t.user_id = :user_id
         """)
         teams = conn.execute(teams_query, {"user_id": instructor_id}).mappings().all()
@@ -205,5 +245,6 @@ def get_user_mgt_data(engine):
         projects=projects,
         unassigned_students=unassigned_students,
         teams_with_members=teams_with_members,
-        join_requests=join_requests
+        join_requests=join_requests,
+        denied_requests=denied_requests 
     )
