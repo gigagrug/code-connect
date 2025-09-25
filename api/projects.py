@@ -1,12 +1,12 @@
 from sqlalchemy import text
-from flask import flash, redirect, url_for, session, request
+from flask import flash, redirect, url_for, session, request, jsonify
 
 def create_project(request, engine):
     if 'user_id' not in session:
         flash("You must be logged in to create a project.", "warning")
         return redirect(url_for('login'))
 
-    if session.get('account_type') == 3:
+    if session.get('role') != 1:
         flash("You do not have permission to create projects.", "danger")
         return redirect(url_for('index'))
 
@@ -90,8 +90,10 @@ def get_projects_for_user(engine):
         print(f"Database error fetching user projects: {e}")
         return []
 
-def get_all_projects(engine):
+def get_all_projects(engine, page=1, per_page=9):
+    """Fetches a paginated list of all projects."""
     try:
+        offset = (page - 1) * per_page
         with engine.connect() as connection:
             query = text("""
                 SELECT 
@@ -100,12 +102,23 @@ def get_all_projects(engine):
                 FROM projects p
                 JOIN users u ON p.user_id = u.id
                 ORDER BY p.id DESC
+                LIMIT :per_page OFFSET :offset
             """)
-            projects = connection.execute(query).mappings().all()
+            projects = connection.execute(query, {
+                "per_page": per_page, 
+                "offset": offset
+            }).mappings().all()
             return projects
     except Exception as e:
         print(f"Database error fetching all projects: {e}")
         return []
+
+def get_projects_api(engine):
+    """API endpoint to fetch projects for infinite scroll."""
+    page = request.args.get('page', 1, type=int)
+    per_page = 25 
+    projects = get_all_projects(engine, page=page, per_page=per_page)
+    return jsonify([dict(row) for row in projects])
 
 def check_if_user_can_edit_links(user_id, project, engine):
     """Checks if a user is the project owner or a student in an assigned team."""

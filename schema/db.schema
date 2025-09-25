@@ -53,7 +53,7 @@ table teams (
   id int NOT NULL AUTO_INCREMENT,
   name varchar(25) NOT NULL,
   user_id int NOT NULL,
-  project_id int NOT NULL,
+  project_id int DEFAULT NULL,
   PRIMARY KEY (id),
   KEY user_id (user_id),
   KEY project_id (project_id),
@@ -63,9 +63,11 @@ table teams (
 
 table users (
   id int NOT NULL AUTO_INCREMENT,
+  name varchar(150) DEFAULT NULL,
   email varchar(150) NOT NULL,
   password varchar(255) NOT NULL,
   account_type int NOT NULL,
+  role int NOT NULL DEFAULT '0',
   instructor_id int DEFAULT NULL,
   PRIMARY KEY (id),
   UNIQUE KEY email (email),

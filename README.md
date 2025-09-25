@@ -2,15 +2,15 @@
 
 1. Change student password
 2. notifactions
-3. oAuth github/ google?
-4. improve ui/ux
-5. Let student request a project
-6. error/ success messages
-7. rest api?
-8. add file support?
-9. create admin dashboard 
-10. default insructaor/alumni cant create project
-11. add excel file
-12. student and alumni can switch roles
-13. add pagination/infinte scroll
-14. add role: 0 can't create project, 1 can create project, 2 admin
+3. improve ui/ux
+4. Let group request a project
+5. error/ success messages
+6. create admin dashboard 
+7. add excel file
+
+Maybe?
+1. oAuth github/ google?
+2. add file support?
+3. student and alumni can switch roles. get instructor or admin approval?
+4. project approval based on instructor/class? collection?
+5. rest api?

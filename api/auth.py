@@ -9,7 +9,9 @@ def register_user(request, engine):
     password2 = request.form.get('password2')
     account_type = request.form.get('account_type')
 
-    if request.form.get("account_type") == 1:
+    role = 0
+
+    if account_type == '1':
         role = 1
 
     if not all([email, password, password2, account_type]):
@@ -42,7 +44,7 @@ def register_user(request, engine):
                 params = {
                     "email": email,
                     "password": hashed_password,
-                    "account_type": int(account_type)
+                    "account_type": int(account_type),
                     "role": int(role)
                 }
                 connection.execute(insert_query, params)
@@ -72,7 +74,7 @@ def login_user(request, engine):
 
     try:
         with engine.connect() as connection:
-            query = text("SELECT id, email, password, account_type FROM users WHERE email = :email")
+            query = text("SELECT id, email, password, account_type, role FROM users WHERE email = :email")
             result = connection.execute(query, {"email": email}).mappings().first()
 
             if result:
@@ -84,6 +86,7 @@ def login_user(request, engine):
                     session['user_id'] = result.id
                     session['email'] = result.email
                     session['account_type'] = result.account_type
+                    session['role'] = result.role
                     flash(f"Welcome back, {email}!", "success")
                     return redirect(url_for('profile'))
             

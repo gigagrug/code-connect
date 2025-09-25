@@ -31,7 +31,7 @@
   {% if session.account_type == 3 %}
     {% if not student_info.instructor_id %}
       <div class="card mx-auto mt-5 mb-12 max-w-xl p-5">
-        <h3 class="mb-4 text-center text-2xl font-semibold">Join an Instructor</h3>
+        <h3 class="text mb-4 text-center text-2xl font-semibold">Join an Instructor</h3>
         {% if pending_request %}
           <p class="text text-center">Your request to join <strong>{{ pending_request.instructor_email }}</strong> is pending.</p>
           <form action="{{ url_for('cancel_request_route') }}" method="POST" class="mt-4">
@@ -57,7 +57,7 @@
   {% endif %}
 
   {# For Project Creators: Show the "Create Project" form #}
-  {% if session.get('account_type') in [0, 1, 2] %}
+  {% if session['email'] and session.get('role') == 1 %}
     <div class="card mx-auto mt-5 mb-12 max-w-xl p-5">
       <h3 class="mb-4 text-center text-2xl font-semibold text-gray-900 dark:text-white">Create a New Project</h3>
       <form action="/projects/create" method="POST">
