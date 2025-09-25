@@ -3,6 +3,7 @@ CREATE TABLE IF NOT EXISTS users (
 	email VARCHAR(150) NOT NULL UNIQUE,
 	password VARCHAR(255) NOT NULL,
 	account_type INT NOT NULL,
+	role INT NOT NULL,
 	instructor_id INT NULL,
 	FOREIGN KEY (instructor_id) REFERENCES users(id) ON DELETE SET NULL
 );

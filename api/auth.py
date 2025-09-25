@@ -9,6 +9,9 @@ def register_user(request, engine):
     password2 = request.form.get('password2')
     account_type = request.form.get('account_type')
 
+    if request.form.get("account_type") == 1:
+        role = 1
+
     if not all([email, password, password2, account_type]):
         flash('All fields are required.', 'danger')
         return redirect(url_for('register'))
@@ -34,12 +37,13 @@ def register_user(request, engine):
                 flash('An account with this email already exists.', 'warning')
             else:
                 insert_query = text(
-                    "INSERT INTO users (email, password, account_type) VALUES (:email, :password, :account_type)"
+                                "INSERT INTO users (email, password, account_type, role) VALUES (:email, :password, :account_type, :role)"
                 )
                 params = {
                     "email": email,
                     "password": hashed_password,
                     "account_type": int(account_type)
+                    "role": int(role)
                 }
                 connection.execute(insert_query, params)
                 connection.commit()

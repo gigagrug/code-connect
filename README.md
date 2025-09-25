@@ -12,3 +12,5 @@
 10. default insructaor/alumni cant create project
 11. add excel file
 12. student and alumni can switch roles
+13. add pagination/infinte scroll
+14. add role: 0 can't create project, 1 can create project, 2 admin

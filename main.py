@@ -8,7 +8,7 @@ from api.auth import *
 from api.projects import *
 from api.mgt import *
 from api.invite import *
-from api.chat import init_chat
+from api.chat import *
 
 db_url = os.getenv("DB_URL")
 if not db_url:
