@@ -7,6 +7,8 @@ services:
       - DB_URL=${DB_URL}
     volumes:
       - .:/app
+    depends_on:
+      - db
     develop:
       watch:
         - action: sync
