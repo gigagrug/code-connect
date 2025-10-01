@@ -4,23 +4,6 @@
   <div class="container mx-auto px-4 py-8">
     <h2 class="text mb-6 text-center text-3xl font-bold">Explore All Projects</h2>
 
-    {% if session['email'] and session.get('role') == 1 %}
-      <div class="card mx-auto mb-12 max-w-xl md:p-8">
-        <h3 class="mb-4 text-center text-2xl font-semibold text-gray-900 dark:text-white">Create a New Project</h3>
-        <form action="/projects/create" method="POST">
-          <div class="mb-4">
-            <label for="name" class="mb-2 block text-sm font-medium text-gray-900 dark:text-white">Project Name</label>
-            <input type="text" name="name" id="name" class="input text" placeholder="My Awesome Project" required />
-          </div>
-          <div class="mb-6">
-            <label for="description" class="mb-2 block text-sm font-medium text-gray-900 dark:text-white">Description</label>
-            <textarea name="description" id="description" class="input text field-sizing-content min-h-[100px]" placeholder="A description of what your project is about." required></textarea>
-          </div>
-          <button type="submit" class="w-full rounded-lg bg-blue-700 px-5 py-2.5 text-center text-sm font-medium text-white hover:bg-blue-800">Publish Project</button>
-        </form>
-      </div>
-    {% endif %}
-
     <div id="projects-grid" class="grid grid-cols-1 gap-8 md:grid-cols-2 lg:grid-cols-3">
       {% for project in projects %}
         <a href="/project/{{ project.id }}" class="card block transform transition-transform duration-300 hover:-translate-y-1">
@@ -56,15 +39,13 @@
       {% endfor %}
     </div>
 
-    <div id="loader" class="text-center text-2xl py-8" style="display: none;">
-      Loading...
-    </div>
+    <div id="loader" class="py-8 text-center text-2xl" style="display: none;">Loading...</div>
   </div>
 
   <script>
-    document.addEventListener('DOMContentLoaded', () => {
-      const projectsGrid = document.getElementById('projects-grid');
-      const loader = document.getElementById('loader');
+    document.addEventListener("DOMContentLoaded", () => {
+      const projectsGrid = document.getElementById("projects-grid");
+      const loader = document.getElementById("loader");
       let currentPage = 1;
       let isLoading = false;
       let noMoreProjects = false;
@@ -79,20 +60,20 @@
           return `<span class="me-2 rounded bg-yellow-100 px-2.5 py-0.5 text-sm font-medium text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300">Pending Approval</span>`;
         }
       };
-      
+
       // Helper function to get account type text
       const getAccountType = (type) => {
-          if (type === 0) return 'Instructor';
-          if (type === 1) return 'Business';
-          if (type === 2) return 'Alumni';
-          return 'N/A';
+        if (type === 0) return "Instructor";
+        if (type === 1) return "Business";
+        if (type === 2) return "Alumni";
+        return "N/A";
       };
 
       // Function to create a project card from data
       const createProjectCard = (project) => {
-        const card = document.createElement('a');
+        const card = document.createElement("a");
         card.href = `/project/${project.id}`;
-        card.className = 'card block transform transition-transform duration-300 hover:-translate-y-1';
+        card.className = "card block transform transition-transform duration-300 hover:-translate-y-1";
         card.innerHTML = `
           <div class="p-6">
             <div class="mb-2">${getStatusBadge(project.status)}</div>
@@ -114,7 +95,7 @@
         if (isLoading || noMoreProjects) return;
 
         isLoading = true;
-        loader.style.display = 'block';
+        loader.style.display = "block";
         currentPage++;
 
         try {
@@ -127,28 +108,32 @@
             return;
           }
 
-          newProjects.forEach(project => {
+          newProjects.forEach((project) => {
             const card = createProjectCard(project);
             projectsGrid.appendChild(card);
           });
         } catch (error) {
-          console.error('Failed to load more projects:', error);
+          console.error("Failed to load more projects:", error);
           loader.innerHTML = "Failed to load projects.";
         } finally {
           isLoading = false;
           if (!noMoreProjects) {
-            loader.style.display = 'none';
+            loader.style.display = "none";
           }
         }
       };
+			const checkAndLoadInitial = async () => {
+        while (window.innerHeight >= document.body.offsetHeight && !noMoreProjects) {
+          await loadMoreProjects();
+        }
+      };
 
-      // Listen for scroll events
-      window.addEventListener('scroll', () => {
-        // Load more projects when the user is 100px from the bottom
+      window.addEventListener("scroll", () => {
         if (window.innerHeight + window.scrollY >= document.body.offsetHeight - 100) {
           loadMoreProjects();
         }
       });
+			checkAndLoadInitial();
     });
   </script>
 {% endblock %}

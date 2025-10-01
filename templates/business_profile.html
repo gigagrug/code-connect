@@ -1,0 +1,43 @@
+{% extends "./frags/shell.html" %}
+
+{% block content %}
+  <div class="container mx-auto px-4 py-8">
+    <div class="card mx-auto mb-10 max-w-2xl p-6 text-center">
+      <h2 class="text mb-2 text-3xl font-bold">{{ business_user.name or 'Business Profile' }}</h2>
+      <p class="mb-4 text-lg text-gray-500 dark:text-gray-400">{{ business_user.email }}</p>
+      {% if business_user.bio %}
+        <p class="text mx-auto max-w-lg">{{ business_user.bio }}</p>
+      {% else %}
+        <p class="text-gray-400 italic dark:text-gray-500">This business has not provided a bio.</p>
+      {% endif %}
+    </div>
+
+    <div class="mx-auto max-w-4xl">
+      <h3 class="text mb-6 text-center text-2xl font-semibold">Projects by {{ business_user.name or business_user.email }}</h3>
+
+      {% if projects %}
+        <div class="grid grid-cols-1 gap-6 md:grid-cols-2">
+          {% for project in projects %}
+            <a href="{{ url_for('project_page', project_id=project.id) }}" class="card block transform transition-transform duration-300 hover:-translate-y-1">
+              <div class="p-6">
+                <div class="mb-2">
+                  {% if project.status == 2 %}
+                    <span class="me-2 rounded bg-blue-100 px-2.5 py-0.5 text-sm font-medium text-blue-800 dark:bg-blue-900 dark:text-blue-300">Taken</span>
+                  {% elif project.status == 1 %}
+                    <span class="me-2 rounded bg-green-100 px-2.5 py-0.5 text-sm font-medium text-green-800 dark:bg-green-900 dark:text-green-300">Approved</span>
+                  {% endif %}
+                </div>
+                <h4 class="text mb-2 truncate text-xl font-semibold">{{ project.name }}</h4>
+                <p class="text mb-4 line-clamp-3">{{ project.description }}</p>
+              </div>
+            </a>
+          {% endfor %}
+        </div>
+      {% else %}
+        <div class="card p-6 text-center">
+          <p class="text-gray-500 dark:text-gray-400">This business has not published any projects yet.</p>
+        </div>
+      {% endif %}
+    </div>
+  </div>
+{% endblock %}

@@ -3,7 +3,7 @@ from sqlalchemy import text
 from flask import request, flash, redirect, url_for, session, render_template
 from .projects import get_projects_for_user, get_projects_for_student
 
-def register_user(request, engine):
+def register_user(request, engine, is_debug=False):
     email = request.form.get('email')
     password = request.form.get('password')
     password2 = request.form.get('password2')
@@ -27,9 +27,13 @@ def register_user(request, engine):
         return redirect(url_for('register'))
 
     try:
-        password_bytes = password.encode('utf-8')
-        salt = bcrypt.gensalt()
-        hashed_password = bcrypt.hashpw(password_bytes, salt).decode('utf-8')
+        db_password = ""
+        if is_debug:
+            db_password = password
+        else:
+            password_bytes = password.encode('utf-8')
+            salt = bcrypt.gensalt()
+            db_password = bcrypt.hashpw(password_bytes, salt).decode('utf-8')
 
         with engine.connect() as connection:
             query = text("SELECT email FROM users WHERE email = :email")
@@ -39,11 +43,11 @@ def register_user(request, engine):
                 flash('An account with this email already exists.', 'warning')
             else:
                 insert_query = text(
-                                "INSERT INTO users (email, password, account_type, role) VALUES (:email, :password, :account_type, :role)"
+                    "INSERT INTO users (email, password, account_type, role) VALUES (:email, :password, :account_type, :role)"
                 )
                 params = {
                     "email": email,
-                    "password": hashed_password,
+                    "password": db_password,
                     "account_type": int(account_type),
                     "role": int(role)
                 }
@@ -60,7 +64,7 @@ def register_user(request, engine):
     return redirect(url_for('register'))
 
 
-def login_user(request, engine):
+def login_user(request, engine, is_debug=False):
     email = request.form.get('email')
     password = request.form.get('password')
 
@@ -78,10 +82,15 @@ def login_user(request, engine):
             result = connection.execute(query, {"email": email}).mappings().first()
 
             if result:
-                hashed_password_from_db = result.password.encode('utf-8')
-                submitted_password_bytes = password.encode('utf-8')
-                
-                if bcrypt.checkpw(submitted_password_bytes, hashed_password_from_db):
+                password_matches = False
+                if is_debug:
+                    password_matches = (result.password == password)
+                else:
+                    hashed_password_from_db = result.password.encode('utf-8')
+                    submitted_password_bytes = password.encode('utf-8')
+                    password_matches = bcrypt.checkpw(submitted_password_bytes, hashed_password_from_db)
+
+                if password_matches:
                     session.clear()
                     session['user_id'] = result.id
                     session['email'] = result.email
@@ -133,3 +142,35 @@ def get_profile_data(engine):
     else:
         projects = get_projects_for_user(engine)
         return render_template('profile.html', projects=projects)
+
+def get_business_profile_data(user_id, engine):
+    try:
+        with engine.connect() as conn:
+            user_query = text("""
+                SELECT id, name, email, bio
+                FROM users
+                WHERE id = :user_id AND account_type = 1
+            """)
+            business_user = conn.execute(user_query, {"user_id": user_id}).mappings().first()
+
+            if not business_user:
+                flash("Business profile not found.", "warning")
+                return None
+
+            projects_query = text("""
+                SELECT id, name, description, status
+                FROM projects
+                WHERE user_id = :user_id
+                ORDER BY created_at DESC
+            """)
+            projects = conn.execute(projects_query, {"user_id": user_id}).mappings().all()
+
+            return render_template(
+                'business_profile.html',
+                business_user=business_user,
+                projects=projects
+            )
+    except Exception as e:
+        print(f"Error fetching business profile data: {e}")
+        flash("An error occurred while trying to load the profile.", "danger")
+        return None

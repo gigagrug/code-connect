@@ -18,7 +18,10 @@
           Student
         {% endif %}
       </p>
-
+      <p class="text">
+        <strong>Public Profile:</strong>
+        <a href="/business/{{ session.user_id }}" class="underline"> Public Profile </a>
+      </p>
       {% if session.account_type == 3 and student_info.instructor_id %}
         <p class="text"><strong>Assigned Instructor:</strong> {{ student_info.instructor_email }}</p>
       {% endif %}
