@@ -1,16 +1,23 @@
 # CodeConnect
 
-1. Change student password
-2. notifactions
-3. improve ui/ux
-4. Let group request a project
-5. error/ success messages
-6. create admin dashboard 
-7. add excel file
+Change student password
+notifications
+improve ui/ux
+Let group request a project
+error/ success messages
+create admin dashboard 
+add excel file
+Add approval for project for each instructor
+Don't default alumni create project
+Students sees approved proposal and request project
+Navigate the website in less than 3 clicks
+Instructor request to admin add grad year
+Status, add file support, comments
+After approval of project by instructor don't allow other instructors
+Add job post only admin
+We deploy server aws ec2, on disk
+More than one different level admin
+student and alumni can switch roles. get admin approval
 
-Maybe?
-1. oAuth github/ google?
-2. add file support?
-3. student and alumni can switch roles. get instructor or admin approval?
-4. project approval based on instructor/class? collection?
-5. rest api?
+rest api?
+Add tags for other project types, like art and project management?

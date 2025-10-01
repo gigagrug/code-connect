@@ -90,7 +90,7 @@ def get_projects_for_user(engine):
         print(f"Database error fetching user projects: {e}")
         return []
 
-def get_all_projects(engine, page=1, per_page=9):
+def get_all_projects(engine, page=1, per_page=5):
     """Fetches a paginated list of all projects."""
     try:
         offset = (page - 1) * per_page
@@ -116,7 +116,7 @@ def get_all_projects(engine, page=1, per_page=9):
 def get_projects_api(engine):
     """API endpoint to fetch projects for infinite scroll."""
     page = request.args.get('page', 1, type=int)
-    per_page = 25 
+    per_page = 5 
     projects = get_all_projects(engine, page=page, per_page=per_page)
     return jsonify([dict(row) for row in projects])
 

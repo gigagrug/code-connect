@@ -9,6 +9,7 @@ from api.projects import *
 from api.mgt import *
 from api.invite import *
 from api.chat import *
+from api.admin import *
 
 db_url = os.getenv("DB_URL")
 if not db_url:
@@ -30,12 +31,12 @@ socketio = SocketIO(app)
 init_chat(socketio, engine)
 
 # Admin
-
+## create routes only under '/admin/'
 
 # Users
 @app.route('/')
 def index():
-    projects = get_all_projects(engine, page=1, per_page=25)
+    projects = get_all_projects(engine, page=1, per_page=12)
     return render_template('index.html', projects=projects)
 
 @app.route('/api/projects')
@@ -100,6 +101,13 @@ def profile():
         return redirect(url_for('login'))
     return get_profile_data(engine)
 
+@app.route('/business/<int:user_id>')
+def business_profile(user_id):
+    profile_page = get_business_profile_data(user_id, engine)
+    if profile_page is None:
+        return redirect(url_for('index'))
+    return profile_page
+
 @app.route('/userMgt')
 def user_mgt():
     if 'user_id' not in session or session.get('account_type') != 0:
@@ -110,13 +118,13 @@ def user_mgt():
 @app.route('/register', methods=['POST', 'GET'])
 def register():
     if request.method == 'POST':
-        return register_user(request, engine)
+        return register_user(request, engine, app.debug)
     return render_template('register.html')
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     if request.method == 'POST':
-        return login_user(request, engine)
+        return login_user(request, engine, app.debug)
     return render_template('login.html')
 
 @app.route('/logout')
