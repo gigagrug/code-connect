@@ -32,7 +32,19 @@ init_chat(socketio, engine)
 
 # Admin
 ## create routes only under '/admin/'
-
+@app.route('/admin')
+def admin():
+    page = int(request.args.get('page', 1) or 1)
+    per_page = 25
+    projects, total, total_pages = get_projects_paginated(engine, page=page, per_page=per_page)
+    return render_template(
+        'admin/admin.html',
+        projects=projects,
+        page=page,
+        per_page=per_page,
+        total=total,
+        total_pages=total_pages
+    )
 # Users
 @app.route('/')
 def index():
