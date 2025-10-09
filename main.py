@@ -1,4 +1,5 @@
 import os
+import sys
 import bcrypt
 import sqlalchemy
 from sqlalchemy import text
@@ -11,10 +12,12 @@ from api.invite import *
 from api.chat import *
 from api.admin import *
 
+app = Flask(__name__)
+app.secret_key = os.getenv("FLASK_SECRET_KEY", 'a_default_dev_secret_key')
+
 db_url = os.getenv("DB_URL")
 if not db_url:
     raise ValueError("Error: DB_URL environment variable is not set.")
-
 try:
     engine = sqlalchemy.create_engine(db_url)
     with engine.connect() as connection:
@@ -23,15 +26,80 @@ except Exception as e:
     print(f"An error occurred while connecting to the database: {e}")
     engine = None
 
-app = Flask(__name__)
-app.secret_key = os.getenv("FLASK_SECRET_KEY", 'a_default_dev_secret_key')
+def drop_all_tables(db_engine, file_path):
+    print(f"--- Dropping tables using rollback script from: {file_path} ---")
+    if not os.path.exists(file_path):
+        print(f"❌ Error: SQL file not found at '{file_path}'")
+        raise FileNotFoundError
+    with open(file_path, 'r', encoding='utf-8') as file:
+        full_script = file.read()
+    rollback_marker = "-- schema rollback"
+    if rollback_marker not in full_script:
+        print(f"❌ Error: Rollback marker '{rollback_marker}' not found in {file_path}.")
+        raise ValueError("Rollback marker not found")
+    rollback_script = full_script.split(rollback_marker, 1)[1]
+    statements = [stmt.strip() for stmt in rollback_script.split(';') if stmt.strip()]
+    if not statements:
+        print("🤔 No rollback statements found to execute.")
+        return
+    try:
+        with db_engine.connect() as connection:
+            with connection.begin() as transaction:
+                connection.execute(text("SET FOREIGN_KEY_CHECKS = 0;"))
+                for statement in statements:
+                    connection.execute(text(statement))
+                connection.execute(text("SET FOREIGN_KEY_CHECKS = 1;"))
+                print("✅ All tables dropped successfully based on rollback script.")
+    except Exception as e:
+        print(f"❌ Could not complete dropping tables. Error: {e}")
+        raise
+
+def execute_sql_from_file(db_engine, file_path):
+    print(f"--- Executing SQL from: {file_path} ---")
+    if not os.path.exists(file_path):
+        print(f"❌ Error: SQL file not found at '{file_path}'")
+        raise FileNotFoundError
+    with open(file_path, 'r', encoding='utf-8') as file:
+        sql_script = file.read()
+    rollback_marker = "-- schema rollback"
+    if rollback_marker in sql_script:
+        print(f"  -> Rollback marker found. Executing creation part only.")
+        sql_script = sql_script.split(rollback_marker, 1)[0]
+    statements = [stmt.strip() for stmt in sql_script.split(';') if stmt.strip()]
+    try:
+        with db_engine.connect() as connection:
+            with connection.begin() as transaction:
+                for statement in statements:
+                    connection.execute(text(statement))
+                print(f"✅ Successfully executed SQL from {os.path.basename(file_path)}.")
+    except Exception as e:
+        print(f"❌ Could not execute SQL file. Error: {e}")
+        raise
+
+def reset_database_on_startup():
+    if not engine:
+        print("❌ Database engine not initialized. Skipping reset.")
+        return
+    if os.environ.get("WERKZEUG_RUN_MAIN") == "true":
+        print("🚀 Starting database reset process on server startup...")
+        try:
+            schema_file = './schema/migrations/1_schema.sql'
+            data_file = './schema/data/0_data.sql'
+            drop_all_tables(engine, schema_file)
+            execute_sql_from_file(engine, schema_file)
+            execute_sql_from_file(engine, data_file)
+            print("\n🎉 Database has been successfully reset and seeded! 🎉\n")
+        except Exception as e:
+            print(f"\n🔥 Database reset failed: {e} 🔥")
+            sys.exit(1)
+
+if app.debug:
+    reset_database_on_startup()
 
 socketio = SocketIO(app)
-
 init_chat(socketio, engine)
 
-# Admin
-## create routes only under '/admin/'
+# Admin Routes
 @app.route('/admin')
 def admin():
     page = int(request.args.get('page', 1) or 1)
@@ -45,7 +113,8 @@ def admin():
         total=total,
         total_pages=total_pages
     )
-# Users
+
+# User and Project Routes
 @app.route('/')
 def index():
     projects = get_all_projects(engine, page=1, per_page=12)
@@ -190,4 +259,4 @@ def dismiss_request_route(request_id):
     return dismiss_denied_request(request_id, engine)
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=5000, debug=True)
+    socketio.run(app, host='0.0.0.0', port=5000, debug=True)
