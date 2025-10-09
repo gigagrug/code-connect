@@ -99,7 +99,8 @@ if app.debug:
 socketio = SocketIO(app)
 init_chat(socketio, engine)
 
-# Admin Routes
+# Admin
+## create routes only under '/admin/'
 @app.route('/admin')
 def admin():
     page = int(request.args.get('page', 1) or 1)
@@ -113,8 +114,7 @@ def admin():
         total=total,
         total_pages=total_pages
     )
-
-# User and Project Routes
+# Users
 @app.route('/')
 def index():
     projects = get_all_projects(engine, page=1, per_page=12)
@@ -259,4 +259,4 @@ def dismiss_request_route(request_id):
     return dismiss_denied_request(request_id, engine)
 
 if __name__ == '__main__':
-    socketio.run(app, host='0.0.0.0', port=5000, debug=True)
+    app.run(host='0.0.0.0', port=5000, debug=True)
