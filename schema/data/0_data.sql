@@ -1,5 +1,5 @@
 INSERT INTO `users`
-	(`name`, `email`, `password`, `account_type`, `role`, `bio`, `instructor_id`, `graduation`)
+	(`name`, `email`, `password`, `role`, `permission`, `bio`, `instructor_id`, `graduation`)
 VALUES
 	('Dr. Evelyn Reed', 'i1@i.com', '1', 0, 0, 'Professor of Computer Science with a focus on AI and machine learning.', NULL, NULL),
 	('Dr. Samuel Chen', 'i2@i.com', '1', 0, 0, 'Specializing in database systems and web application architecture.', NULL, NULL),

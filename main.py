@@ -191,7 +191,7 @@ def business_profile(user_id):
 
 @app.route('/userMgt')
 def user_mgt():
-    if 'user_id' not in session or session.get('account_type') != 0:
+    if 'user_id' not in session or session.get('role') != 0:
         flash("Access restricted to instructors.", "danger")
         return redirect(url_for('profile'))
     return get_user_mgt_data(engine)

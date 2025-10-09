@@ -20,8 +20,6 @@ Don't default alumni create project
 
 Students sees approved proposal and request project
 
-Navigate the website in less than 3 clicks
-
 Instructor request to admin add grad year
 
 Status, add file support, comments

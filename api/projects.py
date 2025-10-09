@@ -6,7 +6,7 @@ def create_project(request, engine):
         flash("You must be logged in to create a project.", "warning")
         return redirect(url_for('login'))
 
-    if session.get('role') != 1:
+    if session.get('permission') != 1:
         flash("You do not have permission to create projects.", "danger")
         return redirect(url_for('index'))
 
@@ -18,7 +18,7 @@ def create_project(request, engine):
         flash("Project name and description are required.", "danger")
         return redirect(url_for('profile'))
 
-    status = 1 if session.get('account_type') == 0 else 0
+    status = 1 if session.get('role') == 0 else 0
 
     try:
         with engine.connect() as connection:
@@ -40,7 +40,7 @@ def create_project(request, engine):
     return redirect(url_for('profile'))
 
 def approve_project(project_id, engine):
-    if session.get('account_type') != 0:
+    if session.get('role') != 0:
         flash("You do not have permission to perform this action.", "danger")
         return redirect(url_for('project_page', project_id=project_id))
     
@@ -74,13 +74,13 @@ def get_projects_for_user(engine):
             project_query = text("""
                 SELECT
                     p.id, p.name, p.description, p.status,
-                    u.email, u.account_type,
+                    u.email, u.role,
                     COUNT(t.id) AS team_count
                 FROM projects p
                 JOIN users u ON p.user_id = u.id
                 LEFT JOIN teams t ON p.id = t.project_id
                 WHERE p.user_id = :user_id
-                GROUP BY p.id, u.email, u.account_type
+                GROUP BY p.id, u.email, u.role
                 ORDER BY p.id DESC
             """)
             projects = connection.execute(project_query, {"user_id": user_id}).mappings().all()
@@ -98,7 +98,7 @@ def get_all_projects(engine, page=1, per_page=5):
             query = text("""
                 SELECT 
                     p.id, p.name, p.description, p.status, 
-                    u.email, u.account_type
+                    u.email, u.role
                 FROM projects p
                 JOIN users u ON p.user_id = u.id
                 ORDER BY p.id DESC
@@ -179,7 +179,7 @@ def get_project_by_id(project_id, engine):
                 SELECT 
                     p.id, p.name, p.description, p.status, 
                     p.project_link, p.github_link,
-                    u.email, u.account_type, u.id as user_id
+                    u.email, u.role, u.id as user_id
                 FROM projects p
                 JOIN users u ON p.user_id = u.id
                 WHERE p.id = :project_id

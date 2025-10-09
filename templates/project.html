@@ -17,7 +17,7 @@
                   <span class="me-5">
                     Created by:
                     <span class="font-medium text-blue-600 dark:text-blue-400">
-                      {% if project.account_type == 1 %}
+                      {% if project.role == 1 %}
                         <a href="/business/{{ project.user_id }}" class="underline">{{ project.email }}</a>
                       {% else %}
                         {{ project.email }}
@@ -26,11 +26,11 @@
                   </span>
                   Account Type:
                   <span class="font-medium text-blue-600 dark:text-blue-400">
-                    {% if project.account_type == 0 %}
+                    {% if project.role == 0 %}
                       Instructor
-                    {% elif project.account_type == 1 %}
+                    {% elif project.role == 1 %}
                       Business
-                    {% elif project.account_type == 2 %}
+                    {% elif project.role == 2 %}
                       Alumni
                     {% endif %}
                   </span>
@@ -95,7 +95,7 @@
               </div>
             {% endif %}
 
-            {% if session.get('account_type') == 0 %}
+            {% if session.get('role') == 0 %}
               <div class="mt-8 border-t border-gray-200 pt-6 dark:border-gray-700">
                 <h3 class="mb-4 text-lg font-semibold text-red-600 dark:text-red-400">Instructor Controls</h3>
                 <form action="/project/{{ project.id }}/approve" method="POST">

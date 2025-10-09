@@ -7,14 +7,14 @@ def register_user(request, engine, is_debug=False):
     email = request.form.get('email')
     password = request.form.get('password')
     password2 = request.form.get('password2')
-    account_type = request.form.get('account_type')
+    role = request.form.get('role')
 
-    role = 0
+    permission = 0
 
-    if account_type == '1':
-        role = 1
+    if role == '1':
+        permission = 1
 
-    if not all([email, password, password2, account_type]):
+    if not all([email, password, password2, role]):
         flash('All fields are required.', 'danger')
         return redirect(url_for('register'))
 
@@ -43,13 +43,13 @@ def register_user(request, engine, is_debug=False):
                 flash('An account with this email already exists.', 'warning')
             else:
                 insert_query = text(
-                    "INSERT INTO users (email, password, account_type, role) VALUES (:email, :password, :account_type, :role)"
+                    "INSERT INTO users (email, password, role, permission) VALUES (:email, :password, :role, :permission)"
                 )
                 params = {
                     "email": email,
                     "password": db_password,
-                    "account_type": int(account_type),
-                    "role": int(role)
+                    "role": int(role),
+                    "permission": int(permission)
                 }
                 connection.execute(insert_query, params)
                 connection.commit()
@@ -78,7 +78,7 @@ def login_user(request, engine, is_debug=False):
 
     try:
         with engine.connect() as connection:
-            query = text("SELECT id, email, password, account_type, role FROM users WHERE email = :email")
+            query = text("SELECT id, email, password, role, permission FROM users WHERE email = :email")
             result = connection.execute(query, {"email": email}).mappings().first()
 
             if result:
@@ -94,8 +94,8 @@ def login_user(request, engine, is_debug=False):
                     session.clear()
                     session['user_id'] = result.id
                     session['email'] = result.email
-                    session['account_type'] = result.account_type
                     session['role'] = result.role
+                    session['permission'] = result.permission
                     flash(f"Welcome back, {email}!", "success")
                     return redirect(url_for('profile'))
             
@@ -108,7 +108,7 @@ def login_user(request, engine, is_debug=False):
     return redirect(url_for('login'))
 
 def get_profile_data(engine):
-    if session['account_type'] == 3:
+    if session['role'] == 3:
         student_id = session['user_id']
         with engine.connect() as conn:
             student_query = text("""
@@ -130,7 +130,7 @@ def get_profile_data(engine):
                 pending_request = conn.execute(req_query, {"student_id": student_id}).first()
 
                 if not pending_request:
-                    inst_query = text("SELECT id, email FROM users WHERE account_type = 0 ORDER BY email")
+                    inst_query = text("SELECT id, email FROM users WHERE role = 0 ORDER BY email")
                     instructors = conn.execute(inst_query).all()
 
             assignments = get_projects_for_student(engine)
@@ -149,7 +149,7 @@ def get_business_profile_data(user_id, engine):
             user_query = text("""
                 SELECT id, name, email, bio
                 FROM users
-                WHERE id = :user_id AND account_type = 1
+                WHERE id = :user_id AND role = 1
             """)
             business_user = conn.execute(user_query, {"user_id": user_id}).mappings().first()
 

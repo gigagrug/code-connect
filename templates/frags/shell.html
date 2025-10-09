@@ -22,7 +22,7 @@
         <ul class="flex flex-row space-x-4 font-medium">
           {% if 'email' in session %}
             <a href="/profile" class="text">Profile</a>
-            {% if session['email'] and session.get('account_type') in [0] %}
+            {% if session['email'] and session.get('role') in [0] %}
               <a href="/userMgt" class="text">UserMgt</a>
             {% endif %}
           {% else %}

@@ -3,8 +3,8 @@ CREATE TABLE IF NOT EXISTS users (
 	name VARCHAR(150),
 	email VARCHAR(150) NOT NULL UNIQUE,
 	password VARCHAR(255) NOT NULL,
-	account_type INT NOT NULL,
-	role INT NOT NULL DEFAULT 0,
+	role INT NOT NULL,
+	permission INT NOT NULL DEFAULT 0,
 	instructor_id INT NULL,
 	graduation VARCHAR(15),
 	bio TEXT,
@@ -12,10 +12,10 @@ CREATE TABLE IF NOT EXISTS users (
 	FOREIGN KEY (instructor_id) REFERENCES users(id) ON DELETE SET NULL
 );
 
-CREATE TABLE IF NOT EXISTS role_change_requests (
+CREATE TABLE IF NOT EXISTS permission_change_requests (
 	id INT AUTO_INCREMENT PRIMARY KEY,
 	user_id INT NOT NULL,
-	requested_account_type INT NOT NULL,
+	requested_role INT NOT NULL,
 	status INT DEFAULT 0,
 	created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
 	FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
@@ -123,6 +123,6 @@ DROP TABLE IF EXISTS projects;
 
 DROP TABLE IF EXISTS instructor_requests;
 
-DROP TABLE IF EXISTS role_change_requests;
+DROP TABLE IF EXISTS permission_change_requests;
 
 DROP TABLE IF EXISTS users;

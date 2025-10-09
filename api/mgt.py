@@ -4,7 +4,7 @@ from sqlalchemy import text
 from .projects import get_projects_for_user, get_projects_for_student
 
 def instructor_only():
-    if 'account_type' not in session or session['account_type'] != 0:
+    if 'role' not in session or session['role'] != 0:
         flash("You do not have permission to perform this action.", "danger")
         return False
     return True
@@ -31,7 +31,7 @@ def create_user_by_instructor(engine):
         with engine.connect() as conn:
             # Updated query to include instructor_id
             query = text(
-                "INSERT INTO users (email, password, account_type, instructor_id) "
+                "INSERT INTO users (email, password, role, instructor_id) "
                 "VALUES (:email, :password, 3, :instructor_id)"
             )
             params = {
@@ -129,7 +129,7 @@ def delete_user(user_id, engine):
     
     try:
         with engine.connect() as conn:
-            query = text("DELETE FROM users WHERE id = :user_id AND account_type = 3")
+            query = text("DELETE FROM users WHERE id = :user_id AND role = 3")
             conn.execute(query, {"user_id": user_id})
             conn.commit()
         flash("User deleted successfully.", "success")
@@ -213,7 +213,7 @@ def get_user_mgt_data(engine):
         projects_query = text("SELECT * FROM projects WHERE status = 1")
         projects = conn.execute(projects_query).mappings().all()
 
-        students_query = text("SELECT id, email FROM users WHERE account_type = 3 AND instructor_id = :instructor_id")
+        students_query = text("SELECT id, email FROM users WHERE role = 3 AND instructor_id = :instructor_id")
         all_students = conn.execute(students_query, {"instructor_id": instructor_id}).mappings().all()
  
         teams_query = text("""

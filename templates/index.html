@@ -24,11 +24,11 @@
                 <span class="me-2">Created by: <span class="font-medium text-blue-600 dark:text-blue-400">{{ project.email }}</span></span>
                 Account Type:
                 <span class="font-medium text-blue-600 dark:text-blue-400">
-                  {% if project.account_type == 0 %}
+                  {% if project.role == 0 %}
                     Instructor
-                  {% elif project.account_type == 1 %}
+                  {% elif project.role == 1 %}
                     Business
-                  {% elif project.account_type == 2 %}
+                  {% elif project.role == 2 %}
                     Alumni
                   {% endif %}
                 </span>
@@ -82,7 +82,7 @@
             <div class="border-t border-gray-200 pt-4 dark:border-gray-700">
               <p class="text-sm text-gray-500 dark:text-gray-300">
                 <span class="me-2">Created by: <span class="font-medium text-blue-600 dark:text-blue-400">${project.email}</span></span>
-                Account Type: <span class="font-medium text-blue-600 dark:text-blue-400">${getAccountType(project.account_type)}</span>
+                Account Type: <span class="font-medium text-blue-600 dark:text-blue-400">${getAccountType(project.role)}</span>
               </p>
             </div>
           </div>
@@ -122,7 +122,7 @@
           }
         }
       };
-			const checkAndLoadInitial = async () => {
+      const checkAndLoadInitial = async () => {
         while (window.innerHeight >= document.body.offsetHeight && !noMoreProjects) {
           await loadMoreProjects();
         }
@@ -133,7 +133,7 @@
           loadMoreProjects();
         }
       });
-			checkAndLoadInitial();
+      checkAndLoadInitial();
     });
   </script>
 {% endblock %}
