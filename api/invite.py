@@ -2,7 +2,7 @@ from flask import request, redirect, url_for, flash, session
 from sqlalchemy import text
 
 def send_instructor_request(engine):
-    if 'user_id' not in session or session.get('account_type') != 3:
+    if 'user_id' not in session or session.get('role') != 3:
         flash("Only students can send requests.", "danger")
         return redirect(url_for('profile'))
 
@@ -38,7 +38,7 @@ def send_instructor_request(engine):
 
 
 def cancel_instructor_request(engine):
-    if 'user_id' not in session or session.get('account_type') != 3:
+    if 'user_id' not in session or session.get('role') != 3:
         flash("Only students can cancel requests.", "danger")
         return redirect(url_for('profile'))
 
@@ -56,7 +56,7 @@ def cancel_instructor_request(engine):
 
 
 def handle_instructor_request(request_id, engine):
-    if 'user_id' not in session or session.get('account_type') != 0:
+    if 'user_id' not in session or session.get('role') != 0:
         flash("Only instructors can handle requests.", "danger")
         return redirect(url_for('user_mgt'))
 
@@ -105,7 +105,7 @@ def handle_instructor_request(request_id, engine):
 
 def dismiss_denied_request(request_id, engine):
     """Allows an instructor to dismiss/delete a denied request."""
-    if 'user_id' not in session or session.get('account_type') != 0:
+    if 'user_id' not in session or session.get('role') != 0:
         flash("Only instructors can handle requests.", "danger")
         return redirect(url_for('user_mgt'))
 

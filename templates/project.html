@@ -1,4 +1,4 @@
-{% extends "./frags/shell.html" %}
+{% extends "./layouts/shell.html" %}
 
 {% block head %}
   <script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
@@ -17,29 +17,21 @@
                   <span class="me-5">
                     Created by:
                     <span class="font-medium text-blue-600 dark:text-blue-400">
-                      {% if project.account_type == 1 %}
+                      {% if project.role == 1 %}
                         <a href="/business/{{ project.user_id }}" class="underline">{{ project.email }}</a>
                       {% else %}
                         {{ project.email }}
                       {% endif %}
                     </span>
                   </span>
-                  Account Type:
-                  <span class="font-medium text-blue-600 dark:text-blue-400">
-                    {% if project.account_type == 0 %}
-                      Instructor
-                    {% elif project.account_type == 1 %}
-                      Business
-                    {% elif project.account_type == 2 %}
-                      Alumni
-                    {% endif %}
-                  </span>
-                  {% if project.status == 2 %}
-                    <span class="ms-5 me-2 rounded bg-blue-100 px-2.5 py-0.5 text-sm font-medium text-blue-800 dark:bg-blue-900 dark:text-blue-300">Taken</span>
+                  {% if project.status == 3 %}
+                    <span class="me-2 rounded bg-blue-100 px-2.5 py-0.5 text-sm font-medium text-blue-800 dark:bg-blue-900 dark:text-blue-300">Taken</span>
+                  {% elif project.status == 2 %}
+                    <span class="me-2 rounded bg-green-100 px-2.5 py-0.5 text-sm font-medium text-green-800 dark:bg-green-900 dark:text-green-300"> Approved</span>
                   {% elif project.status == 1 %}
-                    <span class="ms-5 me-2 rounded bg-green-100 px-2.5 py-0.5 text-sm font-medium text-green-800 dark:bg-green-900 dark:text-green-300">Approved</span>
+                    <span class="me-2 rounded bg-yellow-100 px-2.5 py-0.5 text-sm font-medium text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300">Pending Approval</span>
                   {% else %}
-                    <span class="ms-5 me-2 rounded bg-yellow-100 px-2.5 py-0.5 text-sm font-medium text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300">Pending Approval</span>
+                    <span class="me-2 rounded bg-red-100 px-2.5 py-0.5 text-sm font-medium text-red-800 dark:bg-red-900 dark:text-red-300"> Submitted</span>
                   {% endif %}
                 </p>
               </div>
@@ -71,7 +63,7 @@
             {% if can_edit_links %}
               <div class="mt-8 border-t border-gray-200 pt-6 dark:border-gray-700">
                 <h3 class="text mb-4 text-lg font-semibold">Project Links</h3>
-                <form action="{{ url_for('project_links_route', project_id=project.id) }}" method="POST" id="links-form" class="hidden space-y-4">
+                <form action="/project/{{ project.id }}/links" method="POST" id="links-form" class="hidden space-y-4">
                   <div><label for="project_link" class="text mb-2 block text-sm font-medium">Project URL</label><input type="url" name="project_link" id="project_link" value="{{ project.project_link or '' }}" class="input text" placeholder="https://example.com/my-project" /></div>
                   <div><label for="github_link" class="text mb-2 block text-sm font-medium">GitHub URL</label><input type="url" name="github_link" id="github_link" value="{{ project.github_link or '' }}" class="input text" placeholder="https://github.com/user/repo" /></div>
                   <div class="flex items-center gap-4"><button type="submit" class="btn-primary text">Save Links</button><button type="button" onclick="toggleLinksForm()" class="btn-secondary text">Cancel</button></div>
@@ -95,15 +87,14 @@
               </div>
             {% endif %}
 
-            {% if session.get('account_type') == 0 %}
+            {% if session.get('role') == 0 %}
               <div class="mt-8 border-t border-gray-200 pt-6 dark:border-gray-700">
                 <h3 class="mb-4 text-lg font-semibold text-red-600 dark:text-red-400">Instructor Controls</h3>
-                <form action="/project/{{ project.id }}/approve" method="POST">
-                  {% if project.status > 0 %}
-                    <button type="submit" class="w-full rounded-lg bg-red-600 px-5 py-2.5 text-center text-sm font-medium text-white hover:bg-red-700">Unapprove Project</button>
-                  {% else %}
-                    <button type="submit" class="w-full rounded-lg bg-green-600 px-5 py-2.5 text-center text-sm font-medium text-white hover:bg-green-700">Approve Project</button>
-                  {% endif %}
+
+                <form action="/project/{{ project.id }}/approve" method="POST" class="space-y-2 md:flex md:gap-2 md:space-y-0">
+                  <button type="submit" name="new_status" value="2" class="w-full rounded-lg bg-green-600 px-5 py-2.5 text-center text-sm font-medium text-white hover:bg-green-700 disabled:cursor-not-allowed disabled:opacity-50" {% if project.status == 2 %}disabled{% endif %}>Approve Project</button>
+                  <button type="submit" name="new_status" value="1" class="w-full rounded-lg bg-yellow-500 px-5 py-2.5 text-center text-sm font-medium text-white hover:bg-yellow-600 disabled:cursor-not-allowed disabled:opacity-50" {% if is_pending_by_current_instructor %}disabled{% endif %}>Set to Pending</button>
+                  <button type="submit" name="new_status" value="0" class="w-full rounded-lg bg-red-600 px-5 py-2.5 text-center text-sm font-medium text-white hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-50" {% if project.status == 0 %}disabled{% endif %}>Unlist Project</button>
                 </form>
               </div>
             {% endif %}
@@ -122,7 +113,7 @@
                     {% if msg.email == session.email %}
                       <button class="delete-btn text-xs text-gray-400 hover:text-red-500" data-message-id="{{ msg.message_id }}">&times;</button>
                     {% endif %}
-                    <div class="text-xs text-gray-500 dark:text-gray-400">{{ msg.email }} <span class="ml-2 text-gray-400">{{ msg.timestamp.strftime('%b %d, %I:%M %p') }}</span></div>
+                    <div class="text-xs text-gray-500 dark:text-gray-400">{{ msg.email }} <span class="ml-2 text-gray-400">{{ msg.timestamp.strftime("%b %d, %I:%M %p") }}</span></div>
                   </div>
                   <div class="message-body text {% if msg.email == session.email %}bg-blue-600 text-white{% else %}bg-gray-100 dark:bg-gray-700{% endif %} max-w-xs rounded-lg p-2 break-words">{{ msg.message_text }}</div>
                 </div>
@@ -131,7 +122,7 @@
             <div class="mt-4 border-t pt-4 dark:border-gray-600">
               <form id="chat-form" class="flex items-center gap-2">
                 <input type="text" id="message-input" placeholder="Type a message..." class="input text w-full" autocomplete="off" required />
-                <button type="submit" class="btn-primary flex-shrink-0">Send</button>
+                <button type="submit" class="flex-shrink-0 rounded-lg bg-blue-600 p-2 text-white">Send</button>
               </form>
             </div>
           </div>
@@ -192,7 +183,6 @@
         socket.on("message_deleted", (data) => {
           const msgElement = document.getElementById(`message-${data.message_id}`);
           if (msgElement) {
-            // Remove the entire message element from the page
             msgElement.remove();
           }
         });

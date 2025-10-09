@@ -1,10 +1,10 @@
-{% extends "./frags/shell.html" %}
+{% extends "./layouts/shell.html" %}
 
 {% block content %}
   <form action="/register" method="POST" class="card text mx-auto mt-6 max-w-[500px] space-y-4 p-5">
     <h1 class="mb-2 text-center text-2xl font-bold">Register</h1>
-    <label class="mb-2 block text-sm font-bold" for="account_type"> Account Type </label>
-    <select id="account_type" name="account_type" class="input card shadow-none">
+    <label class="mb-2 block text-sm font-bold" for="role"> Account Type </label>
+    <select id="role" name="role" class="input card shadow-none">
       <option value="" disabled selected>Select Account Type</option>
       <option value="0">Instructor</option>
       <option value="1">Business</option>

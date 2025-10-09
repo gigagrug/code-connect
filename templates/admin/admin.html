@@ -9,128 +9,101 @@
     <title>Code Connect</title>
   </head>
   <body class="bg-gray-50 text-gray-900">
-  <div class="max-w-6xl mx-auto px-4 py-8">
-    <header class="flex items-end justify-between gap-4 mb-6">
-      <div>
-        <h1 class="text-2xl font-semibold">Projects</h1>
-        <p class="text-sm text-gray-600">Browse all projects. Use the pager to jump between pages.</p>
-      </div>
-      <div class="text-sm text-gray-600">
-        Total: <span class="font-medium">{{ total }}</span>
-      </div>
-    </header>
-
-    {% if projects and projects|length %}
-      <!-- GRID OF PROJECT CARDS -->
-      <section class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        {% for p in projects %}
-          <a href="{{ url_for('project_page', project_id=p.id) }}"
-             class="block rounded-xl border bg-white p-4 shadow-sm hover:shadow-md transition">
-            <div class="flex items-start justify-between gap-3">
-              <h3 class="text-base font-semibold leading-tight">
-                {{ p.title or p.name or ('Project #' ~ p.id) }}
-              </h3>
-              <span class="inline-flex items-center rounded-md border px-2 py-0.5 text-xs text-gray-700 bg-gray-50">
-                {{ p.status or '—' }}
-              </span>
-            </div>
-
-            <p class="mt-2 text-sm text-gray-600 line-clamp-3">
-              {{ p.description or 'No description provided.' }}
-            </p>
-
-            <div class="mt-3 flex items-center justify-between text-xs text-gray-500">
-              <span>ID: {{ p.id }}</span>
-              <span>
-                {{ p.created_at or p.timestamp or '' }}
-              </span>
-            </div>
-          </a>
-        {% endfor %}
-      </section>
-    {% else %}
-      <!-- EMPTY STATE -->
-      <div class="rounded-xl border bg-white p-8 text-center">
-        <p class="text-gray-700">No projects yet.</p>
-        <p class="text-sm text-gray-500">Please check back later.</p>
-      </div>
-    {% endif %}
-
-    <!-- PAGINATION (Google-style window with First/Prev/Numbers/Next/Last) -->
-    {% if total_pages > 1 %}
-      {% set window = 2 %}
-      {% set start = page - window if page - window > 1 else 1 %}
-      {% set end   = page + window if page + window < total_pages else total_pages %}
-
-      <nav class="mt-8 flex items-center justify-between" aria-label="Pagination">
-        <div class="text-sm text-gray-600">
-          Page <span class="font-medium">{{ page }}</span> of <span class="font-medium">{{ total_pages }}</span>
+    <div class="mx-auto max-w-6xl px-4 py-8">
+      <header class="mb-6 flex items-end justify-between gap-4">
+        <div>
+          <h1 class="text-2xl font-semibold">Projects</h1>
+          <p class="text-sm text-gray-600">Browse all projects. Use the pager to jump between pages.</p>
         </div>
+        <div class="text-sm text-gray-600">Total: <span class="font-medium">{{ total }}</span></div>
+      </header>
 
-        <ul class="inline-flex items-center gap-1">
+      {% if projects and projects|length %}
+        <!-- GRID OF PROJECT CARDS -->
+        <section class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          {% for p in projects %}
+            <a href="{{ url_for('project_page', project_id=p.id) }}" class="block rounded-xl border bg-white p-4 shadow-sm transition hover:shadow-md">
+              <div class="flex items-start justify-between gap-3">
+                <h3 class="text-base leading-tight font-semibold">{{ p.title or p.name or ('Project #' ~ p.id) }}</h3>
+                <span class="inline-flex items-center rounded-md border bg-gray-50 px-2 py-0.5 text-xs text-gray-700"> {{ p.status or '—' }} </span>
+              </div>
 
-          <!-- First -->
-          <li>
-            <a href="{{ url_for('index', page=1) }}"
-               class="px-3 py-1.5 rounded-lg border text-sm hover:bg-gray-50 {{ 'pointer-events-none opacity-40' if page == 1 }}">
-              First
+              <p class="mt-2 line-clamp-3 text-sm text-gray-600">{{ p.description or 'No description provided.' }}</p>
+
+              <div class="mt-3 flex items-center justify-between text-xs text-gray-500">
+                <span>ID: {{ p.id }}</span>
+                <span> {{ p.created_at or p.timestamp or '' }} </span>
+              </div>
             </a>
-          </li>
-
-          <!-- Prev -->
-          <li>
-            <a href="{{ url_for('index', page=page-1) }}"
-               class="px-3 py-1.5 rounded-lg border text-sm hover:bg-gray-50 {{ 'pointer-events-none opacity-40' if page == 1 }}">
-              Prev
-            </a>
-          </li>
-
-          <!-- Leading ellipsis if needed -->
-          {% if start > 1 %}
-            <li><a href="{{ url_for('index', page=1) }}" class="px-3 py-1.5 rounded-lg border text-sm hover:bg-gray-50">1</a></li>
-            {% if start > 2 %}
-              <li class="px-2 text-gray-500">…</li>
-            {% endif %}
-          {% endif %}
-
-          <!-- Page numbers window -->
-          {% for pnum in range(start, end + 1) %}
-            <li>
-              {% if pnum == page %}
-                <span class="px-3 py-1.5 rounded-lg border text-sm bg-gray-900 text-white">{{ pnum }}</span>
-              {% else %}
-                <a href="{{ url_for('index', page=pnum) }}"
-                   class="px-3 py-1.5 rounded-lg border text-sm hover:bg-gray-50">{{ pnum }}</a>
-              {% endif %}
-            </li>
           {% endfor %}
+        </section>
+      {% else %}
+        <!-- EMPTY STATE -->
+        <div class="rounded-xl border bg-white p-8 text-center">
+          <p class="text-gray-700">No projects yet.</p>
+          <p class="text-sm text-gray-500">Please check back later.</p>
+        </div>
+      {% endif %}
 
-          <!-- Trailing ellipsis if needed -->
-          {% if end < total_pages %}
-            {% if end < total_pages - 1 %}
-              <li class="px-2 text-gray-500">…</li>
+      <!-- PAGINATION (Google-style window with First/Prev/Numbers/Next/Last) -->
+      {% if total_pages > 1 %}
+        {% set window = 2 %}
+        {% set start = page - window if page - window > 1 else 1 %}
+        {% set end   = page + window if page + window < total_pages else total_pages %}
+
+        <nav class="mt-8 flex items-center justify-between" aria-label="Pagination">
+          <div class="text-sm text-gray-600">Page <span class="font-medium">{{ page }}</span> of <span class="font-medium">{{ total_pages }}</span></div>
+
+          <ul class="inline-flex items-center gap-1">
+            <!-- First -->
+            <li>
+              <a href="{{ url_for('index', page=1) }}" class="{{ 'pointer-events-none opacity-40' if page == 1 }} rounded-lg border px-3 py-1.5 text-sm hover:bg-gray-50"> First </a>
+            </li>
+
+            <!-- Prev -->
+            <li>
+              <a href="{{ url_for('index', page=page-1) }}" class="{{ 'pointer-events-none opacity-40' if page == 1 }} rounded-lg border px-3 py-1.5 text-sm hover:bg-gray-50"> Prev </a>
+            </li>
+
+            <!-- Leading ellipsis if needed -->
+            {% if start > 1 %}
+              <li><a href="{{ url_for('index', page=1) }}" class="rounded-lg border px-3 py-1.5 text-sm hover:bg-gray-50">1</a></li>
+              {% if start > 2 %}
+                <li class="px-2 text-gray-500">…</li>
+              {% endif %}
             {% endif %}
-            <li><a href="{{ url_for('index', page=total_pages) }}" class="px-3 py-1.5 rounded-lg border text-sm hover:bg-gray-50">{{ total_pages }}</a></li>
-          {% endif %}
 
-          <!-- Next -->
-          <li>
-            <a href="{{ url_for('index', page=page+1) }}"
-               class="px-3 py-1.5 rounded-lg border text-sm hover:bg-gray-50 {{ 'pointer-events-none opacity-40' if page == total_pages }}">
-              Next
-            </a>
-          </li>
+            <!-- Page numbers window -->
+            {% for pnum in range(start, end + 1) %}
+              <li>
+                {% if pnum == page %}
+                  <span class="rounded-lg border bg-gray-900 px-3 py-1.5 text-sm text-white">{{ pnum }}</span>
+                {% else %}
+                  <a href="{{ url_for('index', page=pnum) }}" class="rounded-lg border px-3 py-1.5 text-sm hover:bg-gray-50">{{ pnum }}</a>
+                {% endif %}
+              </li>
+            {% endfor %}
 
-          <!-- Last -->
-          <li>
-            <a href="{{ url_for('index', page=total_pages) }}"
-               class="px-3 py-1.5 rounded-lg border text-sm hover:bg-gray-50 {{ 'pointer-events-none opacity-40' if page == total_pages }}">
-              Last
-            </a>
-          </li>
-        </ul>
-      </nav>
-    {% endif %}
-  </div>
-</body>
+            <!-- Trailing ellipsis if needed -->
+            {% if end < total_pages %}
+              {% if end < total_pages - 1 %}
+                <li class="px-2 text-gray-500">…</li>
+              {% endif %}
+              <li><a href="{{ url_for('index', page=total_pages) }}" class="rounded-lg border px-3 py-1.5 text-sm hover:bg-gray-50">{{ total_pages }}</a></li>
+            {% endif %}
+
+            <!-- Next -->
+            <li>
+              <a href="{{ url_for('index', page=page+1) }}" class="{{ 'pointer-events-none opacity-40' if page == total_pages }} rounded-lg border px-3 py-1.5 text-sm hover:bg-gray-50"> Next </a>
+            </li>
+
+            <!-- Last -->
+            <li>
+              <a href="{{ url_for('index', page=total_pages) }}" class="{{ 'pointer-events-none opacity-40' if page == total_pages }} rounded-lg border px-3 py-1.5 text-sm hover:bg-gray-50"> Last </a>
+            </li>
+          </ul>
+        </nav>
+      {% endif %}
+    </div>
+  </body>
 </html>
