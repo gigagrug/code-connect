@@ -1,5 +1,23 @@
 from sqlalchemy import text
-from flask import flash, redirect, url_for, session, request, jsonify
+from flask import flash, redirect, url_for, session, request, jsonify, render_template
+
+def get_project_by_id(project_id, engine):
+    try:
+        with engine.connect() as connection:
+            query = text("""
+                SELECT 
+                    p.id, p.name, p.description, p.status, 
+                    p.project_link, p.github_link,
+                    u.email, u.role, u.id as user_id
+                FROM projects p
+                JOIN users u ON p.user_id = u.id
+                WHERE p.id = :project_id
+            """)
+            result = connection.execute(query, {"project_id": project_id}).mappings().first()
+            return result
+    except Exception as e:
+        print(f"Database error fetching project by ID: {e}")
+        return None
 
 def create_project(request, engine):
     if 'user_id' not in session:
@@ -43,25 +61,85 @@ def approve_project(project_id, engine):
     if session.get('role') != 0:
         flash("You do not have permission to perform this action.", "danger")
         return redirect(url_for('project_page', project_id=project_id))
-    
-    project = get_project_by_id(project_id, engine)
-    if not project:
-        flash("Project not found.", "danger")
-        return redirect(url_for('index'))
 
-    new_status = 1 if project.status == 0 else 0
-    
+    instructor_id = session.get('user_id')
+    new_status_str = request.form.get('new_status')
+
+    if not new_status_str or not new_status_str.isdigit():
+        flash("Invalid status provided.", "danger")
+        return redirect(url_for('project_page', project_id=project_id))
+
+    new_status = int(new_status_str)
+    if new_status not in [0, 1, 2]:
+        flash("Invalid status value. Please select a valid option.", "danger")
+        return redirect(url_for('project_page', project_id=project_id))
+
     try:
         with engine.connect() as connection:
-            update_query = text("UPDATE projects SET status = :status WHERE id = :project_id")
-            connection.execute(update_query, {"status": new_status, "project_id": project_id})
+            if new_status == 2:  # Approved - Only ONE instructor is allowed
+                # First, remove any other instructor's link to this project
+                clear_other_instructors_query = text("""
+                    DELETE FROM instructor_projects
+                    WHERE project_id = :project_id AND instructor_id != :instructor_id
+                """)
+                connection.execute(clear_other_instructors_query, {
+                    "project_id": project_id,
+                    "instructor_id": instructor_id
+                })
+
+                # Then, add or update the link for the CURRENT instructor
+                upsert_query = text("""
+                    INSERT INTO instructor_projects (instructor_id, project_id, status)
+                    VALUES (:instructor_id, :project_id, :status)
+                    ON DUPLICATE KEY UPDATE status = :status
+                """)
+                connection.execute(upsert_query, {
+                    "instructor_id": instructor_id,
+                    "project_id": project_id,
+                    "status": new_status
+                })
+
+            elif new_status == 1:  # Pending - MULTIPLE instructors are allowed
+                # Simply add or update the link for the current instructor
+                upsert_query = text("""
+                    INSERT INTO instructor_projects (instructor_id, project_id, status)
+                    VALUES (:instructor_id, :project_id, :status)
+                    ON DUPLICATE KEY UPDATE status = :status
+                """)
+                connection.execute(upsert_query, {
+                    "instructor_id": instructor_id,
+                    "project_id": project_id,
+                    "status": new_status
+                })
+
+            else:  # Status is 0 (Unlisted)
+                # Remove only the current instructor's link
+                delete_query = text("""
+                    DELETE FROM instructor_projects
+                    WHERE instructor_id = :instructor_id AND project_id = :project_id
+                """)
+                connection.execute(delete_query, {
+                    "instructor_id": instructor_id,
+                    "project_id": project_id
+                })
+
+            # Finally, always update the main project's status
+            update_project_query = text("UPDATE projects SET status = :status WHERE id = :project_id")
+            connection.execute(update_project_query, {"status": new_status, "project_id": project_id})
+
             connection.commit()
-            if new_status == 1:
-                flash("Project approved and is now public.", "success")
-            else:
-                flash("Project has been unapproved and is now hidden.", "warning")
+
+            status_messages = {
+                2: ("Project approved. You are now the sole approver.", "success"),
+                1: ("Project status set to 'Pending'. You are now linked to it.", "info"),
+                0: ("Project has been unlisted.", "warning")
+            }
+            message, category = status_messages.get(new_status)
+            flash(message, category)
+
     except Exception as e:
         flash(f"An error occurred while updating the project's status: {e}", "danger")
+
     return redirect(url_for('project_page', project_id=project_id))
 
 def get_projects_for_user(engine):
@@ -90,35 +168,71 @@ def get_projects_for_user(engine):
         print(f"Database error fetching user projects: {e}")
         return []
 
-def get_all_projects(engine, page=1, per_page=5):
-    """Fetches a paginated list of all projects."""
+def get_all_projects(engine, session, page=1, per_page=12):
     try:
         offset = (page - 1) * per_page
-        with engine.connect() as connection:
-            query = text("""
-                SELECT 
-                    p.id, p.name, p.description, p.status, 
-                    u.email, u.role
+        user_role = session.get('role')
+        user_id = session.get('user_id')
+        
+        query_text = ""
+        params = {}
+
+        if user_role == 3:
+            # For students, first find their assigned instructor
+            with engine.connect() as conn:
+                instructor_query = text("SELECT instructor_id FROM users WHERE id = :user_id")
+                result = conn.execute(instructor_query, {"user_id": user_id}).first()
+                
+                # If student has no instructor, they see no projects
+                if not result or not result.instructor_id:
+                    return []
+                
+                instructor_id = result.instructor_id
+
+            # Now, build the query to get projects approved by THAT instructor
+            query_text = """
+                SELECT p.id, p.name, p.description, p.status, u.email, u.role
                 FROM projects p
                 JOIN users u ON p.user_id = u.id
+                JOIN instructor_projects ip ON p.id = ip.project_id
+                WHERE ip.instructor_id = :instructor_id AND ip.status = 2
                 ORDER BY p.id DESC
                 LIMIT :per_page OFFSET :offset
-            """)
-            projects = connection.execute(query, {
-                "per_page": per_page, 
+            """
+            params = {
+                "instructor_id": instructor_id,
+                "per_page": per_page,
                 "offset": offset
-            }).mappings().all()
+            }
+        else:
+            # Original query for all other roles
+            query_text = """
+                SELECT p.id, p.name, p.description, p.status, u.email, u.role
+                FROM projects p
+                JOIN users u ON p.user_id = u.id
+                WHERE p.status IN (0, 1)
+                ORDER BY p.id DESC
+                LIMIT :per_page OFFSET :offset
+            """
+            params = {
+                "per_page": per_page,
+                "offset": offset
+            }
+
+        with engine.connect() as connection:
+            query = text(query_text)
+            projects = connection.execute(query, params).mappings().all()
             return projects
+            
     except Exception as e:
         print(f"Database error fetching all projects: {e}")
         return []
 
-def get_projects_api(engine):
-    """API endpoint to fetch projects for infinite scroll."""
+def load_projects_html(engine):
     page = request.args.get('page', 1, type=int)
-    per_page = 5 
-    projects = get_all_projects(engine, page=page, per_page=per_page)
-    return jsonify([dict(row) for row in projects])
+    per_page = 12 
+    projects = get_all_projects(engine, session, page=page, per_page=per_page)
+    return render_template('partials/projects_list.html', projects=projects)
 
 def check_if_user_can_edit_links(user_id, project, engine):
     """Checks if a user is the project owner or a student in an assigned team."""
@@ -171,25 +285,6 @@ def update_project_links(project_id, engine):
 
     return redirect(url_for('project_page', project_id=project_id))
 
-
-def get_project_by_id(project_id, engine):
-    try:
-        with engine.connect() as connection:
-            query = text("""
-                SELECT 
-                    p.id, p.name, p.description, p.status, 
-                    p.project_link, p.github_link,
-                    u.email, u.role, u.id as user_id
-                FROM projects p
-                JOIN users u ON p.user_id = u.id
-                WHERE p.id = :project_id
-            """)
-            result = connection.execute(query, {"project_id": project_id}).mappings().first()
-            return result
-    except Exception as e:
-        print(f"Database error fetching project by ID: {e}")
-        return None
-
 def get_projects_for_student(engine):
     if 'user_id' not in session:
         return []
@@ -232,7 +327,6 @@ def get_teams_for_project(project_id, engine):
         print(f"Database error fetching teams for project: {e}")
         return []
 
-# Note: update_project and delete_project did not need changes related to status
 def update_project(project_id, request, engine):
     if 'user_id' not in session:
         flash("You must be logged in to update a project.", "warning")
@@ -274,26 +368,17 @@ def delete_project(project_id, engine):
     except Exception as e:
         flash(f"An error occurred while deleting the project: {e}", "danger")
         return redirect(url_for('project_page', project_id=project_id))
-    return redirect(url_for('index'))
+    return redirect(url_for('profile'))
 
 def check_if_user_can_chat(user_id, project_id, engine):
-    """
-    Checks if a user can chat in a project room.
-    Returns True if the user is:
-    1. The project owner.
-    2. A student in a team assigned to the project.
-    3. An instructor of a student in a team assigned to the project.
-    """
     if not user_id:
         return False
 
     with engine.connect() as conn:
-        # Check 1: Is the user the project owner?
         owner_query = text("SELECT 1 FROM projects WHERE id = :project_id AND user_id = :user_id")
         if conn.execute(owner_query, {"project_id": project_id, "user_id": user_id}).first():
             return True
 
-        # Check 2: Is the user a student in a team on this project?
         student_member_query = text("""
             SELECT 1 FROM team_members tm
             JOIN teams t ON tm.team_id = t.id
@@ -302,7 +387,6 @@ def check_if_user_can_chat(user_id, project_id, engine):
         if conn.execute(student_member_query, {"user_id": user_id, "project_id": project_id}).first():
             return True
 
-        # Check 3: Is the user an instructor of a student on this project?
         instructor_query = text("""
             SELECT 1 FROM users AS instructor
             JOIN users AS student ON instructor.id = student.instructor_id

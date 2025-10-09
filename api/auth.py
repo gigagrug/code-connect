@@ -108,15 +108,17 @@ def login_user(request, engine, is_debug=False):
     return redirect(url_for('login'))
 
 def get_profile_data(engine):
-    if session['role'] == 3:
-        student_id = session['user_id']
+    user_role = session.get('role')
+    user_id = session.get('user_id')
+
+    if user_role == 3: # Student Logic
         with engine.connect() as conn:
             student_query = text("""
                 SELECT s.instructor_id, i.email AS instructor_email
                 FROM users s LEFT JOIN users i ON s.instructor_id = i.id
                 WHERE s.id = :student_id
             """)
-            student_info = conn.execute(student_query, {"student_id": student_id}).first()
+            student_info = conn.execute(student_query, {"student_id": user_id}).first()
 
             pending_request = None
             instructors = []
@@ -127,7 +129,7 @@ def get_profile_data(engine):
                     FROM instructor_requests r JOIN users u ON r.instructor_id = u.id
                     WHERE r.student_id = :student_id AND r.status = 0
                 """)
-                pending_request = conn.execute(req_query, {"student_id": student_id}).first()
+                pending_request = conn.execute(req_query, {"student_id": user_id}).first()
 
                 if not pending_request:
                     inst_query = text("SELECT id, email FROM users WHERE role = 0 ORDER BY email")
@@ -139,7 +141,32 @@ def get_profile_data(engine):
                                    student_info=student_info,
                                    instructors=instructors,
                                    pending_request=pending_request)
-    else:
+
+    elif user_role == 0: # Instructor Logic
+        with engine.connect() as conn:
+            # New query to get projects managed by the instructor
+            approved_projects_query = text("""
+                SELECT p.id, p.name, p.description, p.status
+                FROM instructor_projects ip
+                JOIN projects p ON ip.project_id = p.id
+                WHERE ip.instructor_id = :instructor_id
+                ORDER BY p.id DESC
+            """)
+            approved_projects = conn.execute(
+                approved_projects_query, 
+                {"instructor_id": user_id}
+            ).mappings().all()
+
+        # Also get projects created by the instructor
+        created_projects = get_projects_for_user(engine)
+        
+        return render_template(
+            'profile.html',
+            approved_projects=approved_projects,
+            created_projects=created_projects
+        )
+
+    else: # Logic for other roles (e.g., Business)
         projects = get_projects_for_user(engine)
         return render_template('profile.html', projects=projects)
 
@@ -158,10 +185,11 @@ def get_business_profile_data(user_id, engine):
                 return None
 
             projects_query = text("""
-                SELECT id, name, description, status
-                FROM projects
-                WHERE user_id = :user_id
-                ORDER BY created_at DESC
+                SELECT p.id, p.name, p.description, p.status, u.email
+                FROM projects p
+                JOIN users u ON p.user_id = u.id
+                WHERE p.user_id = :user_id
+                ORDER BY p.created_at DESC
             """)
             projects = conn.execute(projects_query, {"user_id": user_id}).mappings().all()
 

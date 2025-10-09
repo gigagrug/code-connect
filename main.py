@@ -106,29 +106,21 @@ def admin():
     page = int(request.args.get('page', 1) or 1)
     per_page = 25
     projects, total, total_pages = get_projects_paginated(engine, page=page, per_page=per_page)
-    return render_template(
-        'admin/admin.html',
-        projects=projects,
-        page=page,
-        per_page=per_page,
-        total=total,
-        total_pages=total_pages
-    )
+    return render_template('admin/admin.html', projects=projects, page=page, per_page=per_page, total=total, total_pages=total_pages)
 # Users
 @app.route('/')
 def index():
-    projects = get_all_projects(engine, page=1, per_page=12)
-    return render_template('index.html', projects=projects)
+    if 'user_id' in session:
+        projects = get_all_projects(engine, session, page=1, per_page=12)
+        return render_template('index.html', projects=projects)
+    else:
+        return render_template('landing_page.html')
 
-@app.route('/api/projects')
+@app.route('/api/load-projects')
 def projects_api_route():
-    return get_projects_api(engine)
+    return load_projects_html(engine)
 
-@app.route('/projects/create', methods=['POST'])
-def project_create_route():
-    return create_project(request, engine)
-
-@app.route('/project/<int:project_id>')
+@app.route('/project/<int:project_id>', methods=['GET'])
 def project_page(project_id):
     project = get_project_by_id(project_id, engine)
     if project:
@@ -137,11 +129,7 @@ def project_page(project_id):
         if can_chat:
             with engine.connect() as conn:
                 history_query = text("""
-                    SELECT 
-                        c.id AS message_id,
-                        u.email, 
-                        c.message_text, 
-                        c.timestamp
+                    SELECT c.id AS message_id, u.email, c.message_text, c.timestamp
                     FROM chat_messages c JOIN users u ON c.user_id = u.id
                     WHERE c.project_id = :project_id ORDER BY c.timestamp ASC
                 """)
@@ -149,31 +137,56 @@ def project_page(project_id):
 
         teams = get_teams_for_project(project_id, engine)
         can_edit_links = check_if_user_can_edit_links(session.get('user_id'), project, engine)
-        return render_template('project.html', 
-                               project=project, 
-                               teams=teams,
-                               can_edit_links=can_edit_links,
-                               can_chat=can_chat,
-                               chat_history=chat_history)
+
+        # Check if the current instructor has this project marked as 'pending'
+        is_pending_by_current_instructor = False
+        if session.get('role') == 0:
+            with engine.connect() as conn:
+                query = text("""
+                    SELECT 1 FROM instructor_projects
+                    WHERE instructor_id = :instructor_id 
+                      AND project_id = :project_id 
+                      AND status = 1
+                """)
+                result = conn.execute(query, {
+                    "instructor_id": session['user_id'],
+                    "project_id": project_id
+                }).first()
+                if result:
+                    is_pending_by_current_instructor = True
+        
+        return render_template(
+            'project.html', 
+            project=project, 
+            teams=teams, 
+            can_edit_links=can_edit_links, 
+            can_chat=can_chat, 
+            chat_history=chat_history,
+            is_pending_by_current_instructor=is_pending_by_current_instructor
+        )
     else:
         flash("Project not found.", "danger")
         return redirect(url_for('index'))
 
-@app.route('/project/<int:project_id>/links', methods=['POST'])
-def project_links_route(project_id):
-    return update_project_links(project_id, engine)
+@app.route('/project/create', methods=['POST'])
+def project_create_route():
+    return create_project(request, engine)
 
 @app.route('/project/<int:project_id>/update', methods=['POST'])
 def project_update_route(project_id):
     return update_project(project_id, request, engine)
 
+@app.route('/project/<int:project_id>/delete', methods=['POST'])
+def project_delete_route(project_id):
+    return delete_project(project_id, engine)
+
 @app.route('/project/<int:project_id>/approve', methods=['POST'])
 def project_approve_route(project_id):
     return approve_project(project_id, engine)
 
-@app.route('/project/<int:project_id>/delete', methods=['POST'])
-def project_delete_route(project_id):
-    return delete_project(project_id, engine)
+@app.route('/project/<int:project_id>/links', methods=['POST'])
+def project_links_route(project_id):
+    return update_project_links(project_id, engine)
 
 @app.route('/profile')
 def profile():

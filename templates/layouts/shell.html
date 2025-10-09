@@ -5,11 +5,12 @@
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <link href="/static/output.css" rel="stylesheet" />
     <script src="/static/theme.js"></script>
+    <script src="/static/at.js"></script>
     {% block head %}{% endblock %}
     <title>Code Connect</title>
   </head>
   <body>
-    <nav class="border-b border-b-neutral-200 dark:border-b-neutral-800">
+    <nav class="border-b border-b-neutral-200 px-12 dark:border-b-neutral-800">
       <div class="mx-auto flex flex-wrap items-center justify-between p-4">
         <button id="doc-toggle-button" popovertarget="sidebar" popovertargetaction="show" class="text hidden lg:hidden">
           <svg class="text h-8 w-8" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24">
@@ -17,7 +18,7 @@
           </svg>
         </button>
         <a href="/" class="flex items-center space-x-3 rtl:space-x-reverse">
-          <span class="text self-center text-2xl font-semibold whitespace-nowrap">Code Connect</span>
+          <span class="text text-2xl font-bold"> Code<span class="text-blue-600">Connect</span> </span>
         </a>
         <ul class="flex flex-row space-x-4 font-medium">
           {% if 'email' in session %}
@@ -33,7 +34,7 @@
         </ul>
       </div>
     </nav>
-    <div class="px-2">
+    <div>
       {% block content %}
         <p>This is the default content from the shell. It will be replaced by other templates.</p>
       {% endblock %}
