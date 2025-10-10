@@ -1,4 +1,5 @@
 import os
+import sys
 import bcrypt
 import sqlalchemy
 from sqlalchemy import text
@@ -11,10 +12,12 @@ from api.invite import *
 from api.chat import *
 from api.admin import *
 
+app = Flask(__name__)
+app.secret_key = os.getenv("FLASK_SECRET_KEY", 'a_default_dev_secret_key')
+
 db_url = os.getenv("DB_URL")
 if not db_url:
     raise ValueError("Error: DB_URL environment variable is not set.")
-
 try:
     engine = sqlalchemy.create_engine(db_url)
     with engine.connect() as connection:
@@ -23,31 +26,101 @@ except Exception as e:
     print(f"An error occurred while connecting to the database: {e}")
     engine = None
 
-app = Flask(__name__)
-app.secret_key = os.getenv("FLASK_SECRET_KEY", 'a_default_dev_secret_key')
+def drop_all_tables(db_engine, file_path):
+    print(f"--- Dropping tables using rollback script from: {file_path} ---")
+    if not os.path.exists(file_path):
+        print(f"❌ Error: SQL file not found at '{file_path}'")
+        raise FileNotFoundError
+    with open(file_path, 'r', encoding='utf-8') as file:
+        full_script = file.read()
+    rollback_marker = "-- schema rollback"
+    if rollback_marker not in full_script:
+        print(f"❌ Error: Rollback marker '{rollback_marker}' not found in {file_path}.")
+        raise ValueError("Rollback marker not found")
+    rollback_script = full_script.split(rollback_marker, 1)[1]
+    statements = [stmt.strip() for stmt in rollback_script.split(';') if stmt.strip()]
+    if not statements:
+        print("🤔 No rollback statements found to execute.")
+        return
+    try:
+        with db_engine.connect() as connection:
+            with connection.begin() as transaction:
+                connection.execute(text("SET FOREIGN_KEY_CHECKS = 0;"))
+                for statement in statements:
+                    connection.execute(text(statement))
+                connection.execute(text("SET FOREIGN_KEY_CHECKS = 1;"))
+                print("✅ All tables dropped successfully based on rollback script.")
+    except Exception as e:
+        print(f"❌ Could not complete dropping tables. Error: {e}")
+        raise
+
+def execute_sql_from_file(db_engine, file_path):
+    print(f"--- Executing SQL from: {file_path} ---")
+    if not os.path.exists(file_path):
+        print(f"❌ Error: SQL file not found at '{file_path}'")
+        raise FileNotFoundError
+    with open(file_path, 'r', encoding='utf-8') as file:
+        sql_script = file.read()
+    rollback_marker = "-- schema rollback"
+    if rollback_marker in sql_script:
+        print(f"  -> Rollback marker found. Executing creation part only.")
+        sql_script = sql_script.split(rollback_marker, 1)[0]
+    statements = [stmt.strip() for stmt in sql_script.split(';') if stmt.strip()]
+    try:
+        with db_engine.connect() as connection:
+            with connection.begin() as transaction:
+                for statement in statements:
+                    connection.execute(text(statement))
+                print(f"✅ Successfully executed SQL from {os.path.basename(file_path)}.")
+    except Exception as e:
+        print(f"❌ Could not execute SQL file. Error: {e}")
+        raise
+
+def reset_database_on_startup():
+    if not engine:
+        print("❌ Database engine not initialized. Skipping reset.")
+        return
+    if os.environ.get("WERKZEUG_RUN_MAIN") == "true":
+        print("🚀 Starting database reset process on server startup...")
+        try:
+            schema_file = './schema/migrations/1_schema.sql'
+            data_file = './schema/data/0_data.sql'
+            drop_all_tables(engine, schema_file)
+            execute_sql_from_file(engine, schema_file)
+            execute_sql_from_file(engine, data_file)
+            print("\n🎉 Database has been successfully reset and seeded! 🎉\n")
+        except Exception as e:
+            print(f"\n🔥 Database reset failed: {e} 🔥")
+            sys.exit(1)
+
+if app.debug:
+    reset_database_on_startup()
 
 socketio = SocketIO(app)
-
 init_chat(socketio, engine)
 
 # Admin
 ## create routes only under '/admin/'
-
+@app.route('/admin')
+def admin():
+    page = int(request.args.get('page', 1) or 1)
+    per_page = 25
+    projects, total, total_pages = get_projects_paginated(engine, page=page, per_page=per_page)
+    return render_template('admin/admin.html', projects=projects, page=page, per_page=per_page, total=total, total_pages=total_pages)
 # Users
 @app.route('/')
 def index():
-    projects = get_all_projects(engine, page=1, per_page=12)
-    return render_template('index.html', projects=projects)
+    if 'user_id' in session:
+        projects = get_all_projects(engine, session, page=1, per_page=12)
+        return render_template('index.html', projects=projects)
+    else:
+        return render_template('landing_page.html')
 
-@app.route('/api/projects')
+@app.route('/api/load-projects')
 def projects_api_route():
-    return get_projects_api(engine)
+    return load_projects_html(engine)
 
-@app.route('/projects/create', methods=['POST'])
-def project_create_route():
-    return create_project(request, engine)
-
-@app.route('/project/<int:project_id>')
+@app.route('/project/<int:project_id>', methods=['GET'])
 def project_page(project_id):
     project = get_project_by_id(project_id, engine)
     if project:
@@ -56,11 +129,7 @@ def project_page(project_id):
         if can_chat:
             with engine.connect() as conn:
                 history_query = text("""
-                    SELECT 
-                        c.id AS message_id,
-                        u.email, 
-                        c.message_text, 
-                        c.timestamp
+                    SELECT c.id AS message_id, u.email, c.message_text, c.timestamp
                     FROM chat_messages c JOIN users u ON c.user_id = u.id
                     WHERE c.project_id = :project_id ORDER BY c.timestamp ASC
                 """)
@@ -68,31 +137,56 @@ def project_page(project_id):
 
         teams = get_teams_for_project(project_id, engine)
         can_edit_links = check_if_user_can_edit_links(session.get('user_id'), project, engine)
-        return render_template('project.html', 
-                               project=project, 
-                               teams=teams,
-                               can_edit_links=can_edit_links,
-                               can_chat=can_chat,
-                               chat_history=chat_history)
+
+        # Check if the current instructor has this project marked as 'pending'
+        is_pending_by_current_instructor = False
+        if session.get('role') == 0:
+            with engine.connect() as conn:
+                query = text("""
+                    SELECT 1 FROM instructor_projects
+                    WHERE instructor_id = :instructor_id 
+                      AND project_id = :project_id 
+                      AND status = 1
+                """)
+                result = conn.execute(query, {
+                    "instructor_id": session['user_id'],
+                    "project_id": project_id
+                }).first()
+                if result:
+                    is_pending_by_current_instructor = True
+        
+        return render_template(
+            'project.html', 
+            project=project, 
+            teams=teams, 
+            can_edit_links=can_edit_links, 
+            can_chat=can_chat, 
+            chat_history=chat_history,
+            is_pending_by_current_instructor=is_pending_by_current_instructor
+        )
     else:
         flash("Project not found.", "danger")
         return redirect(url_for('index'))
 
-@app.route('/project/<int:project_id>/links', methods=['POST'])
-def project_links_route(project_id):
-    return update_project_links(project_id, engine)
+@app.route('/project/create', methods=['POST'])
+def project_create_route():
+    return create_project(request, engine)
 
 @app.route('/project/<int:project_id>/update', methods=['POST'])
 def project_update_route(project_id):
     return update_project(project_id, request, engine)
 
+@app.route('/project/<int:project_id>/delete', methods=['POST'])
+def project_delete_route(project_id):
+    return delete_project(project_id, engine)
+
 @app.route('/project/<int:project_id>/approve', methods=['POST'])
 def project_approve_route(project_id):
     return approve_project(project_id, engine)
 
-@app.route('/project/<int:project_id>/delete', methods=['POST'])
-def project_delete_route(project_id):
-    return delete_project(project_id, engine)
+@app.route('/project/<int:project_id>/links', methods=['POST'])
+def project_links_route(project_id):
+    return update_project_links(project_id, engine)
 
 @app.route('/profile')
 def profile():
@@ -110,7 +204,7 @@ def business_profile(user_id):
 
 @app.route('/userMgt')
 def user_mgt():
-    if 'user_id' not in session or session.get('account_type') != 0:
+    if 'user_id' not in session or session.get('role') != 0:
         flash("Access restricted to instructors.", "danger")
         return redirect(url_for('profile'))
     return get_user_mgt_data(engine)
