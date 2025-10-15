@@ -174,7 +174,7 @@ def get_business_profile_data(user_id, engine):
     try:
         with engine.connect() as conn:
             user_query = text("""
-                SELECT id, name, email, bio
+                SELECT id, name, bio
                 FROM users
                 WHERE id = :user_id AND role = 1
             """)
@@ -185,7 +185,7 @@ def get_business_profile_data(user_id, engine):
                 return None
 
             projects_query = text("""
-                SELECT p.id, p.name, p.description, p.status, u.email
+                SELECT p.id, p.name, p.description, p.status, u.name
                 FROM projects p
                 JOIN users u ON p.user_id = u.id
                 WHERE p.user_id = :user_id
@@ -202,3 +202,106 @@ def get_business_profile_data(user_id, engine):
         print(f"Error fetching business profile data: {e}")
         flash("An error occurred while trying to load the profile.", "danger")
         return None
+
+def update_profile(engine):
+    """Handles updating user profile information."""
+    if 'user_id' not in session:
+        flash("You must be logged in to update your profile.", "danger")
+        return redirect('/login')
+
+    user_id = session.get('user_id')
+    user_role = session.get('role')
+    
+    name = request.form.get('name', '').strip()
+
+    try:
+        with engine.connect() as conn:
+            with conn.begin():  # Start a transaction
+                # Update name for the current user
+                query_name = text("UPDATE users SET name = :name WHERE id = :user_id")
+                conn.execute(query_name, {"name": name, "user_id": user_id})
+
+                # Role-specific updates
+                if user_role == 1:  # Business User can also update bio
+                    bio = request.form.get('bio', '').strip()
+                    query_bio = text("UPDATE users SET bio = :bio WHERE id = :user_id")
+                    conn.execute(query_bio, {"bio": bio, "user_id": user_id})
+
+                elif user_role == 3:  # Student can also update graduation year
+                    graduation = request.form.get('graduation', '').strip()
+                    query_grad = text("UPDATE users SET graduation = :graduation WHERE id = :user_id")
+                    conn.execute(query_grad, {"graduation": graduation, "user_id": user_id})
+
+            flash("Profile updated successfully!", "success")
+    except Exception as e:
+        print(f"Error updating profile: {e}")
+        flash("An error occurred while updating your profile.", "danger")
+
+    return redirect('/profile')
+
+def get_profile_data(engine):
+    user_role = session.get('role')
+    user_id = session.get('user_id')
+
+    # Fetch base user data for everyone
+    with engine.connect() as conn:
+        user_data_query = text("SELECT name, bio FROM users WHERE id = :user_id")
+        user_data = conn.execute(user_data_query, {"user_id": user_id}).mappings().first()
+
+    if user_role == 3: # Student Logic
+        with engine.connect() as conn:
+            student_query = text("""
+                SELECT s.instructor_id, i.name AS instructor_email, s.graduation
+                FROM users s LEFT JOIN users i ON s.instructor_id = i.id
+                WHERE s.id = :student_id
+            """)
+            student_info = conn.execute(student_query, {"student_id": user_id}).first()
+
+            pending_request = None
+            instructors = []
+            
+            if not student_info.instructor_id:
+                req_query = text("""
+                    SELECT r.id, u.email AS instructor_email
+                    FROM instructor_requests r JOIN users u ON r.instructor_id = u.id
+                    WHERE r.student_id = :student_id AND r.status = 0
+                """)
+                pending_request = conn.execute(req_query, {"student_id": user_id}).first()
+
+                if not pending_request:
+                    inst_query = text("SELECT id, email FROM users WHERE role = 0 ORDER BY email")
+                    instructors = conn.execute(inst_query).all()
+
+        assignments = get_projects_for_student(engine)
+        return render_template('profile.html', 
+                               assignments=assignments, 
+                               student_info=student_info,
+                               instructors=instructors,
+                               pending_request=pending_request,
+                               user_data=user_data) # Pass user_data as well
+
+    elif user_role == 0: # Instructor Logic
+        with engine.connect() as conn:
+            approved_projects_query = text("""
+                SELECT p.id, p.name, p.description, p.status, u.name
+                FROM instructor_projects ip
+                JOIN projects p ON ip.project_id = p.id
+                JOIN users u ON p.user_id = u.id
+                WHERE ip.instructor_id = :instructor_id
+                ORDER BY p.id DESC
+            """)
+            approved_projects = conn.execute(
+                approved_projects_query, 
+                {"instructor_id": user_id}
+            ).mappings().all()
+        created_projects = get_projects_for_user(engine)
+        return render_template(
+            'profile.html',
+            approved_projects=approved_projects,
+            created_projects=created_projects,
+            user_data=user_data
+        )
+
+    else: # Logic for Business and other roles
+        projects = get_projects_for_user(engine)
+        return render_template('profile.html', projects=projects, user_data=user_data)

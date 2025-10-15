@@ -1,37 +1,61 @@
 {% extends "./layouts/shell.html" %}
 
 {% block content %}
-  <div class="card mx-auto mt-10 max-w-xl p-5">
-    <h2 class="text text-3xl font-bold">Welcome, <span class="text-blue-600">{{ session.email }}</span>!</h2>
-    <div class="p-4">
-      <h3 class="text text-xl font-semibold">Account Details</h3>
-      <p class="text"><strong>Email:</strong> {{ session.email }}</p>
-      <p class="text">
-        <strong>Role:</strong>
-        {% if session.role == 0 %}
-          Instructor
-        {% elif session.role == 1 %}
-          Business
-        {% elif session.role == 2 %}
-          Alumni
-        {% elif session.role == 3 %}
-          Student
-        {% endif %}
-      </p>
-      {% if session.role == 1 %}
+  <form action="/profile/update" method="POST">
+    <div class="card mx-auto mt-10 max-w-xl p-5">
+      <h2 class="text text-3xl font-bold">Welcome, <span class="text-blue-600">{{ session.email }}</span>!</h2>
+      <div class="p-4">
+        <h3 class="text text-xl font-semibold">Account Details</h3>
+        <p class="text"><strong>Email:</strong> {{ session.email }}</p>
         <p class="text">
-          <strong>Public Profile:</strong>
-          <a href="/business/{{ session.user_id }}" class="underline"> Public Profile </a>
+          <strong>Role:</strong>
+          {% if session.role == 0 %}
+            Instructor
+          {% elif session.role == 1 %}
+            Business
+          {% elif session.role == 2 %}
+            Alumni
+          {% elif session.role == 3 %}
+            Student
+          {% endif %}
         </p>
-      {% endif %}
-      {% if session.role == 3 and student_info.instructor_id %}
-        <p class="text"><strong>Assigned Instructor:</strong> {{ student_info.instructor_email }}</p>
-      {% endif %}
+
+        <div class="mt-4">
+          <label for="name" class="text mb-1 block text-sm font-medium">Display Name</label>
+          <input type="text" name="name" id="name" class="input text card text-sm shadow-none" value="{{ user_data.name or '' }}" placeholder="Your Name or Company" />
+        </div>
+
+        {% if session.role == 1 %}
+          <p class="text mt-4">
+            <strong>Public Profile:</strong>
+            <a href="/business/{{ session.user_id }}" class="underline"> Public Profile </a>
+          </p>
+          <div class="mt-2">
+            <label for="bio" class="text mb-1 block text-sm font-medium">Bio</label>
+            <textarea name="bio" id="bio" class="input text card min-h-[80px] text-sm shadow-none" placeholder="Tell us about your company or yourself.">{{ user_data.bio or '' }}</textarea>
+          </div>
+        {% endif %}
+
+        {% if session.role == 3 %}
+          {% if student_info.instructor_id %}
+            <p class="text mt-4"><strong>Assigned Instructor:</strong> {{ student_info.instructor_email }}</p>
+          {% endif %}
+          <div class="mt-2">
+            <label for="graduation" class="text mb-1 block text-sm font-medium">Graduation Year</label>
+            <input type="text" name="graduation" id="graduation" class="input text card text-sm shadow-none" value="{{ student_info.graduation or '' }}" placeholder="e.g., 2026" />
+          </div>
+        {% endif %}
+      </div>
+
+      <div class="mt-4">
+        <button type="submit" class="w-full rounded-lg bg-green-600 px-4 py-2 text-center font-bold text-white transition duration-300 ease-in-out hover:bg-green-700">Update Profile</button>
+      </div>
+
+      <div class="mt-2">
+        <a href="/logout" class="block w-full rounded-lg bg-red-500 px-4 py-2 text-center font-bold text-white transition duration-300 ease-in-out hover:bg-red-600"> Log Out </a>
+      </div>
     </div>
-    <div>
-      <a href="/logout" class="w-full rounded-lg bg-red-500 px-4 py-2 text-center font-bold text-white transition duration-300 ease-in-out hover:bg-red-600"> Log Out </a>
-    </div>
-  </div>
+  </form>
 
   {% if session.role == 3 %}
     {% if not student_info.instructor_id %}
@@ -39,12 +63,12 @@
         <h3 class="text mb-4 text-center text-2xl font-semibold">Join an Instructor</h3>
         {% if pending_request %}
           <p class="text text-center">Your request to join <strong>{{ pending_request.instructor_email }}</strong> is pending.</p>
-          <form action="{{ url_for('cancel_request_route') }}" method="POST" class="mt-4">
+          <form action="/request/cancel" method="POST" class="mt-4">
             <button type="submit" class="w-full rounded-lg bg-yellow-500 px-5 py-2.5 text-center text-sm font-medium text-white hover:bg-yellow-600">Cancel Request</button>
           </form>
         {% elif instructors %}
           <p class="text mb-4 text-center">You are not currently assigned to an instructor. Send a request to join one.</p>
-          <form action="{{ url_for('request_instructor_route') }}" method="POST">
+          <form action="/request/instructor" method="POST">
             <div class="mb-4">
               <label for="instructor_id" class="text mb-2 block text-sm font-medium">Select Instructor</label>
               <select name="instructor_id" id="instructor_id" class="input text card shadow-none" required>

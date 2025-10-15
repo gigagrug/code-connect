@@ -122,6 +122,9 @@ def projects_api_route():
 
 @app.route('/project/<int:project_id>', methods=['GET'])
 def project_page(project_id):
+    if 'user_id' not in session:
+        flash("You need to be logged in to view this page.", "warning")
+        return redirect(url_for('login'))
     project = get_project_by_id(project_id, engine)
     if project:
         can_chat = check_if_user_can_chat(session.get('user_id'), project_id, engine)
@@ -194,6 +197,10 @@ def profile():
         flash("You need to be logged in to view this page.", "warning")
         return redirect(url_for('login'))
     return get_profile_data(engine)
+
+@app.route('/profile/update', methods=['POST'])
+def profile_update_route():
+    return update_profile(engine)
 
 @app.route('/business/<int:user_id>')
 def business_profile(user_id):

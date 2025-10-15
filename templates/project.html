@@ -18,7 +18,7 @@
                     Created by:
                     <span class="font-medium text-blue-600 dark:text-blue-400">
                       {% if project.role == 1 %}
-                        <a href="/business/{{ project.user_id }}" class="underline">{{ project.email }}</a>
+                        <a href="/business/{{ project.user_id }}" class="underline">{{ project.name }}</a>
                       {% else %}
                         {{ project.email }}
                       {% endif %}

@@ -3,7 +3,7 @@ from sqlalchemy import text
 from flask import request, flash, redirect, url_for, session, render_template, jsonify
 from .projects import get_projects_for_user, get_projects_for_student
 
-def register_user(request, engine, is_debug=False):
+def register_admin(request, engine, is_debug=False):
     email = request.form.get('email')
     password = request.form.get('password')
     password2 = request.form.get('password2')
@@ -64,7 +64,7 @@ def register_user(request, engine, is_debug=False):
     return redirect(url_for('register'))
 
 
-def login_user(request, engine, is_debug=False):
+def login_admin(request, engine, is_debug=False):
     email = request.form.get('email')
     password = request.form.get('password')
 

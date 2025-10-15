@@ -1,15 +1,15 @@
 INSERT INTO `users`
 	(`name`, `email`, `password`, `role`, `permission`, `bio`, `instructor_id`, `graduation`)
 VALUES
-	('Dr. Evelyn Reed', 'i1@i.com', '1', 0, 0, 'Professor of Computer Science with a focus on AI and machine learning.', NULL, NULL),
-	('Dr. Samuel Chen', 'i2@i.com', '1', 0, 0, 'Specializing in database systems and web application architecture.', NULL, NULL),
+	('Dr. Evelyn Reed', 'i1@i.com', '1', 0, 0, NULL, NULL, NULL),
+	('Dr. Samuel Chen', 'i2@i.com', '1', 0, 0, NULL, NULL, NULL),
 	('Innovate Corp', 'b1@b.com', '1', 1, 1, 'A leading tech company focused on developing cutting-edge business solutions.', NULL, NULL),
 	('DataDriven Inc.', 'b2@b.com', '1', 1, 1, 'We turn data into actionable insights for businesses of all sizes.', NULL, NULL),
-	('Alice Johnson', 's1@s.com', '1', 3, 0, 'Senior student passionate about front-end development and UX design.', 1, 'Fall 2025'),
-	('Bob Williams', 's2@s.com', '1', 3, 0, 'Junior student interested in cybersecurity and network protocols.', 1, 'Spring 2026'),
-	('Charlie Brown', 's3@s.com', '1', 3, 0, 'Backend developer with experience in Python and Node.js.', 2, 'Fall 2025'),
-	('Diana Miller', 's4@s.com', '1', 3, 0, 'Sophomore exploring data science and analytics.', 2, 'Spring 2027'),
-	('Ethan Davis', 's5@s.com', '1', 3, 0, 'Aspiring mobile app developer for iOS and Android.', 1, 'Fall 2026');
+	('Alice Johnson', 's1@s.com', '1', 3, 0, NULL, 1, 'Fall 2025'),
+	('Bob Williams', 's2@s.com', '1', 3, 0, NULL, 1, 'Spring 2026'),
+	('Charlie Brown', 's3@s.com', '1', 3, 0, NULL, 2, 'Fall 2025'),
+	('Diana Miller', 's4@s.com', '1', 3, 0, NULL, 2, 'Spring 2027'),
+	('Ethan Davis', 's5@s.com', '1', 3, 0, NULL, 1, 'Fall 2026');
 
 INSERT INTO `projects`
 	(`user_id`, `name`, `description`, `status`, `project_link`, `github_link`)
