@@ -8,7 +8,7 @@ def get_project_by_id(project_id, engine):
                 SELECT 
                     p.id, p.name, p.description, p.status, 
                     p.project_link, p.github_link,
-                    u.email, u.role, u.id as user_id
+                    u.name, u.role, u.id as user_id
                 FROM projects p
                 JOIN users u ON p.user_id = u.id
                 WHERE p.id = :project_id
@@ -152,7 +152,7 @@ def get_projects_for_user(engine):
             project_query = text("""
                 SELECT
                     p.id, p.name, p.description, p.status,
-                    u.email, u.role,
+                    u.name, u.role,
                     COUNT(t.id) AS team_count
                 FROM projects p
                 JOIN users u ON p.user_id = u.id
@@ -191,7 +191,7 @@ def get_all_projects(engine, session, page=1, per_page=12):
 
             # Now, build the query to get projects approved by THAT instructor
             query_text = """
-                SELECT p.id, p.name, p.description, p.status, u.email, u.role
+                SELECT p.id, p.name, p.description, p.status, u.name, u.role
                 FROM projects p
                 JOIN users u ON p.user_id = u.id
                 JOIN instructor_projects ip ON p.id = ip.project_id
@@ -207,7 +207,7 @@ def get_all_projects(engine, session, page=1, per_page=12):
         else:
             # Original query for all other roles
             query_text = """
-                SELECT p.id, p.name, p.description, p.status, u.email, u.role
+                SELECT p.id, p.name, p.description, p.status, u.name, u.role
                 FROM projects p
                 JOIN users u ON p.user_id = u.id
                 WHERE p.status IN (0, 1)
