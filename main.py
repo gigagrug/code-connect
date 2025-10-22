@@ -11,6 +11,7 @@ from api.mgt import *
 from api.invite import *
 from api.chat import *
 from api.admin import *
+from api.job import *
 
 app = Flask(__name__)
 app.secret_key = os.getenv("FLASK_SECRET_KEY", 'a_default_dev_secret_key')
@@ -125,10 +126,21 @@ def project_page(project_id):
     if 'user_id' not in session:
         flash("You need to be logged in to view this page.", "warning")
         return redirect(url_for('login'))
+    
     project = get_project_by_id(project_id, engine)
     if project:
-        can_chat = check_if_user_can_chat(session.get('user_id'), project_id, engine)
+        user_id = session.get('user_id')
+        
+        # Permissions
+        can_chat = check_if_user_can_chat(user_id, project_id, engine)
+        can_edit_links = check_if_user_can_edit_links(user_id, project, engine)
+        can_comment = check_if_user_can_comment(user_id, project, engine)
+
+        # Data
+        teams = get_teams_for_project(project_id, engine)
+        comments = get_comments_for_project(project_id, engine)
         chat_history = []
+        
         if can_chat:
             with engine.connect() as conn:
                 history_query = text("""
@@ -137,9 +149,6 @@ def project_page(project_id):
                     WHERE c.project_id = :project_id ORDER BY c.timestamp ASC
                 """)
                 chat_history = conn.execute(history_query, {"project_id": project_id}).all()
-
-        teams = get_teams_for_project(project_id, engine)
-        can_edit_links = check_if_user_can_edit_links(session.get('user_id'), project, engine)
 
         # Check if the current instructor has this project marked as 'pending'
         is_pending_by_current_instructor = False
@@ -165,7 +174,9 @@ def project_page(project_id):
             can_edit_links=can_edit_links, 
             can_chat=can_chat, 
             chat_history=chat_history,
-            is_pending_by_current_instructor=is_pending_by_current_instructor
+            is_pending_by_current_instructor=is_pending_by_current_instructor,
+            can_comment=can_comment,
+            comments=comments
         )
     else:
         flash("Project not found.", "danger")
@@ -190,6 +201,44 @@ def project_approve_route(project_id):
 @app.route('/project/<int:project_id>/links', methods=['POST'])
 def project_links_route(project_id):
     return update_project_links(project_id, engine)
+
+@app.route('/jobs')
+def jobs_page():
+    if 'user_id' not in session:
+        flash("You must be logged in to view this page.", "warning")
+        return redirect(url_for('login'))
+        
+    open_jobs = get_open_jobs(engine)
+    return render_template('jobs.html', jobs=open_jobs)
+
+@app.route('/job/create', methods=['POST'])
+def job_create_route():
+    return create_job(request, engine)
+
+@app.route('/job/<int:job_id>', methods=['GET'])
+def job_page(job_id):
+    if 'user_id' not in session:
+        flash("You need to be logged in to view this page.", "warning")
+        return redirect(url_for('login'))
+        
+    job = get_job_by_id(job_id, engine)
+    if job:
+        return render_template('job.html', job=job)
+    else:
+        flash("Job not found.", "danger")
+        return redirect(url_for('index'))
+
+@app.route('/job/<int:job_id>/update', methods=['POST'])
+def job_update_route(job_id):
+    return update_job(job_id, request, engine)
+
+@app.route('/job/<int:job_id>/delete', methods=['POST'])
+def job_delete_route(job_id):
+    return delete_job(job_id, engine)
+
+@app.route('/project/<int:project_id>/comment', methods=['POST'])
+def project_comment_route(project_id):
+    return add_comment_to_project(project_id, request, engine)
 
 @app.route('/profile')
 def profile():

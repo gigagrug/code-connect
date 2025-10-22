@@ -2,15 +2,11 @@
 
 Change student password
 
-create admin dashboard 
-
 Students request project
 
 Instructor request to admin 
 
-file support, comments
-
-Add job post only admin
+file support
 
 More than one different level admin
 

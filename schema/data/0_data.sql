@@ -39,3 +39,13 @@ VALUES
 	(3, 'Fitness and Workout Tracking App', 'A mobile app that allows users to log workouts, track progress, and follow personalized fitness plans.', 0, 'https://example.com/project-fitness-app', 'https://github.com/innovatecorp/fitness-app'),
 	(4, 'Real Estate Price Prediction Model', 'An algorithm that predicts housing prices based on location, features, and historical market data.', 0, 'https://example.com/project-real-estate', 'https://github.com/datadriven/real-estate-model'),
 	(3, 'Online Code Editor and Collaboration Tool', 'A browser-based IDE that allows multiple developers to code together in real-time, similar to VS Code Live Share.', 0, 'https://example.com/project-live-editor', 'https://github.com/innovatecorp/live-editor');
+
+INSERT INTO `jobs`
+	(`user_id`, `title`, `description`, `status`)
+VALUES
+	(3, 'Senior Frontend Developer (React)', 'Innovate Corp is seeking an experienced React developer to lead the development of our new project management platform. You will be responsible for building a high-performance, responsive UI and mentoring junior developers.', 1),
+	(4, 'Data Scientist - Machine Learning', 'DataDriven Inc. is looking for a Data Scientist with expertise in machine learning and Python. You will work on our predictive analytics models, including customer churn and fraud detection systems.', 1),
+	(3, 'Mobile Developer (iOS/Swift)', 'Join our mobile team at Innovate Corp to build our next-generation mobile banking and telemedicine applications. Strong experience with Swift and building secure, scalable apps is required.', 1),
+	(4, 'Business Intelligence Analyst', 'We need a BI Analyst to join our team at DataDriven Inc. You will be responsible for creating dashboards (Tableau/Power BI), analyzing supply chain data, and providing actionable insights to our clients.', 1),
+	(3, 'Cloud Infrastructure Engineer (AWS)', 'Innovate Corp is hiring a Cloud Engineer to manage our growing AWS infrastructure. You will be responsible for CI/CD pipelines, container orchestration (Kubernetes), and ensuring high availability for all our platforms.', 1),
+	(4, 'Junior Data Analyst', 'This is an entry-level position at DataDriven Inc. for a recent graduate. You will assist our senior analysts with data cleaning, report generation, and market basket analysis. (This is a draft and not yet open).', 0);
