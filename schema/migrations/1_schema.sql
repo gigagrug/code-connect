@@ -40,6 +40,7 @@ CREATE TABLE IF NOT EXISTS projects (
 	status INT DEFAULT 0,
 	project_link VARCHAR(255),
 	github_link VARCHAR(255),
+	attachment_path VARCHAR(512) NULL,
 	created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
 	FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 );
@@ -60,6 +61,7 @@ CREATE TABLE IF NOT EXISTS comments (
 	project_id INT NOT NULL,
 	parent_comment_id INT NULL,
 	comment TEXT NOT NULL,
+	attachment_path VARCHAR(512) NULL,
 	created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
 	FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
 	FOREIGN KEY (project_id) REFERENCES projects(id) ON DELETE CASCADE,
@@ -110,6 +112,7 @@ CREATE TABLE IF NOT EXISTS chat_messages (
 	project_id INT NOT NULL,
 	user_id INT NOT NULL,
 	message_text TEXT NOT NULL,
+	attachment_path VARCHAR(512) NULL,
 	timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,
 	FOREIGN KEY (project_id) REFERENCES projects(id) ON DELETE CASCADE,
 	FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE

@@ -1,5 +1,26 @@
+import os
+import uuid
 from sqlalchemy import text
 from flask import flash, redirect, url_for, session, request, jsonify, render_template
+from werkzeug.utils import secure_filename
+
+def _get_upload_paths(project_name, original_filename):
+    """
+    Generates a secure filesystem path and a URL path for a new file.
+    Returns (fs_save_path, url_path)
+    """
+    sanitized_project_name = secure_filename(str(project_name))[:50]
+    safe_filename = secure_filename(original_filename)
+    unique_filename = f"{uuid.uuid4()}_{safe_filename}"
+    
+    fs_upload_dir = os.path.join('.', 'uploads', sanitized_project_name)
+    os.makedirs(fs_upload_dir, exist_ok=True)
+    
+    fs_save_path = os.path.join(fs_upload_dir, unique_filename)
+    url_path = f"/uploads/{sanitized_project_name}/{unique_filename}"
+    
+    return (fs_save_path, url_path)
+
 
 def get_project_by_id(project_id, engine):
     try:
@@ -7,8 +28,8 @@ def get_project_by_id(project_id, engine):
             query = text("""
                 SELECT 
                     p.id, p.name, p.description, p.status, 
-                    p.project_link, p.github_link,
-                    u.name, u.role, u.id as user_id
+                    p.project_link, p.github_link, p.attachment_path,
+                    u.name as business_name, u.role, u.id as user_id
                 FROM projects p
                 JOIN users u ON p.user_id = u.id
                 WHERE p.id = :project_id
@@ -37,17 +58,29 @@ def create_project(request, engine):
         return redirect(url_for('profile'))
 
     status = 1 if session.get('role') == 0 else 0
+    attachment_path = None
+
+    file = request.files.get('attachment')
+    if file and file.filename:
+        try:
+            fs_save_path, url_path = _get_upload_paths(project_name, file.filename)
+            file.save(fs_save_path)
+            attachment_path = url_path
+        except Exception as e:
+            flash(f"Error saving file: {e}", "danger")
+            return redirect(url_for('profile'))
 
     try:
         with engine.connect() as connection:
             insert_query = text(
-                "INSERT INTO projects (user_id, name, description, status) VALUES (:user_id, :name, :description, :status)"
+                "INSERT INTO projects (user_id, name, description, status, attachment_path) VALUES (:user_id, :name, :description, :status, :attachment_path)"
             )
             params = {
                 "user_id": user_id,
                 "name": project_name,
                 "description": project_description,
-                "status": status
+                "status": status,
+                "attachment_path": attachment_path
             }
             connection.execute(insert_query, params)
             connection.commit()
@@ -77,7 +110,6 @@ def approve_project(project_id, engine):
     try:
         with engine.connect() as connection:
             if new_status == 2:  # Approved - Only ONE instructor is allowed
-                # First, remove any other instructor's link to this project
                 clear_other_instructors_query = text("""
                     DELETE FROM instructor_projects
                     WHERE project_id = :project_id AND instructor_id != :instructor_id
@@ -87,7 +119,6 @@ def approve_project(project_id, engine):
                     "instructor_id": instructor_id
                 })
 
-                # Then, add or update the link for the CURRENT instructor
                 upsert_query = text("""
                     INSERT INTO instructor_projects (instructor_id, project_id, status)
                     VALUES (:instructor_id, :project_id, :status)
@@ -100,7 +131,6 @@ def approve_project(project_id, engine):
                 })
 
             elif new_status == 1:  # Pending - MULTIPLE instructors are allowed
-                # Simply add or update the link for the current instructor
                 upsert_query = text("""
                     INSERT INTO instructor_projects (instructor_id, project_id, status)
                     VALUES (:instructor_id, :project_id, :status)
@@ -113,7 +143,6 @@ def approve_project(project_id, engine):
                 })
 
             else:  # Status is 0 (Unlisted)
-                # Remove only the current instructor's link
                 delete_query = text("""
                     DELETE FROM instructor_projects
                     WHERE instructor_id = :instructor_id AND project_id = :project_id
@@ -123,7 +152,6 @@ def approve_project(project_id, engine):
                     "project_id": project_id
                 })
 
-            # Finally, always update the main project's status
             update_project_query = text("UPDATE projects SET status = :status WHERE id = :project_id")
             connection.execute(update_project_query, {"status": new_status, "project_id": project_id})
 
@@ -178,18 +206,15 @@ def get_all_projects(engine, session, page=1, per_page=12):
         params = {}
 
         if user_role == 3:
-            # For students, first find their assigned instructor
             with engine.connect() as conn:
                 instructor_query = text("SELECT instructor_id FROM users WHERE id = :user_id")
                 result = conn.execute(instructor_query, {"user_id": user_id}).first()
                 
-                # If student has no instructor, they see no projects
                 if not result or not result.instructor_id:
                     return []
                 
                 instructor_id = result.instructor_id
 
-            # Now, build the query to get projects approved by THAT instructor
             query_text = """
                 SELECT p.id, p.name, p.description, p.status, u.name, u.role
                 FROM projects p
@@ -205,7 +230,6 @@ def get_all_projects(engine, session, page=1, per_page=12):
                 "offset": offset
             }
         else:
-            # Original query for all other roles
             query_text = """
                 SELECT p.id, p.name, p.description, p.status, u.name, u.role
                 FROM projects p
@@ -262,7 +286,6 @@ def update_project_links(project_id, engine):
         flash("Project not found.", "danger")
         return redirect(url_for('index'))
 
-    # Use the helper to check permission
     if not check_if_user_can_edit_links(user_id, project, engine):
         flash("You do not have permission to edit these links.", "danger")
         return redirect(url_for('project_page', project_id=project_id))
@@ -331,34 +354,63 @@ def update_project(project_id, request, engine):
     if 'user_id' not in session:
         flash("You must be logged in to update a project.", "warning")
         return redirect(url_for('login'))
+        
     project = get_project_by_id(project_id, engine)
-    if project.email != session['email']:
+    if not project or project.user_id != session['user_id']:
         flash("You do not have permission to edit this project.", "danger")
         return redirect(url_for('project_page', project_id=project_id))
+        
     new_name = request.form.get('name')
     new_description = request.form.get('description')
+    
     if not new_name or not new_description:
         flash("Project name and description cannot be empty.", "danger")
         return redirect(url_for('project_page', project_id=project_id))
+
+    attachment_path = project.attachment_path 
+    file = request.files.get('attachment')
+
+    if file and file.filename:
+        try:
+            fs_save_path, url_path = _get_upload_paths(project.name, file.filename)
+            file.save(fs_save_path)
+            attachment_path = url_path
+        except Exception as e:
+            flash(f"Error saving file: {e}", "danger")
+            return redirect(url_for('project_page', project_id=project_id))
+
     try:
         with engine.connect() as connection:
-            update_query = text("UPDATE projects SET name = :name, description = :description WHERE id = :project_id AND user_id = :user_id")
-            params = {"name": new_name, "description": new_description, "project_id": project_id, "user_id": session['user_id']}
+            update_query = text("""
+                UPDATE projects 
+                SET name = :name, description = :description, attachment_path = :attachment_path 
+                WHERE id = :project_id AND user_id = :user_id
+            """)
+            params = {
+                "name": new_name, 
+                "description": new_description, 
+                "attachment_path": attachment_path,
+                "project_id": project_id, 
+                "user_id": session['user_id']
+            }
             connection.execute(update_query, params)
             connection.commit()
             flash("Project updated successfully!", "success")
     except Exception as e:
         flash(f"An error occurred while updating the project: {e}", "danger")
+        
     return redirect(url_for('project_page', project_id=project_id))
 
 def delete_project(project_id, engine):
     if 'user_id' not in session:
         flash("You must be logged in to delete a project.", "warning")
         return redirect(url_for('login'))
+        
     project = get_project_by_id(project_id, engine)
-    if project.email != session['email']:
+    if not project or project.user_id != session['user_id']:
         flash("You do not have permission to delete this project.", "danger")
         return redirect(url_for('project_page', project_id=project_id))
+        
     try:
         with engine.connect() as connection:
             delete_query = text("DELETE FROM projects WHERE id = :project_id AND user_id = :user_id")
@@ -368,6 +420,7 @@ def delete_project(project_id, engine):
     except Exception as e:
         flash(f"An error occurred while deleting the project: {e}", "danger")
         return redirect(url_for('project_page', project_id=project_id))
+        
     return redirect(url_for('profile'))
 
 def check_if_user_can_chat(user_id, project_id, engine):
@@ -400,19 +453,15 @@ def check_if_user_can_chat(user_id, project_id, engine):
     return False
 
 def check_if_user_can_comment(user_id, project, engine):
-    """Checks if a user can comment based on the defined rules."""
     if not user_id:
         return False
 
-    # Rule 1: Project owner can comment
     if user_id == project.user_id:
         return True
 
-    # Rule 2: Instructor can comment if project is Pending (1) or Approved (2)
     if session.get('role') == 0 and project.status in [1, 2]:
         return True
 
-    # Rule 3: Student in an assigned team can comment
     with engine.connect() as conn:
         query = text("""
             SELECT 1 FROM team_members tm
@@ -427,11 +476,11 @@ def check_if_user_can_comment(user_id, project, engine):
     return False
 
 def get_comments_for_project(project_id, engine):
-    """Fetches all comments for a given project, ordered by creation time."""
     try:
         with engine.connect() as conn:
             query = text("""
-                SELECT c.id, c.comment, c.created_at, u.name, u.email, u.role
+                SELECT c.id, c.comment, c.created_at, c.attachment_path,
+                       u.name, u.email, u.role
                 FROM comments c
                 JOIN users u ON c.user_id = u.id
                 WHERE c.project_id = :project_id
@@ -444,7 +493,6 @@ def get_comments_for_project(project_id, engine):
         return []
 
 def add_comment_to_project(project_id, request, engine):
-    """Handles adding a new comment to a project."""
     user_id = session.get('user_id')
     comment_text = request.form.get('comment')
 
@@ -461,21 +509,33 @@ def add_comment_to_project(project_id, request, engine):
         flash("Project not found.", "danger")
         return redirect(url_for('index'))
 
-    # Server-side permission check
     if not check_if_user_can_comment(user_id, project, engine):
         flash("You do not have permission to comment on this project.", "danger")
         return redirect(url_for('project_page', project_id=project_id))
 
+    attachment_path = None
+    file = request.files.get('attachment')
+
+    if file and file.filename:
+        try:
+            fs_save_path, url_path = _get_upload_paths(project.name, file.filename)
+            file.save(fs_save_path)
+            attachment_path = url_path
+        except Exception as e:
+            flash(f"Error saving file: {e}", "danger")
+            return redirect(url_for('project_page', project_id=project_id))
+
     try:
         with engine.connect() as conn:
             query = text("""
-                INSERT INTO comments (user_id, project_id, comment)
-                VALUES (:user_id, :project_id, :comment)
+                INSERT INTO comments (user_id, project_id, comment, attachment_path)
+                VALUES (:user_id, :project_id, :comment, :attachment_path)
             """)
             conn.execute(query, {
                 "user_id": user_id,
                 "project_id": project_id,
-                "comment": comment_text
+                "comment": comment_text,
+                "attachment_path": attachment_path
             })
             conn.commit()
             flash("Comment added successfully.", "success")
