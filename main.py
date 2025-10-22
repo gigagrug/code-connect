@@ -3,7 +3,7 @@ import sys
 import bcrypt
 import sqlalchemy
 from sqlalchemy import text
-from flask import Flask, render_template, request, redirect, url_for, flash, session
+from flask import Flask, render_template, request, redirect, url_for, flash, session, send_from_directory
 from flask_socketio import SocketIO
 from api.auth import *
 from api.projects import *
@@ -15,7 +15,8 @@ from api.job import *
 
 app = Flask(__name__)
 app.secret_key = os.getenv("FLASK_SECRET_KEY", 'a_default_dev_secret_key')
-
+UPLOAD_DIR = os.path.join(os.path.abspath(os.path.dirname(__file__)), 'uploads')
+app.config['UPLOAD_DIR'] = UPLOAD_DIR
 db_url = os.getenv("DB_URL")
 if not db_url:
     raise ValueError("Error: DB_URL environment variable is not set.")
@@ -99,7 +100,10 @@ if app.debug:
 
 socketio = SocketIO(app)
 init_chat(socketio, engine)
-
+@app.route('/uploads/<path:project_name>/<path:filename>')
+def serve_upload(project_name, filename):
+    project_dir = os.path.join(app.config['UPLOAD_DIR'], project_name)
+    return send_from_directory(project_dir, filename)
 # Admin
 ## create routes only under '/admin/'
 @app.route('/admin')
