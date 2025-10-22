@@ -255,6 +255,10 @@ def profile():
 def profile_update_route():
     return update_profile(engine)
 
+@app.route('/message/admin', methods=['POST'])
+def admin_message_route():
+    return create_admin_message(request, engine)
+
 @app.route('/business/<int:user_id>')
 def business_profile(user_id):
     profile_page = get_business_profile_data(user_id, engine)
