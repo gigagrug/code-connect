@@ -18,9 +18,9 @@
                     Created by:
                     <span class="font-medium text-blue-600 dark:text-blue-400">
                       {% if project.role == 1 %}
-                        <a href="/business/{{ project.user_id }}" class="underline">{{ project.name }}</a>
+                        <a href="/business/{{ project.user_id }}" class="underline">{{ project.user_name }}</a>
                       {% else %}
-                        {{ project.email }}
+                        {{ project.user_name }}
                       {% endif %}
                     </span>
                   </span>
@@ -44,6 +44,42 @@
               </div>
             </div>
 
+            <div class="mt-8 border-t border-gray-200 pt-6 dark:border-gray-700">
+              <h3 class="text mb-4 text-2xl font-semibold">Comments</h3>
+
+              {% if can_comment %}
+                <form action="/project/{{ project.id }}/comment" method="POST" class="mb-6">
+                  <label for="comment" class="text mb-2 block text-sm font-medium">Add a comment</label>
+                  <textarea name="comment" id="comment" class="input text field-sizing-content min-h-[80px]" placeholder="Write your comment..." required></textarea>
+                  <button type="submit" class="btn-primary text mt-2">Submit Comment</button>
+                </form>
+              {% endif %}
+
+              <div class="space-y-4">
+                {% if comments %}
+                  {% for comment in comments %}
+                    <div class="rounded-lg bg-gray-100 p-4 dark:bg-gray-800">
+                      <div class="mb-2 flex items-center justify-between">
+                        <span class="text font-semibold">
+                          {{ comment.name }}
+                          {% if comment.role == 0 %}
+                            <span class="text-xs font-normal text-red-500">(Instructor)</span>
+                          {% elif comment.role == 1 %}
+                            <span class="text-xs font-normal text-blue-500">(Business)</span>
+                          {% elif comment.role == 3 %}
+                            <span class="text-xs font-normal text-green-500">(Student)</span>
+                          {% endif %}
+                        </span>
+                        <span class="text-xs text-gray-500 dark:text-gray-400"> {{ comment.created_at.strftime('%b %d, %Y at %I:%M %p') }} </span>
+                      </div>
+                      <p class="text whitespace-pre-line">{{ comment.comment }}</p>
+                    </div>
+                  {% endfor %}
+                {% else %}
+                  <p class="text text-gray-500">No comments yet.</p>
+                {% endif %}
+              </div>
+            </div>
             {% if teams %}
               <div class="mt-8 border-t border-gray-200 pt-6 dark:border-gray-700">
                 <h3 class="text mb-4 text-2xl font-semibold">Assigned Teams</h3>

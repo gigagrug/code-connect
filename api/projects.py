@@ -398,3 +398,88 @@ def check_if_user_can_chat(user_id, project_id, engine):
             return True
 
     return False
+
+def check_if_user_can_comment(user_id, project, engine):
+    """Checks if a user can comment based on the defined rules."""
+    if not user_id:
+        return False
+
+    # Rule 1: Project owner can comment
+    if user_id == project.user_id:
+        return True
+
+    # Rule 2: Instructor can comment if project is Pending (1) or Approved (2)
+    if session.get('role') == 0 and project.status in [1, 2]:
+        return True
+
+    # Rule 3: Student in an assigned team can comment
+    with engine.connect() as conn:
+        query = text("""
+            SELECT 1 FROM team_members tm
+            JOIN teams t ON tm.team_id = t.id
+            WHERE tm.user_id = :user_id AND t.project_id = :project_id
+            LIMIT 1
+        """)
+        result = conn.execute(query, {"user_id": user_id, "project_id": project.id}).first()
+        if result:
+            return True
+
+    return False
+
+def get_comments_for_project(project_id, engine):
+    """Fetches all comments for a given project, ordered by creation time."""
+    try:
+        with engine.connect() as conn:
+            query = text("""
+                SELECT c.id, c.comment, c.created_at, u.name, u.email, u.role
+                FROM comments c
+                JOIN users u ON c.user_id = u.id
+                WHERE c.project_id = :project_id
+                ORDER BY c.created_at ASC
+            """)
+            result = conn.execute(query, {"project_id": project_id}).mappings().all()
+            return result
+    except Exception as e:
+        print(f"Database error fetching comments: {e}")
+        return []
+
+def add_comment_to_project(project_id, request, engine):
+    """Handles adding a new comment to a project."""
+    user_id = session.get('user_id')
+    comment_text = request.form.get('comment')
+
+    if not user_id:
+        flash("You must be logged in to comment.", "warning")
+        return redirect(url_for('login'))
+
+    if not comment_text:
+        flash("Comment cannot be empty.", "danger")
+        return redirect(url_for('project_page', project_id=project_id))
+
+    project = get_project_by_id(project_id, engine)
+    if not project:
+        flash("Project not found.", "danger")
+        return redirect(url_for('index'))
+
+    # Server-side permission check
+    if not check_if_user_can_comment(user_id, project, engine):
+        flash("You do not have permission to comment on this project.", "danger")
+        return redirect(url_for('project_page', project_id=project_id))
+
+    try:
+        with engine.connect() as conn:
+            query = text("""
+                INSERT INTO comments (user_id, project_id, comment)
+                VALUES (:user_id, :project_id, :comment)
+            """)
+            conn.execute(query, {
+                "user_id": user_id,
+                "project_id": project_id,
+                "comment": comment_text
+            })
+            conn.commit()
+            flash("Comment added successfully.", "success")
+    except Exception as e:
+        flash(f"An error occurred while posting your comment: {e}", "danger")
+
+    return redirect(url_for('project_page', project_id=project_id))
