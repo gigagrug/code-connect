@@ -54,10 +54,10 @@
                 <form action="/project/{{ project.id }}/comment" method="POST" enctype="multipart/form-data" class="mb-6">
                   <label for="comment" class="text mb-2 block text-sm font-medium">Add a comment</label>
                   <textarea name="comment" id="comment" class="input text field-sizing-content min-h-[80px]" placeholder="Write your comment..."></textarea>
-                  
-                  <label for="attachment" class="text mb-2 mt-2 block text-sm font-medium">Attach File (Optional)</label>
+
+                  <label for="attachment" class="text mt-2 mb-2 block text-sm font-medium">Attach File (Optional)</label>
                   <input type="file" name="attachment" id="attachment" class="input text w-full file:mr-4 file:rounded-md file:border-0 file:bg-gray-200 file:px-4 file:py-2 file:text-sm file:font-semibold hover:file:bg-gray-300 dark:file:bg-gray-700 dark:file:text-gray-200 dark:hover:file:bg-gray-600" />
-                  
+
                   <button type="submit" class="btn-primary text mt-4">Submit Comment</button>
                 </form>
               {% endif %}
@@ -82,9 +82,7 @@
                       <p class="text whitespace-pre-line">{{ comment.comment }}</p>
                       {% if comment.attachment_path %}
                         <div class="mt-2">
-                          <a href="{{ comment.attachment_path }}" target="_blank" class="text-sm text-blue-500 hover:underline">
-                            View Attachment
-                          </a>
+                          <a href="{{ comment.attachment_path }}" target="_blank" class="text-sm text-blue-500 hover:underline"> View Attachment </a>
                         </div>
                       {% endif %}
                     </div>
@@ -128,14 +126,14 @@
                 <form action="/project/{{ project.id }}/update" method="POST" id="edit-form" class="mb-6 hidden space-y-4" enctype="multipart/form-data">
                   <div><label for="name" class="text mb-2 block text-sm font-medium">Project Name</label><input type="text" name="name" id="name" value="{{ project.name }}" class="input text" required /></div>
                   <div><label for="description" class="text mb-2 block text-sm font-medium">Description</label><textarea name="description" id="description" class="input text field-sizing-content min-h-[100px]" required>{{ project.description }}</textarea></div>
-                  
+
                   <div>
                     <label for="attachment" class="text mb-2 block text-sm font-medium">Project Attachment</label>
                     {% if project.attachment_path %}
-                      <div class="text-sm mb-2">Current: <a href="{{ project.attachment_path }}" target="_blank" class="text-blue-500 hover:underline">View File</a></div>
+                      <div class="mb-2 text-sm">Current: <a href="{{ project.attachment_path }}" target="_blank" class="text-blue-500 hover:underline">View File</a></div>
                     {% endif %}
                     <input type="file" name="attachment" id="attachment" class="input text w-full file:mr-4 file:rounded-md file:border-0 file:bg-gray-200 file:px-4 file:py-2 file:text-sm file:font-semibold hover:file:bg-gray-300 dark:file:bg-gray-700 dark:file:text-gray-200 dark:hover:file:bg-gray-600" />
-                    <p class="text-xs text-gray-500 mt-1">Uploading a new file will replace the old one.</p>
+                    <p class="mt-1 text-xs text-gray-500">Uploading a new file will replace the old one.</p>
                   </div>
 
                   <div class="flex items-center gap-4"><button type="submit" class="btn-primary text">Save Changes</button><button type="button" onclick="toggleEditForm()" class="btn-secondary text">Cancel</button></div>
@@ -177,9 +175,7 @@
                   <div class="message-body text {% if msg.email == session.email %}bg-blue-600 text-white{% else %}bg-gray-100 dark:bg-gray-700{% endif %} max-w-xs rounded-lg p-2 break-words">
                     {{ msg.message_text }}
                     {% if msg.attachment_path %}
-                      <a href="{{ msg.attachment_path }}" target="_blank" class="mt-1 block text-sm font-bold text-white underline dark:text-blue-300">
-                        View Attachment
-                      </a>
+                      <a href="{{ msg.attachment_path }}" target="_blank" class="mt-1 block text-sm font-bold text-white underline dark:text-blue-300"> View Attachment </a>
                     {% endif %}
                   </div>
                 </div>

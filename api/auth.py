@@ -305,3 +305,28 @@ def get_profile_data(engine):
     else: # Logic for Business and other roles
         projects = get_projects_for_user(engine)
         return render_template('profile.html', projects=projects, user_data=user_data)
+
+def create_admin_message(request, engine):
+    """Saves a new message from a user to the admin."""
+    if 'user_id' not in session:
+        flash("You must be logged in to send a message.", "warning")
+        return redirect(url_for('login'))
+
+    message = request.form.get('message')
+    if not message or not message.strip():
+        flash("Message cannot be empty.", "danger")
+        return redirect(url_or('profile'))
+
+    user_id = session['user_id']
+    
+    try:
+        with engine.connect() as conn:
+            query = text("INSERT INTO admin_messages (user_id, message) VALUES (:user_id, :message)")
+            conn.execute(query, {"user_id": user_id, "message": message.strip()})
+            conn.commit()
+        flash("Your message has been sent to the administrators.", "success")
+    except Exception as e:
+        print(f"Error saving admin message: {e}")
+        flash("An error occurred while sending your message.", "danger")
+
+    return redirect(url_for('profile'))
