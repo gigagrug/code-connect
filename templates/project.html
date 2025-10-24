@@ -1,4 +1,4 @@
-{% extends "./frags/shell.html" %}
+{% extends "./layouts/shell.html" %}
 
 {% block head %}
   <script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
@@ -14,23 +14,24 @@
               <h1 class="text mb-4 text-4xl font-extrabold md:text-5xl">{{ project.name }}</h1>
               <div class="mb-6 border-b border-gray-200 pb-4 dark:border-gray-700">
                 <p class="text-md text-gray-500 dark:text-gray-300">
-                  <span class="me-5">Created by: <span class="font-medium text-blue-600 dark:text-blue-400">{{ project.email }}</span></span>
-                  Account Type:
-                  <span class="font-medium text-blue-600 dark:text-blue-400">
-                    {% if project.account_type == 0 %}
-                      Instructor
-                    {% elif project.account_type == 1 %}
-                      Business
-                    {% elif project.account_type == 2 %}
-                      Alumni
-                    {% endif %}
+                  <span class="me-5">
+                    Created by:
+                    <span class="font-medium text-blue-600 dark:text-blue-400">
+                      {% if project.role == 1 %}
+                        <a href="/business/{{ project.user_id }}" class="underline">{{ project.business_name }}</a>
+                      {% else %}
+                        {{ project.business_name }}
+                      {% endif %}
+                    </span>
                   </span>
-                  {% if project.status == 2 %}
-                    <span class="ms-5 me-2 rounded bg-blue-100 px-2.5 py-0.5 text-sm font-medium text-blue-800 dark:bg-blue-900 dark:text-blue-300">Taken</span>
+                  {% if project.status == 3 %}
+                    <span class="me-2 rounded bg-blue-100 px-2.5 py-0.5 text-sm font-medium text-blue-800 dark:bg-blue-900 dark:text-blue-300">Taken</span>
+                  {% elif project.status == 2 %}
+                    <span class="me-2 rounded bg-green-100 px-2.5 py-0.5 text-sm font-medium text-green-800 dark:bg-green-900 dark:text-green-300"> Approved</span>
                   {% elif project.status == 1 %}
-                    <span class="ms-5 me-2 rounded bg-green-100 px-2.5 py-0.5 text-sm font-medium text-green-800 dark:bg-green-900 dark:text-green-300">Approved</span>
+                    <span class="me-2 rounded bg-yellow-100 px-2.5 py-0.5 text-sm font-medium text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300">Pending Approval</span>
                   {% else %}
-                    <span class="ms-5 me-2 rounded bg-yellow-100 px-2.5 py-0.5 text-sm font-medium text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300">Pending Approval</span>
+                    <span class="me-2 rounded bg-red-100 px-2.5 py-0.5 text-sm font-medium text-red-800 dark:bg-red-900 dark:text-red-300"> Submitted</span>
                   {% endif %}
                 </p>
               </div>
@@ -40,19 +41,69 @@
               <div class="text mt-6 space-y-2">
                 {% if project.project_link %}<p><strong>Project Link:</strong> <a href="{{ project.project_link }}" target="_blank" class="text-blue-500 hover:underline">{{ project.project_link }}</a></p>{% endif %}
                 {% if project.github_link %}<p><strong>GitHub Link:</strong> <a href="{{ project.github_link }}" target="_blank" class="text-blue-500 hover:underline">{{ project.github_link }}</a></p>{% endif %}
+                {% if project.attachment_path %}
+                  <p><strong>Attachment:</strong> <a href="{{ project.attachment_path }}" target="_blank" class="text-blue-500 hover:underline">View Attached File</a></p>
+                {% endif %}
               </div>
             </div>
 
+            <div class="mt-8 border-t border-gray-200 pt-6 dark:border-gray-700">
+              <h3 class="text mb-4 text-2xl font-semibold">Comments</h3>
+
+              {% if can_comment %}
+                <form action="/project/{{ project.id }}/comment" method="POST" enctype="multipart/form-data" class="mb-6">
+                  <label for="comment" class="text mb-2 block text-sm font-medium">Add a comment</label>
+                  <textarea name="comment" id="comment" class="input text field-sizing-content min-h-[80px]" placeholder="Write your comment..."></textarea>
+
+                  <label for="attachment" class="text mt-2 mb-2 block text-sm font-medium">Attach File (Optional)</label>
+                  <input type="file" name="attachment" id="attachment" class="input text w-full file:mr-4 file:rounded-md file:border-0 file:bg-gray-200 file:px-4 file:py-2 file:text-sm file:font-semibold hover:file:bg-gray-300 dark:file:bg-gray-700 dark:file:text-gray-200 dark:hover:file:bg-gray-600" />
+
+                  <button type="submit" class="btn-primary text mt-4">Submit Comment</button>
+                </form>
+              {% endif %}
+
+              <div class="space-y-4">
+                {% if comments %}
+                  {% for comment in comments %}
+                    <div class="rounded-lg bg-gray-100 p-4 dark:bg-gray-800">
+                      <div class="mb-2 flex items-center justify-between">
+                        <span class="text font-semibold">
+                          {{ comment.name }}
+                          {% if comment.role == 0 %}
+                            <span class="text-xs font-normal text-red-500">(Instructor)</span>
+                          {% elif comment.role == 1 %}
+                            <span class="text-xs font-normal text-blue-500">(Business)</span>
+                          {% elif comment.role == 3 %}
+                            <span class="text-xs font-normal text-green-500">(Student)</span>
+                          {% endif %}
+                        </span>
+                        <span class="text-xs text-gray-500 dark:text-gray-400"> {{ comment.created_at.strftime('%b %d, %Y at %I:%M %p') }} </span>
+                      </div>
+                      <p class="text whitespace-pre-line">{{ comment.comment }}</p>
+                      {% if comment.attachment_path %}
+                        <div class="mt-2">
+                          <a href="{{ comment.attachment_path }}" target="_blank" class="text-sm text-blue-500 hover:underline"> View Attachment </a>
+                        </div>
+                      {% endif %}
+                    </div>
+                  {% endfor %}
+                {% else %}
+                  <p class="text text-gray-500">No comments yet.</p>
+                {% endif %}
+              </div>
+            </div>
             {% if teams %}
               <div class="mt-8 border-t border-gray-200 pt-6 dark:border-gray-700">
                 <h3 class="text mb-4 text-2xl font-semibold">Assigned Teams</h3>
                 <div class="space-y-4">
-                  {% for team in teams %}<div class="rounded-lg bg-gray-100 p-4 dark:bg-gray-800">
-                    <h4 class="text font-bold">{{ team.name }}</h4>
-                    <ul class="text mt-2 list-inside list-disc">
-                      {% for member in team.members %}<li>{{ member.email }}</li>{% endfor %}
-                    </ul>
-                  </div>{% endfor %}
+                  {% for team in teams %}
+                    <div class="rounded-lg bg-gray-100 p-4 dark:bg-gray-800">
+                      <h4 class="text font-bold">{{ team.name }}</h4>
+                      <ul class="text mt-2 list-inside list-disc">
+                        {% for member in team.members %}<li>{{ member.email }}</li>{% endfor %}
+                      </ul>
+                    </div>
+                  {% endfor %}
                 </div>
               </div>
             {% endif %}
@@ -60,7 +111,7 @@
             {% if can_edit_links %}
               <div class="mt-8 border-t border-gray-200 pt-6 dark:border-gray-700">
                 <h3 class="text mb-4 text-lg font-semibold">Project Links</h3>
-                <form action="{{ url_for('project_links_route', project_id=project.id) }}" method="POST" id="links-form" class="hidden space-y-4">
+                <form action="/project/{{ project.id }}/links" method="POST" id="links-form" class="hidden space-y-4">
                   <div><label for="project_link" class="text mb-2 block text-sm font-medium">Project URL</label><input type="url" name="project_link" id="project_link" value="{{ project.project_link or '' }}" class="input text" placeholder="https://example.com/my-project" /></div>
                   <div><label for="github_link" class="text mb-2 block text-sm font-medium">GitHub URL</label><input type="url" name="github_link" id="github_link" value="{{ project.github_link or '' }}" class="input text" placeholder="https://github.com/user/repo" /></div>
                   <div class="flex items-center gap-4"><button type="submit" class="btn-primary text">Save Links</button><button type="button" onclick="toggleLinksForm()" class="btn-secondary text">Cancel</button></div>
@@ -72,9 +123,19 @@
             {% if session.user_id == project.user_id %}
               <div class="mt-8 border-t border-gray-200 pt-6 dark:border-gray-700">
                 <h3 class="text mb-4 text-lg font-semibold">Owner Controls</h3>
-                <form action="/project/{{ project.id }}/update" method="POST" id="edit-form" class="mb-6 hidden space-y-4">
+                <form action="/project/{{ project.id }}/update" method="POST" id="edit-form" class="mb-6 hidden space-y-4" enctype="multipart/form-data">
                   <div><label for="name" class="text mb-2 block text-sm font-medium">Project Name</label><input type="text" name="name" id="name" value="{{ project.name }}" class="input text" required /></div>
                   <div><label for="description" class="text mb-2 block text-sm font-medium">Description</label><textarea name="description" id="description" class="input text field-sizing-content min-h-[100px]" required>{{ project.description }}</textarea></div>
+
+                  <div>
+                    <label for="attachment" class="text mb-2 block text-sm font-medium">Project Attachment</label>
+                    {% if project.attachment_path %}
+                      <div class="mb-2 text-sm">Current: <a href="{{ project.attachment_path }}" target="_blank" class="text-blue-500 hover:underline">View File</a></div>
+                    {% endif %}
+                    <input type="file" name="attachment" id="attachment" class="input text w-full file:mr-4 file:rounded-md file:border-0 file:bg-gray-200 file:px-4 file:py-2 file:text-sm file:font-semibold hover:file:bg-gray-300 dark:file:bg-gray-700 dark:file:text-gray-200 dark:hover:file:bg-gray-600" />
+                    <p class="mt-1 text-xs text-gray-500">Uploading a new file will replace the old one.</p>
+                  </div>
+
                   <div class="flex items-center gap-4"><button type="submit" class="btn-primary text">Save Changes</button><button type="button" onclick="toggleEditForm()" class="btn-secondary text">Cancel</button></div>
                 </form>
                 <div class="text flex items-center gap-4" id="control-buttons">
@@ -84,15 +145,13 @@
               </div>
             {% endif %}
 
-            {% if session.get('account_type') == 0 %}
+            {% if session.get('role') == 0 %}
               <div class="mt-8 border-t border-gray-200 pt-6 dark:border-gray-700">
                 <h3 class="mb-4 text-lg font-semibold text-red-600 dark:text-red-400">Instructor Controls</h3>
-                <form action="/project/{{ project.id }}/approve" method="POST">
-                  {% if project.status > 0 %}
-                    <button type="submit" class="w-full rounded-lg bg-red-600 px-5 py-2.5 text-center text-sm font-medium text-white hover:bg-red-700">Unapprove Project</button>
-                  {% else %}
-                    <button type="submit" class="w-full rounded-lg bg-green-600 px-5 py-2.5 text-center text-sm font-medium text-white hover:bg-green-700">Approve Project</button>
-                  {% endif %}
+                <form action="/project/{{ project.id }}/approve" method="POST" class="space-y-2 md:flex md:gap-2 md:space-y-0">
+                  <button type="submit" name="new_status" value="2" class="w-full rounded-lg bg-green-600 px-5 py-2.5 text-center text-sm font-medium text-white hover:bg-green-700 disabled:cursor-not-allowed disabled:opacity-50" {% if project.status == 2 %}disabled{% endif %}>Approve Project</button>
+                  <button type="submit" name="new_status" value="1" class="w-full rounded-lg bg-yellow-500 px-5 py-2.5 text-center text-sm font-medium text-white hover:bg-yellow-600 disabled:cursor-not-allowed disabled:opacity-50" {% if is_pending_by_current_instructor %}disabled{% endif %}>Set to Pending</button>
+                  <button type="submit" name="new_status" value="0" class="w-full rounded-lg bg-red-600 px-5 py-2.5 text-center text-sm font-medium text-white hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-50" {% if project.status == 0 %}disabled{% endif %}>Unlist Project</button>
                 </form>
               </div>
             {% endif %}
@@ -111,16 +170,22 @@
                     {% if msg.email == session.email %}
                       <button class="delete-btn text-xs text-gray-400 hover:text-red-500" data-message-id="{{ msg.message_id }}">&times;</button>
                     {% endif %}
-                    <div class="text-xs text-gray-500 dark:text-gray-400">{{ msg.email }} <span class="ml-2 text-gray-400">{{ msg.timestamp.strftime('%b %d, %I:%M %p') }}</span></div>
+                    <div class="text-xs text-gray-500 dark:text-gray-400">{{ msg.email }} <span class="ml-2 text-gray-400">{{ msg.timestamp.strftime("%b %d, %I:%M %p") }}</span></div>
                   </div>
-                  <div class="message-body text {% if msg.email == session.email %}bg-blue-600 text-white{% else %}bg-gray-100 dark:bg-gray-700{% endif %} max-w-xs rounded-lg p-2 break-words">{{ msg.message_text }}</div>
+                  <div class="message-body text {% if msg.email == session.email %}bg-blue-600 text-white{% else %}bg-gray-100 dark:bg-gray-700{% endif %} max-w-xs rounded-lg p-2 break-words">
+                    {{ msg.message_text }}
+                    {% if msg.attachment_path %}
+                      <a href="{{ msg.attachment_path }}" target="_blank" class="mt-1 block text-sm font-bold text-white underline dark:text-blue-300"> View Attachment </a>
+                    {% endif %}
+                  </div>
                 </div>
               {% endfor %}
             </div>
             <div class="mt-4 border-t pt-4 dark:border-gray-600">
-              <form id="chat-form" class="flex items-center gap-2">
-                <input type="text" id="message-input" placeholder="Type a message..." class="input text w-full" autocomplete="off" required />
-                <button type="submit" class="btn-primary flex-shrink-0">Send</button>
+              <form id="chat-form" class="flex flex-col items-center gap-2">
+                <input type="text" id="message-input" placeholder="Type a message..." class="input text w-full" autocomplete="off" />
+                <input type="file" id="chat-file-input" class="input text w-full file:mr-4 file:rounded-md file:border-0 file:bg-gray-200 file:px-4 file:py-2 file:text-sm file:font-semibold hover:file:bg-gray-300 dark:file:bg-gray-700 dark:file:text-gray-200 dark:hover:file:bg-gray-600" />
+                <button type="submit" class="btn-primary mt-2 w-full flex-shrink-0 rounded-lg bg-blue-600 p-2 text-white">Send</button>
               </form>
             </div>
           </div>
@@ -143,11 +208,12 @@
   {% if can_chat %}
     <script>
       document.addEventListener("DOMContentLoaded", () => {
-        const projectId = {{ project.id }};
+        const projectId = "{{ project.id }}";
         const currentUserEmail = "{{ session.email }}";
         const messagesContainer = document.getElementById("chat-messages");
         const chatForm = document.getElementById("chat-form");
         const messageInput = document.getElementById("message-input");
+        const fileInput = document.getElementById("chat-file-input");
         const socket = io();
 
         if (messagesContainer) {
@@ -172,6 +238,15 @@
           messageBody.className = `message-body text rounded-lg p-2 max-w-xs break-words ${isCurrentUser ? "bg-blue-600 text-white" : "bg-gray-100 dark:bg-gray-700"}`;
           messageBody.textContent = data.message;
 
+          if (data.attachment_path) {
+            const attachmentLink = document.createElement("a");
+            attachmentLink.href = data.attachment_path;
+            attachmentLink.target = "_blank";
+            attachmentLink.className = "mt-1 block text-sm font-bold text-white underline dark:text-blue-300";
+            attachmentLink.textContent = "View Attachment";
+            messageBody.appendChild(attachmentLink);
+          }
+
           msgContainer.appendChild(infoDiv);
           msgContainer.appendChild(messageBody);
           messagesContainer.appendChild(msgContainer);
@@ -181,7 +256,6 @@
         socket.on("message_deleted", (data) => {
           const msgElement = document.getElementById(`message-${data.message_id}`);
           if (msgElement) {
-            // Remove the entire message element from the page
             msgElement.remove();
           }
         });
@@ -198,8 +272,30 @@
         chatForm.addEventListener("submit", (e) => {
           e.preventDefault();
           const message = messageInput.value.trim();
-          if (message) {
-            socket.emit("new_message", { project_id: projectId, message: message });
+          const file = fileInput.files[0];
+
+          if (!message && !file) {
+            return; // Don't send empty messages
+          }
+
+          const payload = {
+            project_id: projectId,
+            message: message,
+          };
+
+          if (file) {
+            const reader = new FileReader();
+            reader.onload = (event) => {
+              payload.file = event.target.result; // This is the Base64 string
+              payload.filename = file.name;
+              socket.emit("new_message", payload);
+              messageInput.value = "";
+              fileInput.value = null; // Clear the file input
+            };
+            reader.readAsDataURL(file);
+          } else {
+            // Send text-only message
+            socket.emit("new_message", payload);
             messageInput.value = "";
           }
         });

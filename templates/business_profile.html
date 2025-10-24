@@ -1,0 +1,30 @@
+{% extends "./layouts/shell.html" %}
+
+{% block content %}
+  <div class="container mx-auto px-4 py-8">
+    <div class="card mx-auto mb-10 max-w-2xl p-6 text-center">
+      <h2 class="text mb-2 text-3xl font-bold">{{ business_user.name or 'Business Profile' }}</h2>
+      {% if business_user.bio %}
+        <p class="text mx-auto max-w-lg">{{ business_user.bio }}</p>
+      {% else %}
+        <p class="text-gray-400 italic dark:text-gray-500">This business has not provided a bio.</p>
+      {% endif %}
+    </div>
+
+    <div class="mx-auto max-w-4xl">
+      <h3 class="text mb-6 text-center text-2xl font-semibold">Projects by {{ business_user.name or business_user.email }}</h3>
+
+      {% if projects %}
+        <div id="projects-grid" class="grid grid-cols-1 gap-8 md:grid-cols-2 lg:grid-cols-3">
+          {% for project in projects %}
+            {% include "partials/project_card.html" %}
+          {% endfor %}
+        </div>
+      {% else %}
+        <div class="card p-6 text-center">
+          <p class="text-gray-500 dark:text-gray-400">This business has not published any projects yet.</p>
+        </div>
+      {% endif %}
+    </div>
+  </div>
+{% endblock %}

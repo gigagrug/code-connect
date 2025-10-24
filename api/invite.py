@@ -2,7 +2,7 @@ from flask import request, redirect, url_for, flash, session
 from sqlalchemy import text
 
 def send_instructor_request(engine):
-    if 'user_id' not in session or session.get('account_type') != 3:
+    if 'user_id' not in session or session.get('role') != 3:
         flash("Only students can send requests.", "danger")
         return redirect(url_for('profile'))
 
@@ -38,7 +38,7 @@ def send_instructor_request(engine):
 
 
 def cancel_instructor_request(engine):
-    if 'user_id' not in session or session.get('account_type') != 3:
+    if 'user_id' not in session or session.get('role') != 3:
         flash("Only students can cancel requests.", "danger")
         return redirect(url_for('profile'))
 
@@ -56,7 +56,7 @@ def cancel_instructor_request(engine):
 
 
 def handle_instructor_request(request_id, engine):
-    if 'user_id' not in session or session.get('account_type') != 0:
+    if 'user_id' not in session or session.get('role') != 0:
         flash("Only instructors can handle requests.", "danger")
         return redirect(url_for('user_mgt'))
 
@@ -66,8 +66,13 @@ def handle_instructor_request(request_id, engine):
     try:
         with engine.connect() as conn:
             with conn.begin(): # Start transaction
-                # Verify the request belongs to this instructor
-                req_query = text("SELECT student_id FROM instructor_requests WHERE id = :request_id AND instructor_id = :instructor_id AND status = 0")
+                # MODIFIED: Allow handling requests with status 0 (pending) OR 2 (denied)
+                req_query = text("""
+                    SELECT student_id FROM instructor_requests 
+                    WHERE id = :request_id 
+                    AND instructor_id = :instructor_id 
+                    AND status IN (0, 2)
+                """)
                 req_result = conn.execute(req_query, {"request_id": request_id, "instructor_id": instructor_id}).first()
 
                 if not req_result:
@@ -92,6 +97,39 @@ def handle_instructor_request(request_id, engine):
                     update_req_query = text("UPDATE instructor_requests SET status = 2 WHERE id = :request_id")
                     conn.execute(update_req_query, {"request_id": request_id})
                     flash("Student request denied.", "info")
+
+    except Exception as e:
+        flash(f"An error occurred: {e}", "danger")
+
+    return redirect(url_for('user_mgt'))
+
+def dismiss_denied_request(request_id, engine):
+    """Allows an instructor to dismiss/delete a denied request."""
+    if 'user_id' not in session or session.get('role') != 0:
+        flash("Only instructors can handle requests.", "danger")
+        return redirect(url_for('user_mgt'))
+
+    instructor_id = session['user_id']
+    
+    try:
+        with engine.connect() as conn:
+            # Ensure the instructor can only delete their own denied requests
+            query = text("""
+                DELETE FROM instructor_requests 
+                WHERE id = :request_id 
+                AND instructor_id = :instructor_id 
+                AND status = 2
+            """)
+            result = conn.execute(query, {
+                "request_id": request_id, 
+                "instructor_id": instructor_id
+            })
+            conn.commit()
+            
+            if result.rowcount > 0:
+                flash("Denied request has been dismissed.", "info")
+            else:
+                flash("Request not found or permission denied.", "warning")
 
     except Exception as e:
         flash(f"An error occurred: {e}", "danger")

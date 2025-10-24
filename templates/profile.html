@@ -1,45 +1,100 @@
-{% extends "./frags/shell.html" %}
+{% extends "./layouts/shell.html" %}
 
 {% block content %}
-  <div class="card mx-auto mt-10 max-w-xl p-5">
-    <h2 class="text text-3xl font-bold">Welcome, <span class="text-blue-600">{{ session.email }}</span>!</h2>
-    <div class="p-4">
-      <h3 class="text text-xl font-semibold">Account Details</h3>
-      <p class="text"><strong>Email:</strong> {{ session.email }}</p>
-      <p class="text">
-        <strong>Account Type:</strong>
-        {% if session.account_type == 0 %}
-          Instructor
-        {% elif session.account_type == 1 %}
-          Business
-        {% elif session.account_type == 2 %}
-          Alumni
-        {% elif session.account_type == 3 %}
-          Student
+  <form action="/profile/update" method="POST">
+    <div class="card mx-auto mt-10 max-w-xl p-5">
+      <h2 class="text text-3xl font-bold">Welcome, <span class="text-blue-600">{{ session.email }}</span>!</h2>
+      <div class="p-4">
+        <h3 class="text text-xl font-semibold">Account Details</h3>
+        <p class="text"><strong>Email:</strong> {{ session.email }}</p>
+        <p class="text">
+          <strong>Role:</strong>
+          {% if session.role == 0 %}
+            Instructor
+          {% elif session.role == 1 %}
+            Business
+          {% elif session.role == 2 %}
+            Alumni
+          {% elif session.role == 3 %}
+            Student
+          {% endif %}
+        </p>
+
+        <div class="mt-4">
+          <label for="name" class="text mb-1 block text-sm font-medium">Display Name</label>
+          <input type="text" name="name" id="name" class="input text card text-sm shadow-none" value="{{ user_data.name or '' }}" placeholder="Your Name or Company" />
+        </div>
+
+        {% if session.role == 1 %}
+          <p class="text mt-4">
+            <strong>Public Profile:</strong>
+            <a href="/business/{{ session.user_id }}" class="underline"> Public Profile </a>
+          </p>
+          <div class="mt-2">
+            <label for="bio" class="text mb-1 block text-sm font-medium">Bio</label>
+            <textarea name="bio" id="bio" class="input text card min-h-[80px] text-sm shadow-none" placeholder="Tell us about your company or yourself.">{{ user_data.bio or '' }}</textarea>
+          </div>
         {% endif %}
-      </p>
+        {% if session.role == 3 %}
+          {% if student_info.instructor_id %}
+            <p class="text mt-4"><strong>Assigned Instructor:</strong> {{ student_info.instructor_email }}</p>
+          {% endif %}
+          <div class="mt-2">
+            <label for="graduation" class="text mb-1 block text-sm font-medium">Graduation Year</label>
+            <input type="text" name="graduation" id="graduation" class="input text card text-sm shadow-none" value="{{ student_info.graduation or '' }}" placeholder="e.g., 2026" />
+          </div>
+        {% endif %}
+      </div>
 
-      {% if session.account_type == 3 and student_info.instructor_id %}
-        <p class="text"><strong>Assigned Instructor:</strong> {{ student_info.instructor_email }}</p>
-      {% endif %}
+      <div class="mt-4">
+        <button type="submit" class="w-full rounded-lg bg-green-600 px-4 py-2 text-center font-bold text-white transition duration-300 ease-in-out hover:bg-green-700">Update Profile</button>
+      </div>
+
+      <div class="mt-2">
+        <a href="/logout" class="block w-full rounded-lg bg-red-500 px-4 py-2 text-center font-bold text-white transition duration-300 ease-in-out hover:bg-red-600"> Log Out </a>
+      </div>
     </div>
-    <div>
-      <a href="/logout" class="w-full rounded-lg bg-red-500 px-4 py-2 text-center font-bold text-white transition duration-300 ease-in-out hover:bg-red-600"> Log Out </a>
-    </div>
+  </form>
+
+  <div class="card mx-auto mt-5 mb-12 max-w-xl p-5">
+    <h3 class="text mb-4 text-2xl font-semibold">Contact Admin</h3>
+    <p class="mb-4 text-sm text-gray-500 dark:text-gray-400">Have an issue or a request? Send a message directly to the site administrators.</p>
+    <form action="/message/admin" method="POST">
+      <div class="mb-4">
+        <label for="admin_message" class="text mb-2 block text-sm font-medium">Your Message</label>
+        <textarea name="message" id="admin_message" class="input text field-sizing-content min-h-[100px]" placeholder="Please describe your issue or request..." required></textarea>
+      </div>
+      <button type="submit" class="w-full rounded-lg bg-blue-700 px-5 py-2.5 text-center text-sm font-medium text-white hover:bg-blue-800">Send Message</button>
+    </form>
   </div>
-
-  {% if session.account_type == 3 %}
+  {% if session.get('role') == 1 %}
+    <div class="card mx-auto mt-5 mb-12 max-w-xl p-5">
+      <h2 class="text mb-4 text-2xl font-bold">Create a New Job</h2>
+      <form action="/job/create" method="POST" class="space-y-4">
+        <div>
+          <label for="title" class="text mb-2 block text-sm font-medium">Job Title</label>
+          <input type="text" name="title" id="title" class="input text" placeholder="e.g., Senior Web Developer" required />
+        </div>
+        <div>
+          <label for="description" class="text mb-2 block text-sm font-medium">Job Description</label>
+          <textarea name="description" id="description" class="input text field-sizing-content min-h-[120px]" placeholder="Describe the role, responsibilities, and qualifications..." required></textarea>
+        </div>
+        <button type="submit" class="w-full rounded-lg bg-blue-700 px-5 py-2.5 text-center text-sm font-medium text-white hover:bg-blue-800">Post Job</button>
+      </form>
+    </div>
+  {% endif %}
+  {% if session.role == 3 %}
     {% if not student_info.instructor_id %}
       <div class="card mx-auto mt-5 mb-12 max-w-xl p-5">
-        <h3 class="mb-4 text-center text-2xl font-semibold">Join an Instructor</h3>
+        <h3 class="text mb-4 text-center text-2xl font-semibold">Join an Instructor</h3>
         {% if pending_request %}
           <p class="text text-center">Your request to join <strong>{{ pending_request.instructor_email }}</strong> is pending.</p>
-          <form action="{{ url_for('cancel_request_route') }}" method="POST" class="mt-4">
+          <form action="/request/cancel" method="POST" class="mt-4">
             <button type="submit" class="w-full rounded-lg bg-yellow-500 px-5 py-2.5 text-center text-sm font-medium text-white hover:bg-yellow-600">Cancel Request</button>
           </form>
         {% elif instructors %}
           <p class="text mb-4 text-center">You are not currently assigned to an instructor. Send a request to join one.</p>
-          <form action="{{ url_for('request_instructor_route') }}" method="POST">
+          <form action="/request/instructor" method="POST">
             <div class="mb-4">
               <label for="instructor_id" class="text mb-2 block text-sm font-medium">Select Instructor</label>
               <select name="instructor_id" id="instructor_id" class="input text card shadow-none" required>
@@ -56,11 +111,11 @@
     {% endif %}
   {% endif %}
 
-  {# For Project Creators: Show the "Create Project" form #}
-  {% if session.get('account_type') in [0, 1, 2] %}
+  {% if session['email'] and session.get('permission') == 1 %}
     <div class="card mx-auto mt-5 mb-12 max-w-xl p-5">
       <h3 class="mb-4 text-center text-2xl font-semibold text-gray-900 dark:text-white">Create a New Project</h3>
-      <form action="/projects/create" method="POST">
+
+      <form action="/project/create" method="POST" enctype="multipart/form-data">
         <div class="mb-4">
           <label for="name" class="mb-2 block text-sm font-medium text-gray-900 dark:text-white">Project Name</label>
           <input type="text" name="name" id="name" class="input text" placeholder="My Awesome Project" required />
@@ -69,14 +124,19 @@
           <label for="description" class="mb-2 block text-sm font-medium text-gray-900 dark:text-white">Description</label>
           <textarea name="description" id="description" class="input text field-sizing-content min-h-[100px]" placeholder="A description of what your project is about." required></textarea>
         </div>
+
+        <div class="mb-6">
+          <label for="attachment" class="mb-2 block text-sm font-medium text-gray-900 dark:text-white">Project Attachment (Optional)</label>
+          <input type="file" name="attachment" id="attachment" class="input text w-full file:mr-4 file:rounded-md file:border-0 file:bg-gray-200 file:px-4 file:py-2 file:text-sm file:font-semibold hover:file:bg-gray-300 dark:file:bg-gray-700 dark:file:text-gray-200 dark:hover:file:bg-gray-600" />
+        </div>
+
         <button type="submit" class="w-full rounded-lg bg-blue-700 px-5 py-2.5 text-center text-sm font-medium text-white hover:bg-blue-800">Create Project</button>
       </form>
     </div>
   {% endif %}
 
   <div class="container mx-auto p-4">
-    {# For Students: Show team assignments #}
-    {% if session.account_type == 3 %}
+    {% if session.role == 3 %}
       <h2 class="text mb-6 text-center text-3xl font-bold">Your Team Assignments</h2>
       <div class="space-y-6">
         {% for item in assignments %}
@@ -97,46 +157,31 @@
           </div>
         {% endfor %}
       </div>
+    {% elif session.role == 0 %}
+      <h2 class="text mb-6 text-center text-3xl font-bold">Managed Projects</h2>
+      <div class="grid grid-cols-1 gap-8 md:grid-cols-2 lg:grid-cols-3">
+        {% for project in approved_projects %}
+          {% include "partials/project_card.html" %}
+        {% else %}
+          <p class="col-span-full text-center text-gray-500 dark:text-gray-400">You have not approved or managed any projects yet.</p>
+        {% endfor %}
+      </div>
 
-      {# For Project Creators: Show their created projects #}
+      <h2 class="text my-8 text-center text-3xl font-bold">My Created Projects</h2>
+      <div class="grid grid-cols-1 gap-8 md:grid-cols-2 lg:grid-cols-3">
+        {% for project in created_projects %}
+          {% include "partials/project_card.html" %}
+        {% else %}
+          <p class="col-sspan-full text-center text-gray-500 dark:text-gray-400">You have not created any projects.</p>
+        {% endfor %}
+      </div>
     {% else %}
       <h2 class="text mb-6 text-center text-3xl font-bold">Your Created Projects</h2>
       <div class="grid grid-cols-1 gap-8 md:grid-cols-2 lg:grid-cols-3">
         {% for project in projects %}
-          <a href="/project/{{ project.id }}" class="card block transform transition-transform duration-300 hover:-translate-y-1">
-            <div class="p-6">
-              <div class="mb-2">
-                {% if project.status == 2 %}
-                  <span class="me-2 rounded bg-blue-100 px-2.5 py-0.5 text-sm font-medium text-blue-800 dark:bg-blue-900 dark:text-blue-300">Taken</span>
-                {% elif project.status == 1 %}
-                  <span class="me-2 rounded bg-green-100 px-2.5 py-0.5 text-sm font-medium text-green-800 dark:bg-green-900 dark:text-green-300">Approved</span>
-                {% else %}
-                  <span class="me-2 rounded bg-yellow-100 px-2.5 py-0.5 text-sm font-medium text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300">Pending Approval</span>
-                {% endif %}
-              </div>
-              <h3 class="text mb-2 truncate text-xl font-semibold">{{ project.name }}</h3>
-              <p class="text mb-4 line-clamp-3">{{ project.description }}</p>
-              <div class="border-t border-gray-200 pt-4 dark:border-gray-700">
-                <p class="text-sm text-gray-500 dark:text-gray-300">
-                  Account Type:
-                  <span class="font-medium text-blue-600 dark:text-blue-400">
-                    {% if project.account_type == 0 %}
-                      Instructor
-                    {% elif project.account_type == 1 %}
-                      Business
-                    {% elif project.account_type == 2 %}
-                      Alumni
-                    {% endif %}
-                  </span>
-                </p>
-              </div>
-            </div>
-          </a>
+          {% include "partials/project_card.html" %}
         {% else %}
-          <div class="col-span-full py-12 text-center">
-            <h3 class="text-xl text-gray-700 dark:text-gray-300">No Projects Yet</h3>
-            <p class="mt-2 text-gray-500 dark:text-gray-400">Use the form above to create a project!</p>
-          </div>
+          <p class="col-span-full text-center text-gray-500 dark:text-gray-400">You have not created any projects yet.</p>
         {% endfor %}
       </div>
     {% endif %}

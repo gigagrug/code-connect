@@ -1,0 +1,64 @@
+{% extends "./layouts/shell.html" %}
+
+{% block content %}
+  <main>
+    <section class="py-10">
+      <div class="container mx-auto px-6 text-center">
+        <h1 class="text mb-4 text-4xl leading-tight font-extrabold md:text-6xl">Bridge the Gap Between <span class="text-blue-600">Learning</span> and <span class="text-emerald-500">Doing</span>.</h1>
+        <p class="text mx-auto mb-8 max-w-3xl text-lg md:text-xl">Code Connect is where innovative businesses find talented students to build real-world projects. Gain experience, build your portfolio, and get a head start on your career.</p>
+        <div class="flex justify-center space-x-4">
+          <a href="/register" class="rounded-lg bg-blue-600 px-8 py-3 text-lg font-semibold text-white transition hover:bg-blue-700">Post a Project</a>
+          <a href="/register" class="rounded-lg bg-gray-200 px-8 py-3 text-lg font-semibold text-gray-800 transition hover:bg-gray-300">Find a Project</a>
+        </div>
+      </div>
+    </section>
+
+    <section id="how-it-works" class="py-10">
+      <div class="container mx-auto px-6">
+        <div class="mb-12 text-center">
+          <h2 class="text text-3xl font-bold">How It Works</h2>
+          <p class="text mt-2">A simple process to connect and create.</p>
+        </div>
+        <div class="grid gap-12 text-center md:grid-cols-3">
+          <div class="flex flex-col items-center">
+            <div class="mb-4 rounded-full bg-blue-100 p-4 text-blue-600">
+              <svg class="h-10 w-10" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 13h6m-3-3v6m5 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+            </div>
+            <h3 class="text mb-2 text-xl font-semibold">1. Post Your Project</h3>
+            <p class="text">Businesses outline their project needs, timeline, and the skills required.</p>
+          </div>
+          <div class="flex flex-col items-center">
+            <div class="mb-4 rounded-full bg-emerald-100 p-4 text-emerald-600">
+              <svg class="h-10 w-10" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+            </div>
+            <h3 class="text mb-2 text-xl font-semibold">2. Find Talent</h3>
+            <p class="text">Students browse projects that match their skills and apply to contribute.</p>
+          </div>
+          <div class="flex flex-col items-center">
+            <div class="mb-4 rounded-full bg-purple-100 p-4 text-purple-600">
+              <svg class="h-10 w-10" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path></svg>
+            </div>
+            <h3 class="text mb-2 text-xl font-semibold">3. Collaborate & Build</h3>
+            <p class="text">Connect, collaborate, and bring the project to life with fresh perspectives.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="cta" class="bg-blue-600 text-white">
+      <div class="container mx-auto px-6 py-16 text-center">
+        <h2 class="mb-4 text-3xl font-bold">Ready to Build the Future?</h2>
+        <p class="mx-auto mb-8 max-w-2xl">Whether you're a business looking for fresh talent or a student ready for a challenge, Code Connect is your starting point.</p>
+        <a href="/register" class="rounded-lg bg-white px-8 py-3 text-lg font-semibold text-blue-600 transition hover:bg-gray-100">Sign Up For Free</a>
+      </div>
+    </section>
+  </main>
+
+  <footer class="bg-gray-800 py-12 text-gray-400">
+    <div class="container mx-auto px-6">
+      <div class="mt-8 border-t border-gray-700 pt-6 text-center">
+        <p>&copy; 2025 Code Connect. All rights reserved.</p>
+      </div>
+    </div>
+  </footer>
+{% endblock %}

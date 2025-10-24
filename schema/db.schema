@@ -6,12 +6,41 @@ table chat_messages (
   project_id int NOT NULL,
   user_id int NOT NULL,
   message_text text NOT NULL,
+  attachment_path varchar(512) DEFAULT NULL,
   timestamp datetime DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (id),
   KEY project_id (project_id),
   KEY user_id (user_id),
   CONSTRAINT chat_messages_ibfk_1 FOREIGN KEY (project_id) REFERENCES projects (id) ON DELETE CASCADE,
   CONSTRAINT chat_messages_ibfk_2 FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE
+)
+
+table comments (
+  id int NOT NULL AUTO_INCREMENT,
+  user_id int NOT NULL,
+  project_id int NOT NULL,
+  parent_comment_id int DEFAULT NULL,
+  comment text NOT NULL,
+  attachment_path varchar(512) DEFAULT NULL,
+  created_at timestamp NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (id),
+  KEY user_id (user_id),
+  KEY project_id (project_id),
+  KEY parent_comment_id (parent_comment_id),
+  CONSTRAINT comments_ibfk_1 FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE,
+  CONSTRAINT comments_ibfk_2 FOREIGN KEY (project_id) REFERENCES projects (id) ON DELETE CASCADE,
+  CONSTRAINT comments_ibfk_3 FOREIGN KEY (parent_comment_id) REFERENCES comments (id) ON DELETE CASCADE
+)
+
+table instructor_projects (
+  instructor_id int NOT NULL,
+  project_id int NOT NULL,
+  status int DEFAULT '0',
+  created_at timestamp NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (instructor_id,project_id),
+  KEY project_id (project_id),
+  CONSTRAINT instructor_projects_ibfk_1 FOREIGN KEY (instructor_id) REFERENCES users (id) ON DELETE CASCADE,
+  CONSTRAINT instructor_projects_ibfk_2 FOREIGN KEY (project_id) REFERENCES projects (id) ON DELETE CASCADE
 )
 
 table instructor_requests (
@@ -27,6 +56,42 @@ table instructor_requests (
   CONSTRAINT instructor_requests_ibfk_2 FOREIGN KEY (instructor_id) REFERENCES users (id) ON DELETE CASCADE
 )
 
+table jobs (
+  id int NOT NULL AUTO_INCREMENT,
+  user_id int NOT NULL,
+  title varchar(255) NOT NULL,
+  description text NOT NULL,
+  status int NOT NULL DEFAULT '0',
+  created_at timestamp NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (id),
+  KEY user_id (user_id),
+  CONSTRAINT jobs_ibfk_1 FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE
+)
+
+table permission_change_requests (
+  id int NOT NULL AUTO_INCREMENT,
+  user_id int NOT NULL,
+  requested_role int NOT NULL,
+  status int DEFAULT '0',
+  created_at timestamp NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (id),
+  KEY user_id (user_id),
+  CONSTRAINT permission_change_requests_ibfk_1 FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE
+)
+
+table project_requests (
+  id int NOT NULL AUTO_INCREMENT,
+  team_id int NOT NULL,
+  project_id int NOT NULL,
+  status tinyint DEFAULT '0',
+  created_at timestamp NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (id),
+  KEY team_id (team_id),
+  KEY project_id (project_id),
+  CONSTRAINT project_requests_ibfk_1 FOREIGN KEY (team_id) REFERENCES teams (id) ON DELETE CASCADE,
+  CONSTRAINT project_requests_ibfk_2 FOREIGN KEY (project_id) REFERENCES projects (id) ON DELETE CASCADE
+)
+
 table projects (
   id int NOT NULL AUTO_INCREMENT,
   user_id int DEFAULT NULL,
@@ -35,6 +100,8 @@ table projects (
   status int DEFAULT '0',
   project_link varchar(255) DEFAULT NULL,
   github_link varchar(255) DEFAULT NULL,
+  attachment_path varchar(512) DEFAULT NULL,
+  created_at timestamp NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (id),
   KEY user_id (user_id),
   CONSTRAINT projects_ibfk_1 FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE
@@ -43,6 +110,7 @@ table projects (
 table team_members (
   team_id int NOT NULL,
   user_id int NOT NULL,
+  created_at timestamp NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (team_id,user_id),
   KEY user_id (user_id),
   CONSTRAINT team_members_ibfk_1 FOREIGN KEY (team_id) REFERENCES teams (id) ON DELETE CASCADE,
@@ -53,7 +121,8 @@ table teams (
   id int NOT NULL AUTO_INCREMENT,
   name varchar(25) NOT NULL,
   user_id int NOT NULL,
-  project_id int NOT NULL,
+  project_id int DEFAULT NULL,
+  created_at timestamp NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (id),
   KEY user_id (user_id),
   KEY project_id (project_id),
@@ -63,10 +132,15 @@ table teams (
 
 table users (
   id int NOT NULL AUTO_INCREMENT,
+  name varchar(150) DEFAULT NULL,
   email varchar(150) NOT NULL,
   password varchar(255) NOT NULL,
-  account_type int NOT NULL,
+  role int NOT NULL,
+  permission int NOT NULL DEFAULT '0',
   instructor_id int DEFAULT NULL,
+  graduation varchar(15) DEFAULT NULL,
+  bio text,
+  created_at timestamp NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (id),
   UNIQUE KEY email (email),
   KEY instructor_id (instructor_id),

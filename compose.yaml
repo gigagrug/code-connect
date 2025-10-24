@@ -7,11 +7,13 @@ services:
       - DB_URL=${DB_URL}
     volumes:
       - .:/app
+    depends_on:
+      - db
     develop:
       watch:
         - action: sync
-          path: ./app.py
-          target: /app/app.py
+          path: ./main.py
+          target: /app/main.py
         - action: rebuild
           path: ./requirements.txt
   db:
