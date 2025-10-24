@@ -1,18 +1,11 @@
-{% extends "./layouts/shell.html" %}
+{% extends "./frags/shell.html" %}
 
 {% block content %}
-  <form action="/register" method="POST" class="card text mx-auto mt-6 max-w-[500px] space-y-4 p-5">
+  <form action="/registeradmin" method="POST" class="card text mx-auto mt-6 max-w-[500px] space-y-4 p-5">
     <h1 class="mb-2 text-center text-2xl font-bold">Register</h1>
-    <label class="mb-2 block text-sm font-bold" for="role"> Account Type </label>
-    <select id="role" name="role" class="input card shadow-none">
-      <option value="" disabled selected>Select Account Type</option>
-      <option value="0">Instructor</option>
-      <option value="1">Business</option>
-      <option value="2">Alumni</option>
-      <option value="3">Student</option>
-    </select>
+
     <label class="mb-2 block text-sm font-bold" for="reg_email"> Email </label>
-    <input name="email" class="input" id="reg_email" type="email" placeholder="your@email.com" />
+    <input name="email" class="input" id="reg_email" type="email" placeholder="suckmy@balls.com" />
     <label class="mb-2 block text-sm font-bold" for="reg_pwd">Password</label>
     <input name="password" class="input" id="reg_pwd" type="password" placeholder="*****" />
     <label class="mb-2 block text-sm font-bold" for="reg_pwd2">Reenter Password</label>

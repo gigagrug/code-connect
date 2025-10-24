@@ -6,6 +6,7 @@ table chat_messages (
   project_id int NOT NULL,
   user_id int NOT NULL,
   message_text text NOT NULL,
+  attachment_path varchar(512) DEFAULT NULL,
   timestamp datetime DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (id),
   KEY project_id (project_id),
@@ -20,6 +21,7 @@ table comments (
   project_id int NOT NULL,
   parent_comment_id int DEFAULT NULL,
   comment text NOT NULL,
+  attachment_path varchar(512) DEFAULT NULL,
   created_at timestamp NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (id),
   KEY user_id (user_id),
@@ -54,6 +56,29 @@ table instructor_requests (
   CONSTRAINT instructor_requests_ibfk_2 FOREIGN KEY (instructor_id) REFERENCES users (id) ON DELETE CASCADE
 )
 
+table jobs (
+  id int NOT NULL AUTO_INCREMENT,
+  user_id int NOT NULL,
+  title varchar(255) NOT NULL,
+  description text NOT NULL,
+  status int NOT NULL DEFAULT '0',
+  created_at timestamp NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (id),
+  KEY user_id (user_id),
+  CONSTRAINT jobs_ibfk_1 FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE
+)
+
+table permission_change_requests (
+  id int NOT NULL AUTO_INCREMENT,
+  user_id int NOT NULL,
+  requested_role int NOT NULL,
+  status int DEFAULT '0',
+  created_at timestamp NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (id),
+  KEY user_id (user_id),
+  CONSTRAINT permission_change_requests_ibfk_1 FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE
+)
+
 table project_requests (
   id int NOT NULL AUTO_INCREMENT,
   team_id int NOT NULL,
@@ -75,21 +100,11 @@ table projects (
   status int DEFAULT '0',
   project_link varchar(255) DEFAULT NULL,
   github_link varchar(255) DEFAULT NULL,
+  attachment_path varchar(512) DEFAULT NULL,
   created_at timestamp NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (id),
   KEY user_id (user_id),
   CONSTRAINT projects_ibfk_1 FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE
-)
-
-table role_change_requests (
-  id int NOT NULL AUTO_INCREMENT,
-  user_id int NOT NULL,
-  requested_account_type int NOT NULL,
-  status int DEFAULT '0',
-  created_at timestamp NULL DEFAULT CURRENT_TIMESTAMP,
-  PRIMARY KEY (id),
-  KEY user_id (user_id),
-  CONSTRAINT role_change_requests_ibfk_1 FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE
 )
 
 table team_members (
@@ -120,8 +135,8 @@ table users (
   name varchar(150) DEFAULT NULL,
   email varchar(150) NOT NULL,
   password varchar(255) NOT NULL,
-  account_type int NOT NULL,
-  role int NOT NULL DEFAULT '0',
+  role int NOT NULL,
+  permission int NOT NULL DEFAULT '0',
   instructor_id int DEFAULT NULL,
   graduation varchar(15) DEFAULT NULL,
   bio text,

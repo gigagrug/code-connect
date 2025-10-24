@@ -3,8 +3,8 @@ CREATE TABLE IF NOT EXISTS users (
 	name VARCHAR(150),
 	email VARCHAR(150) NOT NULL UNIQUE,
 	password VARCHAR(255) NOT NULL,
-	account_type INT NOT NULL,
-	role INT NOT NULL DEFAULT 0,
+	role INT NOT NULL,
+	permission INT NOT NULL DEFAULT 0,
 	instructor_id INT NULL,
 	graduation VARCHAR(15),
 	bio TEXT,
@@ -12,10 +12,10 @@ CREATE TABLE IF NOT EXISTS users (
 	FOREIGN KEY (instructor_id) REFERENCES users(id) ON DELETE SET NULL
 );
 
-CREATE TABLE IF NOT EXISTS role_change_requests (
+CREATE TABLE IF NOT EXISTS permission_change_requests (
 	id INT AUTO_INCREMENT PRIMARY KEY,
 	user_id INT NOT NULL,
-	requested_account_type INT NOT NULL,
+	requested_role INT NOT NULL,
 	status INT DEFAULT 0,
 	created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
 	FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
@@ -40,6 +40,17 @@ CREATE TABLE IF NOT EXISTS projects (
 	status INT DEFAULT 0,
 	project_link VARCHAR(255),
 	github_link VARCHAR(255),
+	attachment_path VARCHAR(512) NULL,
+	created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+	FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS jobs (
+	id INT AUTO_INCREMENT PRIMARY KEY,
+	user_id INT NOT NULL,
+	title VARCHAR(255) NOT NULL,
+	description TEXT NOT NULL,
+	status INT NOT NULL DEFAULT 0,
 	created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
 	FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 );
@@ -50,6 +61,7 @@ CREATE TABLE IF NOT EXISTS comments (
 	project_id INT NOT NULL,
 	parent_comment_id INT NULL,
 	comment TEXT NOT NULL,
+	attachment_path VARCHAR(512) NULL,
 	created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
 	FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
 	FOREIGN KEY (project_id) REFERENCES projects(id) ON DELETE CASCADE,
@@ -100,12 +112,23 @@ CREATE TABLE IF NOT EXISTS chat_messages (
 	project_id INT NOT NULL,
 	user_id INT NOT NULL,
 	message_text TEXT NOT NULL,
+	attachment_path VARCHAR(512) NULL,
 	timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,
 	FOREIGN KEY (project_id) REFERENCES projects(id) ON DELETE CASCADE,
 	FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 );
 
+CREATE TABLE IF NOT EXISTS admin_messages (
+	id INT AUTO_INCREMENT PRIMARY KEY,
+	user_id INT NOT NULL,
+	message TEXT NOT NULL,
+	timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,
+	FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+);
+
 -- schema rollback
+
+DROP TABLE IF EXISTS admin_messages;
 
 DROP TABLE IF EXISTS chat_messages;
 
@@ -117,12 +140,14 @@ DROP TABLE IF EXISTS teams;
 
 DROP TABLE IF EXISTS instructor_projects;
 
+DROP TABLE IF EXISTS jobs;
+
 DROP TABLE IF EXISTS comments;
 
 DROP TABLE IF EXISTS projects;
 
 DROP TABLE IF EXISTS instructor_requests;
 
-DROP TABLE IF EXISTS role_change_requests;
+DROP TABLE IF EXISTS permission_change_requests;
 
 DROP TABLE IF EXISTS users;
