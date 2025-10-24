@@ -10,6 +10,7 @@ from api.mgt import *
 from api.invite import *
 from api.chat import *
 from api.admin import *
+from api.admin import get_projects_paginated
 
 db_url = os.getenv("DB_URL")
 if not db_url:
@@ -30,22 +31,18 @@ socketio = SocketIO(app)
 
 init_chat(socketio, engine)
 
-# Admin
-## create routes only under '/admin/'
-@app.route('/admin')
-def admin():
-    page = int(request.args.get('page', 1) or 1)
-    per_page = 25
-    projects, total, total_pages = get_projects_paginated(engine, page=page, per_page=per_page)
-    return render_template(
-        'admin/admin.html',
-        projects=projects,
-        page=page,
-        per_page=per_page,
-        total=total,
-        total_pages=total_pages
-    )
-# Users
+# Admin 
+## create routes only under '/admin/' 
+
+@app.route('/admin', endpoint='admin') # ← add endpoint; you can keep a trailing slash if you prefer 
+def admin_index(): # ← optional: rename for clarity (avoid two functions named "index") 
+    page = request.args.get('page', default=1, type=int) or 1
+    per_page = 6
+    projects, total, total_pages, pending_count, approved_count, taken_count = get_projects_paginated(engine, page=page, per_page=per_page) # optional: clamp very large ?page=
+    if page > total_pages:
+        page = total_pages
+    return render_template('/admin/admin.html', projects=projects, page=page, per_page=per_page, total=total, total_pages=total_pages, pending_count=pending_count, approved_count=approved_count, taken_count=taken_count)
+
 @app.route('/')
 def index():
     projects = get_all_projects(engine, page=1, per_page=12)
