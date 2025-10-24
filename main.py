@@ -11,7 +11,6 @@ from api.mgt import *
 from api.invite import *
 from api.chat import *
 from api.admin import *
-from api.admin import get_projects_paginated
 from api.job import *
 
 app = Flask(__name__)
@@ -119,13 +118,7 @@ def serve_upload(project_name, filename):
     project_dir = os.path.join(app.config['UPLOAD_DIR'], project_name)
     return send_from_directory(project_dir, filename)
 # Admin
-## create routes only under '/admin/'
-@app.route('/admin')
-def admin():
-    page = int(request.args.get('page', 1) or 1)
-    per_page = 25
-    projects, total, total_pages = get_projects_paginated(engine, page=page, per_page=per_page)
-    return render_template('admin/admin.html', projects=projects, page=page, per_page=per_page, total=total, total_pages=total_pages)
+
 # Users
 @app.route('/')
 def index():
