@@ -11,11 +11,8 @@ from api.mgt import *
 from api.invite import *
 from api.chat import *
 from api.admin import *
-<<<<<<< HEAD
 from api.admin import get_projects_paginated
-=======
 from api.job import *
->>>>>>> c5ce4daf75bab7542a5b94944883a08a05cf8800
 
 app = Flask(__name__)
 app.secret_key = os.getenv("FLASK_SECRET_KEY", 'a_default_dev_secret_key')
@@ -104,7 +101,6 @@ if app.debug:
 
 socketio = SocketIO(app)
 init_chat(socketio, engine)
-<<<<<<< HEAD
 
 # Admin 
 ## create routes only under '/admin/' 
@@ -118,7 +114,6 @@ def admin_index(): # ← optional: rename for clarity (avoid two functions named
         page = total_pages
     return render_template('/admin/admin.html', projects=projects, page=page, per_page=per_page, total=total, total_pages=total_pages, pending_count=pending_count, approved_count=approved_count, taken_count=taken_count)
 
-=======
 @app.route('/uploads/<path:project_name>/<path:filename>')
 def serve_upload(project_name, filename):
     project_dir = os.path.join(app.config['UPLOAD_DIR'], project_name)
@@ -132,7 +127,6 @@ def admin():
     projects, total, total_pages = get_projects_paginated(engine, page=page, per_page=per_page)
     return render_template('admin/admin.html', projects=projects, page=page, per_page=per_page, total=total, total_pages=total_pages)
 # Users
->>>>>>> c5ce4daf75bab7542a5b94944883a08a05cf8800
 @app.route('/')
 def index():
     if 'user_id' in session:
