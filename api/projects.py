@@ -5,10 +5,6 @@ from flask import flash, redirect, url_for, session, request, jsonify, render_te
 from werkzeug.utils import secure_filename
 
 def _get_upload_paths(project_name, original_filename):
-    """
-    Generates a secure filesystem path and a URL path for a new file.
-    Returns (fs_save_path, url_path)
-    """
     sanitized_project_name = secure_filename(str(project_name))[:50]
     safe_filename = secure_filename(original_filename)
     unique_filename = f"{uuid.uuid4()}_{safe_filename}"
@@ -216,7 +212,7 @@ def get_all_projects(engine, session, page=1, per_page=12):
                 instructor_id = result.instructor_id
 
             query_text = """
-                SELECT p.id, p.name, p.description, p.status, u.name, u.role
+                SELECT p.id, p.name, p.description, p.status, u.name AS business_name, u.role
                 FROM projects p
                 JOIN users u ON p.user_id = u.id
                 JOIN instructor_projects ip ON p.id = ip.project_id
@@ -231,7 +227,7 @@ def get_all_projects(engine, session, page=1, per_page=12):
             }
         else:
             query_text = """
-                SELECT p.id, p.name, p.description, p.status, u.name, u.role
+                SELECT p.id, p.name, p.description, p.status, u.name AS business_name, u.role
                 FROM projects p
                 JOIN users u ON p.user_id = u.id
                 WHERE p.status IN (0, 1)

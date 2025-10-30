@@ -101,22 +101,21 @@ if app.debug:
 socketio = SocketIO(app)
 init_chat(socketio, engine)
 
-# Admin 
-## create routes only under '/admin/' 
-
-@app.route('/admin', endpoint='admin') # ← add endpoint; you can keep a trailing slash if you prefer 
-def admin_index(): # ← optional: rename for clarity (avoid two functions named "index") 
-    page = request.args.get('page', default=1, type=int) or 1
-    per_page = 6
-    projects, total, total_pages, pending_count, approved_count, taken_count = get_projects_paginated(engine, page=page, per_page=per_page) # optional: clamp very large ?page=
-    if page > total_pages:
-        page = total_pages
-    return render_template('/admin/admin.html', projects=projects, page=page, per_page=per_page, total=total, total_pages=total_pages, pending_count=pending_count, approved_count=approved_count, taken_count=taken_count)
-
 @app.route('/uploads/<path:project_name>/<path:filename>')
 def serve_upload(project_name, filename):
     project_dir = os.path.join(app.config['UPLOAD_DIR'], project_name)
     return send_from_directory(project_dir, filename)
+
+# Admin 
+## create routes only under '/admin/' 
+@app.route('/admin', endpoint='admin')
+def admin_index():
+    page = request.args.get('page', default=1, type=int) or 1
+    per_page = 6
+    projects, total, total_pages, pending_count, approved_count, taken_count = get_projects_paginated(engine, page=page, per_page=per_page)
+    if page > total_pages:
+        page = total_pages
+    return render_template('/admin/admin.html', projects=projects, page=page, per_page=per_page, total=total, total_pages=total_pages, pending_count=pending_count, approved_count=approved_count, taken_count=taken_count)
 # Admin
 
 # Users
@@ -124,7 +123,7 @@ def serve_upload(project_name, filename):
 def index():
     if 'user_id' in session:
         if session.get('role') == 1:
-            return redirect(url_for('business_profile',user_id=session['user_id']))
+            return redirect(url_for('business_profile', user_id=session['user_id']))
 
         projects = get_all_projects(engine, session, page=1, per_page=12)
         return render_template('index.html', projects=projects)

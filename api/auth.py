@@ -185,7 +185,7 @@ def get_business_profile_data(user_id, engine):
                 return None
 
             projects_query = text("""
-                SELECT p.id, p.name, p.description, p.status, u.name
+                SELECT p.id, p.name, p.description, p.status, u.name AS business_name
                 FROM projects p
                 JOIN users u ON p.user_id = u.id
                 WHERE p.user_id = :user_id

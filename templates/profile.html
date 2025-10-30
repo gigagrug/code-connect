@@ -175,15 +175,6 @@
           <p class="col-sspan-full text-center text-gray-500 dark:text-gray-400">You have not created any projects.</p>
         {% endfor %}
       </div>
-    {% else %}
-      <h2 class="text mb-6 text-center text-3xl font-bold">Your Created Projects</h2>
-      <div class="grid grid-cols-1 gap-8 md:grid-cols-2 lg:grid-cols-3">
-        {% for project in projects %}
-          {% include "partials/project_card.html" %}
-        {% else %}
-          <p class="col-span-full text-center text-gray-500 dark:text-gray-400">You have not created any projects yet.</p>
-        {% endfor %}
-      </div>
     {% endif %}
   </div>
 {% endblock %}

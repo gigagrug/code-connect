@@ -12,15 +12,6 @@ CREATE TABLE IF NOT EXISTS users (
 	FOREIGN KEY (instructor_id) REFERENCES users(id) ON DELETE SET NULL
 );
 
-CREATE TABLE IF NOT EXISTS permission_change_requests (
-	id INT AUTO_INCREMENT PRIMARY KEY,
-	user_id INT NOT NULL,
-	requested_role INT NOT NULL,
-	status INT DEFAULT 0,
-	created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-	FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
-);
-
 CREATE TABLE IF NOT EXISTS instructor_requests (
 	id INT AUTO_INCREMENT PRIMARY KEY,
 	student_id INT NOT NULL,
