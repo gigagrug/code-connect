@@ -123,6 +123,9 @@ def serve_upload(project_name, filename):
 @app.route('/')
 def index():
     if 'user_id' in session:
+        if session.get('role') == 1:
+            return redirect(url_for('business_profile',user_id=session['user_id']))
+
         projects = get_all_projects(engine, session, page=1, per_page=12)
         return render_template('index.html', projects=projects)
     else:

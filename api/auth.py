@@ -97,7 +97,7 @@ def login_user(request, engine, is_debug=False):
                     session['role'] = result.role
                     session['permission'] = result.permission
                     flash(f"Welcome back, {email}!", "success")
-                    return redirect(url_for('profile'))
+                    return redirect(url_for('index'))
             
             flash("Invalid email or password. Please try again.", "danger")
 
