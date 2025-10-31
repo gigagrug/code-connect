@@ -23,8 +23,8 @@
         <ul class="flex flex-row space-x-4 font-medium">
           {% if 'email' in session %}
             {% if session['email'] and session.get('role') in [3] %}
-							<a href="/jobs" class="text">Jobs</a>
-						{% endif %}
+              <a href="/jobs" class="text">Jobs</a>
+            {% endif %}
             <a href="/profile" class="text">Profile</a>
             {% if session['email'] and session.get('role') in [0] %}
               <a href="/userMgt" class="text">UserMgt</a>

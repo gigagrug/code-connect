@@ -12,17 +12,12 @@
     </div>
 
     <div class="mb-8 flex justify-center gap-x-8 border-b border-gray-200 dark:border-gray-700">
-      <span class="text -mb-px cursor-default border-b-2 border-blue-500 px-4 py-3 text-2xl font-semibold text-blue-500">
-        Projects
-      </span>
-      
-      <a href="/business/{{ business_user.id }}/jobs" 
-         class="text -mb-px border-b-2 border-transparent px-4 py-3 text-2xl font-semibold text-gray-400 hover:border-gray-300 hover:text-gray-600 dark:text-gray-500 dark:hover:border-gray-600 dark:hover:text-gray-300">
-        Jobs
-      </a>
+      <span class="text -mb-px cursor-default border-b-2 border-blue-500 px-4 py-3 text-2xl font-semibold text-blue-500"> Projects </span>
+
+      <a href="/business/{{ business_user.id }}/jobs" class="text -mb-px border-b-2 border-transparent px-4 py-3 text-2xl font-semibold text-gray-400 hover:border-gray-300 hover:text-gray-600 dark:text-gray-500 dark:hover:border-gray-600 dark:hover:text-gray-300"> Jobs </a>
     </div>
 
-    <div class="mx-auto max-w-4xl">
+    <div class="mx-auto">
       {% if projects %}
         <div id="projects-grid" class="grid grid-cols-1 gap-8 md:grid-cols-2 lg:grid-cols-3">
           {% for project in projects %}
