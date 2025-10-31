@@ -135,3 +135,36 @@ def get_open_jobs(engine):
     except Exception as e:
         print(f"Database error fetching open jobs: {e}")
         return []
+
+def get_business_jobs_data(user_id, engine):
+    try:
+        with engine.connect() as conn:
+            user_query = text("""
+                SELECT id, name, bio
+                FROM users
+                WHERE id = :user_id AND role = 1
+            """)
+            business_user = conn.execute(user_query, {"user_id": user_id}).mappings().first()
+
+            if not business_user:
+                flash("Business profile not found.", "warning")
+                return None
+
+            jobs_query = text("""
+                SELECT j.id, j.title, j.description, j.status, j.user_id, u.name AS user_name
+                FROM jobs j
+                JOIN users u ON j.user_id = u.id
+                WHERE j.user_id = :user_id
+                ORDER BY j.created_at DESC
+            """)
+            jobs = conn.execute(jobs_query, {"user_id": user_id}).mappings().all()
+
+            return render_template(
+                'business_jobs.html',
+                business_user=business_user,
+                jobs=jobs
+            )
+    except Exception as e:
+        print(f"Error fetching business profile data: {e}")
+        flash("An error occurred while trying to load the profile.", "danger")
+        return None

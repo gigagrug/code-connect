@@ -139,6 +139,4 @@ DROP TABLE IF EXISTS projects;
 
 DROP TABLE IF EXISTS instructor_requests;
 
-DROP TABLE IF EXISTS permission_change_requests;
-
 DROP TABLE IF EXISTS users;

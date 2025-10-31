@@ -275,6 +275,13 @@ def business_profile(user_id):
         return redirect(url_for('index'))
     return profile_page
 
+@app.route('/business/<int:user_id>/jobs')
+def business_jobs(user_id):
+    profile_page = get_business_jobs_data(user_id, engine)
+    if profile_page is None:
+        return redirect(url_for('index'))
+    return profile_page
+
 @app.route('/userMgt')
 def user_mgt():
     if 'user_id' not in session or session.get('role') != 0:
