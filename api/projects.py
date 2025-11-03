@@ -1,5 +1,6 @@
 import os
 import uuid
+import shutil
 from sqlalchemy import text
 from flask import flash, redirect, url_for, session, request, jsonify, render_template
 from werkzeug.utils import secure_filename
@@ -408,13 +409,32 @@ def delete_project(project_id, engine):
         return redirect(url_for('project_page', project_id=project_id))
         
     try:
+        project_name = project.name 
+
         with engine.connect() as connection:
             delete_query = text("DELETE FROM projects WHERE id = :project_id AND user_id = :user_id")
             connection.execute(delete_query, {"project_id": project_id, "user_id": session['user_id']})
             connection.commit()
-            flash("Project deleted successfully.", "success")
-    except Exception as e:
-        flash(f"An error occurred while deleting the project: {e}", "danger")
+
+        try:
+            sanitized_project_name = secure_filename(str(project_name))[:50]
+            fs_upload_dir = os.path.join('.', 'uploads', sanitized_project_name)
+            
+            if os.path.isdir(fs_upload_dir):
+                shutil.rmtree(fs_upload_dir)
+                print(f"Successfully deleted directory: {fs_upload_dir}")
+            else:
+                print(f"Directory not found, skipping deletion: {fs_upload_dir}")
+                
+        except Exception as file_e:
+            print(f"Error deleting project directory: {file_e}")
+            flash("Project deleted, but an error occurred while cleaning up associated files.", "warning")
+            return redirect(url_for('profile'))
+            
+        flash("Project deleted successfully.", "success")
+
+    except Exception as db_e:
+        flash(f"An error occurred while deleting the project: {db_e}", "danger")
         return redirect(url_for('project_page', project_id=project_id))
         
     return redirect(url_for('profile'))
@@ -476,7 +496,7 @@ def get_comments_for_project(project_id, engine):
         with engine.connect() as conn:
             query = text("""
                 SELECT c.id, c.comment, c.created_at, c.attachment_path,
-                       u.name, u.email, u.role
+                       u.name, u.email, u.role, c.user_id
                 FROM comments c
                 JOIN users u ON c.user_id = u.id
                 WHERE c.project_id = :project_id
@@ -537,5 +557,61 @@ def add_comment_to_project(project_id, request, engine):
             flash("Comment added successfully.", "success")
     except Exception as e:
         flash(f"An error occurred while posting your comment: {e}", "danger")
+
+    return redirect(url_for('project_page', project_id=project_id))
+
+def delete_comment_on_project(project_id, comment_id, engine):
+    """Handles deleting a comment and its associated attachment."""
+    user_id = session.get('user_id')
+    if not user_id:
+        flash("You must be logged in to delete a comment.", "warning")
+        return redirect(url_for('project_page', project_id=project_id))
+
+    try:
+        with engine.connect() as conn:
+            with conn.begin(): # Start a transaction
+                
+                # 1. Get comment details (owner and attachment path)
+                query_details = text("""
+                    SELECT user_id, attachment_path 
+                    FROM comments 
+                    WHERE id = :comment_id AND project_id = :project_id
+                """)
+                comment = conn.execute(query_details, {
+                    "comment_id": comment_id, 
+                    "project_id": project_id
+                }).mappings().first()
+
+                if not comment:
+                    flash("Comment not found.", "danger")
+                    return redirect(url_for('project_page', project_id=project_id))
+
+                # 2. Check permissions (Only comment owner can delete)
+                #    You could also add: or project.user_id == user_id
+                if comment.user_id != user_id:
+                    flash("You do not have permission to delete this comment.", "danger")
+                    return redirect(url_for('project_page', project_id=project_id))
+                
+                # 3. Delete the file from the filesystem if it exists
+                if comment.attachment_path:
+                    try:
+                        # Convert URL path (/uploads/...) to a relative file path (./uploads/...)
+                        file_path = os.path.join('.', comment.attachment_path.lstrip('/'))
+                        if os.path.exists(file_path):
+                            os.remove(file_path)
+                        else:
+                            print(f"Warning: File not found, cannot delete: {file_path}")
+                    except Exception as e:
+                        # Log error but don't stop the message deletion
+                        print(f"Error deleting file {comment.attachment_path}: {e}")
+
+                # 4. Delete the comment from the database
+                delete_query = text("DELETE FROM comments WHERE id = :comment_id")
+                conn.execute(delete_query, {"comment_id": comment_id})
+                
+                flash("Comment deleted successfully.", "success")
+                
+    except Exception as e:
+        flash(f"An error occurred while deleting the comment: {e}", "danger")
 
     return redirect(url_for('project_page', project_id=project_id))

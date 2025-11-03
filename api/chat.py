@@ -8,10 +8,6 @@ from werkzeug.utils import secure_filename
 from .projects import check_if_user_can_chat, get_project_by_id
 
 def _get_upload_paths(project_name, original_filename):
-    """
-    Generates a secure filesystem path and a URL path for a new file.
-    Returns (fs_save_path, url_path)
-    """
     sanitized_project_name = secure_filename(str(project_name))[:50]
     safe_filename = secure_filename(original_filename)
     unique_filename = f"{uuid.uuid4()}_{safe_filename}"
@@ -121,10 +117,21 @@ def init_chat(socketio, engine):
                     message = conn.execute(msg_query, {"id": message_id}).first()
 
                     if message and message.user_id == user_id:
-                        # TODO: Optionally delete file from filesystem here
-                        # if message.attachment_path:
-                        #   os.remove(path) 
                         
+                        # --- ADDED FILE DELETION LOGIC ---
+                        if message.attachment_path:
+                            try:
+                                # Convert URL path (/uploads/...) to a relative file path (./uploads/...)
+                                file_path = os.path.join('.', message.attachment_path.lstrip('/'))
+                                if os.path.exists(file_path):
+                                    os.remove(file_path)
+                                else:
+                                    print(f"Warning: File not found, cannot delete: {file_path}")
+                            except Exception as e:
+                                # Log error but don't stop the message deletion
+                                print(f"Error deleting file {message.attachment_path}: {e}")
+                        # --- END FILE DELETION LOGIC ---
+                                
                         delete_query = text("DELETE FROM chat_messages WHERE id = :id")
                         conn.execute(delete_query, {"id": message_id})
 

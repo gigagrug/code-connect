@@ -157,7 +157,7 @@ def project_page(project_id):
         if can_chat:
             with engine.connect() as conn:
                 history_query = text("""
-                    SELECT c.id AS message_id, u.email, c.message_text, c.timestamp
+                    SELECT c.id AS message_id, u.email, c.message_text, c.timestamp, c.attachment_path
                     FROM chat_messages c JOIN users u ON c.user_id = u.id
                     WHERE c.project_id = :project_id ORDER BY c.timestamp ASC
                 """)
@@ -252,6 +252,10 @@ def job_delete_route(job_id):
 @app.route('/project/<int:project_id>/comment', methods=['POST'])
 def project_comment_route(project_id):
     return add_comment_to_project(project_id, request, engine)
+
+@app.route('/project/<int:project_id>/comment/<int:comment_id>/delete', methods=['POST'])
+def project_comment_delete_route(project_id, comment_id):
+    return delete_comment_on_project(project_id, comment_id, engine)
 
 @app.route('/profile')
 def profile():

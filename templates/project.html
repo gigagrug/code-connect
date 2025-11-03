@@ -42,7 +42,16 @@
                 {% if project.project_link %}<p><strong>Project Link:</strong> <a href="{{ project.project_link }}" target="_blank" class="text-blue-500 hover:underline">{{ project.project_link }}</a></p>{% endif %}
                 {% if project.github_link %}<p><strong>GitHub Link:</strong> <a href="{{ project.github_link }}" target="_blank" class="text-blue-500 hover:underline">{{ project.github_link }}</a></p>{% endif %}
                 {% if project.attachment_path %}
-                  <p><strong>Attachment:</strong> <a href="{{ project.attachment_path }}" target="_blank" class="text-blue-500 hover:underline">View Attached File</a></p>
+                  <p><strong>Attachment:</strong></p>
+                  {% set filename = project.attachment_path.split('/')[-1] %}
+                  {% set extension = filename.split('.')[-1].lower() %}
+                  {% if extension in ['jpg', 'jpeg', 'png', 'gif', 'webp'] %}
+                    <a href="{{ project.attachment_path }}" target="_blank">
+                      <img src="{{ project.attachment_path }}" alt="Project Attachment" class="mt-2 h-auto max-w-full rounded-lg shadow-md" />
+                    </a>
+                  {% else %}
+                    <a href="{{ project.attachment_path }}" target="_blank" class="text-blue-500 hover:underline">View Attached File</a>
+                  {% endif %}
                 {% endif %}
               </div>
             </div>
@@ -77,12 +86,30 @@
                             <span class="text-xs font-normal text-green-500">(Student)</span>
                           {% endif %}
                         </span>
-                        <span class="text-xs text-gray-500 dark:text-gray-400"> {{ comment.created_at.strftime('%b %d, %Y at %I:%M %p') }} </span>
+
+                        <div class="flex items-center gap-3">
+                          <span class="text-xs text-gray-500 dark:text-gray-400"> {{ comment.created_at.strftime('%b %d, %Y at %I:%M %p') }} </span>
+
+                          {% if session.user_id == comment.user_id %}
+                            <form action="/project/{{ project.id }}/comment/{{ comment.id }}/delete" method="POST" onsubmit="return confirm('Are you sure you want to delete this comment?');">
+                              <button type="submit" class="text-lg font-bold text-gray-400 hover:text-red-500" title="Delete comment">&times;</button>
+                            </form>
+                          {% endif %}
+                        </div>
                       </div>
                       <p class="text whitespace-pre-line">{{ comment.comment }}</p>
+
                       {% if comment.attachment_path %}
                         <div class="mt-2">
-                          <a href="{{ comment.attachment_path }}" target="_blank" class="text-sm text-blue-500 hover:underline"> View Attachment </a>
+                          {% set filename = comment.attachment_path.split('/')[-1] %}
+                          {% set extension = filename.split('.')[-1].lower() %}
+                          {% if extension in ['jpg', 'jpeg', 'png', 'gif', 'webp'] %}
+                            <a href="{{ comment.attachment_path }}" target="_blank">
+                              <img src="{{ comment.attachment_path }}" alt="Comment Attachment" class="mt-2 h-auto max-w-full rounded-lg shadow-md" />
+                            </a>
+                          {% else %}
+                            <a href="{{ comment.attachment_path }}" target="_blank" class="text-sm text-blue-500 hover:underline"> View Attachment </a>
+                          {% endif %}
                         </div>
                       {% endif %}
                     </div>
@@ -92,6 +119,7 @@
                 {% endif %}
               </div>
             </div>
+
             {% if teams %}
               <div class="mt-8 border-t border-gray-200 pt-6 dark:border-gray-700">
                 <h3 class="text mb-4 text-2xl font-semibold">Assigned Teams</h3>
@@ -130,7 +158,17 @@
                   <div>
                     <label for="attachment" class="text mb-2 block text-sm font-medium">Project Attachment</label>
                     {% if project.attachment_path %}
-                      <div class="mb-2 text-sm">Current: <a href="{{ project.attachment_path }}" target="_blank" class="text-blue-500 hover:underline">View File</a></div>
+                      <div class="mb-2 text-sm">
+                        Current: {% set filename = project.attachment_path.split('/')[-1] %}
+                        {% set extension = filename.split('.')[-1].lower() %}
+                        {% if extension in ['jpg', 'jpeg', 'png', 'gif', 'webp'] %}
+                          <a href="{{ project.attachment_path }}" target="_blank">
+                            <img src="{{ project.attachment_path }}" alt="Current Project Attachment" class="inline-block h-16 w-16 rounded-md object-cover" />
+                          </a>
+                        {% else %}
+                          <a href="{{ project.attachment_path }}" target="_blank" class="text-blue-500 hover:underline">View File</a>
+                        {% endif %}
+                      </div>
                     {% endif %}
                     <input type="file" name="attachment" id="attachment" class="input text w-full file:mr-4 file:rounded-md file:border-0 file:bg-gray-200 file:px-4 file:py-2 file:text-sm file:font-semibold hover:file:bg-gray-300 dark:file:bg-gray-700 dark:file:text-gray-200 dark:hover:file:bg-gray-600" />
                     <p class="mt-1 text-xs text-gray-500">Uploading a new file will replace the old one.</p>
@@ -174,8 +212,21 @@
                   </div>
                   <div class="message-body text {% if msg.email == session.email %}bg-blue-600 text-white{% else %}bg-gray-100 dark:bg-gray-700{% endif %} max-w-xs rounded-lg p-2 break-words">
                     {{ msg.message_text }}
+
                     {% if msg.attachment_path %}
-                      <a href="{{ msg.attachment_path }}" target="_blank" class="mt-1 block text-sm font-bold text-white underline dark:text-blue-300"> View Attachment </a>
+                      {% set filename = msg.attachment_path.split('/')[-1] %}
+                      {% set extension = filename.split('.')[-1].lower() %}
+                      {% if extension in ['jpg', 'jpeg', 'png', 'gif', 'webp'] %}
+                        <a href="{{ msg.attachment_path }}" target="_blank">
+                          <img src="{{ msg.attachment_path }}" alt="Chat Attachment" class="mt-2 h-auto max-w-[200px] rounded-lg" />
+                        </a>
+                      {% else %}
+                        {% if msg.email == session.email %}
+                          <a href="{{ msg.attachment_path }}" target="_blank" class="mt-1 block text-sm font-bold text-white underline dark:text-blue-300"> View Attachment </a>
+                        {% else %}
+                          <a href="{{ msg.attachment_path }}" target="_blank" class="mt-1 block text-sm font-bold text-blue-500 underline dark:text-blue-400"> View Attachment </a>
+                        {% endif %}
+                      {% endif %}
                     {% endif %}
                   </div>
                 </div>
@@ -239,11 +290,27 @@
           messageBody.textContent = data.message;
 
           if (data.attachment_path) {
+            const filename = data.attachment_path.split("/").pop();
+            const extension = filename.split(".").pop().toLowerCase();
+
             const attachmentLink = document.createElement("a");
             attachmentLink.href = data.attachment_path;
             attachmentLink.target = "_blank";
-            attachmentLink.className = "mt-1 block text-sm font-bold text-white underline dark:text-blue-300";
-            attachmentLink.textContent = "View Attachment";
+
+            if (["jpg", "jpeg", "png", "gif", "webp"].includes(extension)) {
+              const img = document.createElement("img");
+              img.src = data.attachment_path;
+              img.alt = "Chat Attachment";
+              img.className = "mt-2 max-w-[200px] h-auto rounded-lg";
+              attachmentLink.appendChild(img);
+            } else {
+              if (isCurrentUser) {
+                attachmentLink.className = "mt-1 block text-sm font-bold text-white underline dark:text-blue-300";
+              } else {
+                attachmentLink.className = "mt-1 block text-sm font-bold text-blue-500 underline dark:text-blue-400";
+              }
+              attachmentLink.textContent = "View Attachment";
+            }
             messageBody.appendChild(attachmentLink);
           }
 
@@ -275,7 +342,7 @@
           const file = fileInput.files[0];
 
           if (!message && !file) {
-            return; // Don't send empty messages
+            return;
           }
 
           const payload = {
@@ -286,15 +353,14 @@
           if (file) {
             const reader = new FileReader();
             reader.onload = (event) => {
-              payload.file = event.target.result; // This is the Base64 string
+              payload.file = event.target.result;
               payload.filename = file.name;
               socket.emit("new_message", payload);
               messageInput.value = "";
-              fileInput.value = null; // Clear the file input
+              fileInput.value = null;
             };
             reader.readAsDataURL(file);
           } else {
-            // Send text-only message
             socket.emit("new_message", payload);
             messageInput.value = "";
           }
