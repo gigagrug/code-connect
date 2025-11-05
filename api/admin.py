@@ -108,11 +108,6 @@ def login_admin(request, engine, is_debug=False):
     return redirect(url_for('login'))
 
 def get_projects_paginated(engine, page: int = 1, per_page: int = 6, q: str | None = None, status: str | None = None):
-    """
-    Returns (rows, total, total_pages, pending_count, approved_count, taken_count).
-    - q: optional substring match on title/description (legacy names title/description)
-    - status: optional exact status filter value (0=pending, 1=approved, 2=taken)
-    """
     page = max(int(page or 1), 1)
     per_page = max(int(per_page or 1), 1)
     offset = (page - 1) * per_page
@@ -133,7 +128,6 @@ def get_projects_paginated(engine, page: int = 1, per_page: int = 6, q: str | No
     with engine.connect() as conn:
         total = conn.execute(text(f"SELECT COUNT(*) FROM projects {where_sql}"), params).scalar() or 0
 
-        # Global status counts (not affected by filters)
         counts = conn.execute(text(
             """
             SELECT 
@@ -144,7 +138,6 @@ def get_projects_paginated(engine, page: int = 1, per_page: int = 6, q: str | No
             """
         )).mappings().first() or {"pending_count": 0, "approved_count": 0, "taken_count": 0}
 
-        # Order by ID ascending for deterministic paging
         try:
             rows = conn.execute(
                 text(f"""

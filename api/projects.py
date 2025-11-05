@@ -106,7 +106,7 @@ def approve_project(project_id, engine):
 
     try:
         with engine.connect() as connection:
-            if new_status == 2:  # Approved - Only ONE instructor is allowed
+            if new_status == 2:
                 clear_other_instructors_query = text("""
                     DELETE FROM instructor_projects
                     WHERE project_id = :project_id AND instructor_id != :instructor_id
@@ -127,7 +127,7 @@ def approve_project(project_id, engine):
                     "status": new_status
                 })
 
-            elif new_status == 1:  # Pending - MULTIPLE instructors are allowed
+            elif new_status == 1:
                 upsert_query = text("""
                     INSERT INTO instructor_projects (instructor_id, project_id, status)
                     VALUES (:instructor_id, :project_id, :status)
@@ -139,7 +139,7 @@ def approve_project(project_id, engine):
                     "status": new_status
                 })
 
-            else:  # Status is 0 (Unlisted)
+            else:  
                 delete_query = text("""
                     DELETE FROM instructor_projects
                     WHERE instructor_id = :instructor_id AND project_id = :project_id
@@ -569,9 +569,8 @@ def delete_comment_on_project(project_id, comment_id, engine):
 
     try:
         with engine.connect() as conn:
-            with conn.begin(): # Start a transaction
+            with conn.begin():
                 
-                # 1. Get comment details (owner and attachment path)
                 query_details = text("""
                     SELECT user_id, attachment_path 
                     FROM comments 
@@ -586,26 +585,20 @@ def delete_comment_on_project(project_id, comment_id, engine):
                     flash("Comment not found.", "danger")
                     return redirect(url_for('project_page', project_id=project_id))
 
-                # 2. Check permissions (Only comment owner can delete)
-                #    You could also add: or project.user_id == user_id
                 if comment.user_id != user_id:
                     flash("You do not have permission to delete this comment.", "danger")
                     return redirect(url_for('project_page', project_id=project_id))
                 
-                # 3. Delete the file from the filesystem if it exists
                 if comment.attachment_path:
                     try:
-                        # Convert URL path (/uploads/...) to a relative file path (./uploads/...)
                         file_path = os.path.join('.', comment.attachment_path.lstrip('/'))
                         if os.path.exists(file_path):
                             os.remove(file_path)
                         else:
                             print(f"Warning: File not found, cannot delete: {file_path}")
                     except Exception as e:
-                        # Log error but don't stop the message deletion
                         print(f"Error deleting file {comment.attachment_path}: {e}")
 
-                # 4. Delete the comment from the database
                 delete_query = text("DELETE FROM comments WHERE id = :comment_id")
                 conn.execute(delete_query, {"comment_id": comment_id})
                 

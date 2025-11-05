@@ -142,9 +142,8 @@ def get_profile_data(engine):
                                    instructors=instructors,
                                    pending_request=pending_request)
 
-    elif user_role == 0: # Instructor Logic
+    elif user_role == 0:
         with engine.connect() as conn:
-            # New query to get projects managed by the instructor
             approved_projects_query = text("""
                 SELECT p.id, p.name, p.description, p.status
                 FROM instructor_projects ip
@@ -157,7 +156,6 @@ def get_profile_data(engine):
                 {"instructor_id": user_id}
             ).mappings().all()
 
-        # Also get projects created by the instructor
         created_projects = get_projects_for_user(engine)
         
         return render_template(
@@ -216,18 +214,16 @@ def update_profile(engine):
 
     try:
         with engine.connect() as conn:
-            with conn.begin():  # Start a transaction
-                # Update name for the current user
+            with conn.begin(): 
                 query_name = text("UPDATE users SET name = :name WHERE id = :user_id")
                 conn.execute(query_name, {"name": name, "user_id": user_id})
 
-                # Role-specific updates
-                if user_role == 1:  # Business User can also update bio
+                if user_role == 1: 
                     bio = request.form.get('bio', '').strip()
                     query_bio = text("UPDATE users SET bio = :bio WHERE id = :user_id")
                     conn.execute(query_bio, {"bio": bio, "user_id": user_id})
 
-                elif user_role == 3:  # Student can also update graduation year
+                elif user_role == 3: 
                     graduation = request.form.get('graduation', '').strip()
                     query_grad = text("UPDATE users SET graduation = :graduation WHERE id = :user_id")
                     conn.execute(query_grad, {"graduation": graduation, "user_id": user_id})
@@ -243,12 +239,11 @@ def get_profile_data(engine):
     user_role = session.get('role')
     user_id = session.get('user_id')
 
-    # Fetch base user data for everyone
     with engine.connect() as conn:
         user_data_query = text("SELECT name, bio FROM users WHERE id = :user_id")
         user_data = conn.execute(user_data_query, {"user_id": user_id}).mappings().first()
 
-    if user_role == 3: # Student Logic
+    if user_role == 3:
         with engine.connect() as conn:
             student_query = text("""
                 SELECT s.instructor_id, i.name AS instructor_email, s.graduation
@@ -278,9 +273,9 @@ def get_profile_data(engine):
                                student_info=student_info,
                                instructors=instructors,
                                pending_request=pending_request,
-                               user_data=user_data) # Pass user_data as well
+                               user_data=user_data)
 
-    elif user_role == 0: # Instructor Logic
+    elif user_role == 0:
         with engine.connect() as conn:
             approved_projects_query = text("""
                 SELECT p.id, p.name, p.description, p.status, u.name
@@ -302,7 +297,7 @@ def get_profile_data(engine):
             user_data=user_data
         )
 
-    else: # Logic for Business and other roles
+    else:
         projects = get_projects_for_user(engine)
         return render_template('profile.html', projects=projects, user_data=user_data)
 

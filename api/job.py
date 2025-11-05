@@ -115,7 +115,7 @@ def delete_job(job_id, engine):
         flash(f"An error occurred: {e}", "danger")
         return redirect(url_for('job_page', job_id=job_id))
 
-    return redirect(url_for('profile'))
+    return redirect(url_for('business_jobs',user_id=session['user_id']))
 
 def get_open_jobs(engine):
     """Fetches all jobs with status 1 (Open) for the public jobs page."""

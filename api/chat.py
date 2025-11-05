@@ -47,7 +47,7 @@ def init_chat(socketio, engine):
         if not all([project_id, user_id, email]):
             return
         if not message_text and not file_data:
-            return # Ignore empty submissions
+            return 
         if not check_if_user_can_chat(user_id, project_id, engine):
             return
 
@@ -62,8 +62,6 @@ def init_chat(socketio, engine):
 
                 fs_save_path, url_path = _get_upload_paths(project.name, original_filename)
                 
-                # Decode the Base64 string
-                # It's usually "data:image/png;base64,iVBORw..." we split on the comma
                 file_content = base64.b64decode(file_data.split(',')[1])
                 
                 with open(fs_save_path, 'wb') as f:
@@ -72,7 +70,6 @@ def init_chat(socketio, engine):
                 attachment_path = url_path
             except Exception as e:
                 print(f"Error saving chat file: {e}")
-                # Don't stop, just don't attach the file
 
         try:
             with engine.connect() as conn:
@@ -118,19 +115,15 @@ def init_chat(socketio, engine):
 
                     if message and message.user_id == user_id:
                         
-                        # --- ADDED FILE DELETION LOGIC ---
                         if message.attachment_path:
                             try:
-                                # Convert URL path (/uploads/...) to a relative file path (./uploads/...)
                                 file_path = os.path.join('.', message.attachment_path.lstrip('/'))
                                 if os.path.exists(file_path):
                                     os.remove(file_path)
                                 else:
                                     print(f"Warning: File not found, cannot delete: {file_path}")
                             except Exception as e:
-                                # Log error but don't stop the message deletion
                                 print(f"Error deleting file {message.attachment_path}: {e}")
-                        # --- END FILE DELETION LOGIC ---
                                 
                         delete_query = text("DELETE FROM chat_messages WHERE id = :id")
                         conn.execute(delete_query, {"id": message_id})
