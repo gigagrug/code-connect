@@ -41,18 +41,31 @@
               <div class="text mt-6 space-y-2">
                 {% if project.project_link %}<p><strong>Project Link:</strong> <a href="{{ project.project_link }}" target="_blank" class="text-blue-500 hover:underline">{{ project.project_link }}</a></p>{% endif %}
                 {% if project.github_link %}<p><strong>GitHub Link:</strong> <a href="{{ project.github_link }}" target="_blank" class="text-blue-500 hover:underline">{{ project.github_link }}</a></p>{% endif %}
+                
                 {% if project.attachment_path %}
-                  <p><strong>Attachment:</strong></p>
-                  {% set filename = project.attachment_path.split('/')[-1] %}
-                  {% set extension = filename.split('.')[-1].lower() %}
-                  {% if extension in ['jpg', 'jpeg', 'png', 'gif', 'webp'] %}
-                    <a href="{{ project.attachment_path }}" target="_blank">
-                      <img src="{{ project.attachment_path }}" alt="Project Attachment" class="mt-2 h-auto max-w-full rounded-lg shadow-md" />
-                    </a>
-                  {% else %}
-                    <a href="{{ project.attachment_path }}" target="_blank" class="text-blue-500 hover:underline">View Attached File</a>
-                  {% endif %}
+                  <p><strong>Attachment(s):</strong></p>
+                  <div class="flex flex-wrap gap-4">
+                    {% set paths = project.attachment_path.split(';') %}
+                    {% for path in paths %}
+                      {% if path %}
+                        {% set full_filename = path.split('/')[-1] %}
+                        {% set original_filename = full_filename.split('_', 1)[-1] %}
+                        {% set extension = original_filename.split('.')[-1].lower() %}
+                        
+                        {% if extension in ['jpg', 'jpeg', 'png', 'gif', 'webp'] %}
+                          <a href="{{ path }}" target="_blank">
+                            <img src="{{ path }}" alt="Project Attachment" class="mt-2 h-24 w-24 rounded-lg object-cover shadow-md" />
+                          </a>
+                        {% else %}
+                          <a href="{{ path }}" download="{{ original_filename }}" class="text-blue-500 hover:underline">
+                            Download ({{ original_filename }})
+                          </a>
+                        {% endif %}
+                      {% endif %}
+                    {% endfor %}
+                  </div>
                 {% endif %}
+
               </div>
             </div>
 
@@ -64,8 +77,8 @@
                   <label for="comment" class="text mb-2 block text-sm font-medium">Add a comment</label>
                   <textarea name="comment" id="comment" class="input text field-sizing-content min-h-[80px]" placeholder="Write your comment..."></textarea>
 
-                  <label for="attachment" class="text mt-2 mb-2 block text-sm font-medium">Attach File (Optional)</label>
-                  <input type="file" name="attachment" id="attachment" class="input text w-full file:mr-4 file:rounded-md file:border-0 file:bg-gray-200 file:px-4 file:py-2 file:text-sm file:font-semibold hover:file:bg-gray-300 dark:file:bg-gray-700 dark:file:text-gray-200 dark:hover:file:bg-gray-600" />
+                  <label for="attachment" class="text mt-2 mb-2 block text-sm font-medium">Attach File(s) (Optional)</label>
+                  <input type="file" name="attachment" id="attachment" multiple class="input text w-full file:mr-4 file:rounded-md file:border-0 file:bg-gray-200 file:px-4 file:py-2 file:text-sm file:font-semibold hover:file:bg-gray-300 dark:file:bg-gray-700 dark:file:text-gray-200 dark:hover:file:bg-gray-600" />
 
                   <button type="submit" class="btn-primary text mt-4">Submit Comment</button>
                 </form>
@@ -98,20 +111,30 @@
                         </div>
                       </div>
                       <p class="text whitespace-pre-line">{{ comment.comment }}</p>
-
+                      
                       {% if comment.attachment_path %}
-                        <div class="mt-2">
-                          {% set filename = comment.attachment_path.split('/')[-1] %}
-                          {% set extension = filename.split('.')[-1].lower() %}
-                          {% if extension in ['jpg', 'jpeg', 'png', 'gif', 'webp'] %}
-                            <a href="{{ comment.attachment_path }}" target="_blank">
-                              <img src="{{ comment.attachment_path }}" alt="Comment Attachment" class="mt-2 h-auto max-w-full rounded-lg shadow-md" />
-                            </a>
-                          {% else %}
-                            <a href="{{ comment.attachment_path }}" target="_blank" class="text-sm text-blue-500 hover:underline"> View Attachment </a>
-                          {% endif %}
+                        <div class="mt-2 flex flex-wrap gap-4">
+                          {% set paths = comment.attachment_path.split(';') %}
+                          {% for path in paths %}
+                            {% if path %}
+                              {% set full_filename = path.split('/')[-1] %}
+                              {% set original_filename = full_filename.split('_', 1)[-1] %}
+                              {% set extension = original_filename.split('.')[-1].lower() %}
+                              
+                              {% if extension in ['jpg', 'jpeg', 'png', 'gif', 'webp'] %}
+                                <a href="{{ path }}" target="_blank">
+                                  <img src="{{ path }}" alt="Comment Attachment" class="mt-2 h-20 w-20 rounded-lg object-cover shadow-md" />
+                                </a>
+                              {% else %}
+                                <a href="{{ path }}" download="{{ original_filename }}" class="text-sm text-blue-500 hover:underline">
+                                  Download ({{ original_filename }})
+                                </a>
+                              {% endif %}
+                            {% endif %}
+                          {% endfor %}
                         </div>
                       {% endif %}
+                      
                     </div>
                   {% endfor %}
                 {% else %}
@@ -156,24 +179,35 @@
                   <div><label for="description" class="text mb-2 block text-sm font-medium">Description</label><textarea name="description" id="description" class="input text field-sizing-content min-h-[100px]" required>{{ project.description }}</textarea></div>
 
                   <div>
-                    <label for="attachment" class="text mb-2 block text-sm font-medium">Project Attachment</label>
+                    <label class="text mb-2 block text-sm font-medium">Manage Attachments</label>
+                    
                     {% if project.attachment_path %}
                       <div class="mb-2 text-sm">
-                        Current: {% set filename = project.attachment_path.split('/')[-1] %}
-                        {% set extension = filename.split('.')[-1].lower() %}
-                        {% if extension in ['jpg', 'jpeg', 'png', 'gif', 'webp'] %}
-                          <a href="{{ project.attachment_path }}" target="_blank">
-                            <img src="{{ project.attachment_path }}" alt="Current Project Attachment" class="inline-block h-16 w-16 rounded-md object-cover" />
-                          </a>
-                        {% else %}
-                          <a href="{{ project.attachment_path }}" target="_blank" class="text-blue-500 hover:underline">View File</a>
-                        {% endif %}
+                        <p>Current Files:</p>
+                        <div class="space-y-2 rounded-md border p-2 dark:border-gray-600">
+                          {% set paths = project.attachment_path.split(';') %}
+                          {% for path in paths %}
+                            {% if path %}
+                              {% set full_filename = path.split('/')[-1] %}
+                              {% set original_filename = full_filename.split('_', 1)[-1] %}
+                              
+                              <div class="flex items-center justify-between">
+                                <label for="del-{{ loop.index }}" class="flex items-center gap-2">
+                                  <input type="checkbox" name="files_to_delete" value="{{ path }}" id="del-{{ loop.index }}" class="rounded text-red-500 focus:ring-red-400" />
+                                  <span class="text-red-500">Delete</span>
+                                </label>
+                                <a href="{{ path }}" target="_blank" class="text-blue-500 hover:underline">{{ original_filename }}</a>
+                              </div>
+                            {% endif %}
+                          {% endfor %}
+                        </div>
                       </div>
                     {% endif %}
-                    <input type="file" name="attachment" id="attachment" class="input text w-full file:mr-4 file:rounded-md file:border-0 file:bg-gray-200 file:px-4 file:py-2 file:text-sm file:font-semibold hover:file:bg-gray-300 dark:file:bg-gray-700 dark:file:text-gray-200 dark:hover:file:bg-gray-600" />
-                    <p class="mt-1 text-xs text-gray-500">Uploading a new file will replace the old one.</p>
+                    
+                    <label for="attachment" class="text mb-2 mt-4 block text-sm font-medium">Add New Attachment(s)</label>
+                    <input type="file" name="attachment" id="attachment" multiple class="input text w-full file:mr-4 file:rounded-md file:border-0 file:bg-gray-200 file:px-4 file:py-2 file:text-sm file:font-semibold hover:file:bg-gray-300 dark:file:bg-gray-700 dark:file:text-gray-200 dark:hover:file:bg-gray-600" />
+                    <p class="mt-1 text-xs text-gray-500">Uploading new files will add them to the project. Use the checkboxes to delete old ones.</p>
                   </div>
-
                   <div class="flex items-center gap-4"><button type="submit" class="btn-primary text">Save Changes</button><button type="button" onclick="toggleEditForm()" class="btn-secondary text">Cancel</button></div>
                 </form>
                 <div class="text flex items-center gap-4" id="control-buttons">
@@ -214,20 +248,23 @@
                     {{ msg.message_text }}
 
                     {% if msg.attachment_path %}
-                      {% set filename = msg.attachment_path.split('/')[-1] %}
-                      {% set extension = filename.split('.')[-1].lower() %}
+                      {% set full_filename = msg.attachment_path.split('/')[-1] %}
+                      {% set original_filename = full_filename.split('_', 1)[-1] %}
+                      {% set extension = original_filename.split('.')[-1].lower() %}
+                      
                       {% if extension in ['jpg', 'jpeg', 'png', 'gif', 'webp'] %}
                         <a href="{{ msg.attachment_path }}" target="_blank">
                           <img src="{{ msg.attachment_path }}" alt="Chat Attachment" class="mt-2 h-auto max-w-[200px] rounded-lg" />
                         </a>
                       {% else %}
                         {% if msg.email == session.email %}
-                          <a href="{{ msg.attachment_path }}" target="_blank" class="mt-1 block text-sm font-bold text-white underline dark:text-blue-300"> View Attachment </a>
+                          <a href="{{ msg.attachment_path }}" download="{{ original_filename }}" class="mt-1 block text-sm font-bold text-white underline dark:text-blue-300"> Download ({{ original_filename }}) </a>
                         {% else %}
-                          <a href="{{ msg.attachment_path }}" target="_blank" class="mt-1 block text-sm font-bold text-blue-500 underline dark:text-blue-400"> View Attachment </a>
+                          <a href="{{ msg.attachment_path }}" download="{{ original_filename }}" class="mt-1 block text-sm font-bold text-blue-500 underline dark:text-blue-400"> Download ({{ original_filename }}) </a>
                         {% endif %}
                       {% endif %}
                     {% endif %}
+                    
                   </div>
                 </div>
               {% endfor %}
@@ -290,8 +327,9 @@
           messageBody.textContent = data.message;
 
           if (data.attachment_path) {
-            const filename = data.attachment_path.split("/").pop();
-            const extension = filename.split(".").pop().toLowerCase();
+            const full_filename = data.attachment_path.split("/").pop();
+            const original_filename = full_filename.substring(full_filename.indexOf('_') + 1);
+            const extension = full_filename.split(".").pop().toLowerCase();
 
             const attachmentLink = document.createElement("a");
             attachmentLink.href = data.attachment_path;
@@ -304,12 +342,13 @@
               img.className = "mt-2 max-w-[200px] h-auto rounded-lg";
               attachmentLink.appendChild(img);
             } else {
+              attachmentLink.setAttribute("download", original_filename);
               if (isCurrentUser) {
                 attachmentLink.className = "mt-1 block text-sm font-bold text-white underline dark:text-blue-300";
               } else {
                 attachmentLink.className = "mt-1 block text-sm font-bold text-blue-500 underline dark:text-blue-400";
               }
-              attachmentLink.textContent = "View Attachment";
+              attachmentLink.textContent = `Download (${original_filename})`;
             }
             messageBody.appendChild(attachmentLink);
           }

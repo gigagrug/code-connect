@@ -119,7 +119,7 @@ def admin_index():
 # Admin
 
 # Users
-@app.route('/')
+@app.route('/', methods=['GET'])
 def index():
     if 'user_id' in session:
         if session.get('role') == 1:
@@ -272,21 +272,21 @@ def profile_update_route():
 def admin_message_route():
     return create_admin_message(request, engine)
 
-@app.route('/business/<int:user_id>')
+@app.route('/business/<int:user_id>', methods=['GET'])
 def business_profile(user_id):
     profile_page = get_business_profile_data(user_id, engine)
     if profile_page is None:
         return redirect(url_for('index'))
     return profile_page
 
-@app.route('/business/<int:user_id>/jobs')
+@app.route('/business/<int:user_id>/jobs', methods=['GET'])
 def business_jobs(user_id):
     profile_page = get_business_jobs_data(user_id, engine)
     if profile_page is None:
         return redirect(url_for('index'))
     return profile_page
 
-@app.route('/userMgt')
+@app.route('/userMgt', methods=['GET'])
 def user_mgt():
     if 'user_id' not in session or session.get('role') != 0:
         flash("Access restricted to instructors.", "danger")

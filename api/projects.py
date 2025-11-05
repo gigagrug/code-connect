@@ -55,17 +55,21 @@ def create_project(request, engine):
         return redirect(url_for('business_profile', user_id=session['user_id']))
 
     status = 1 if session.get('role') == 0 else 0
-    attachment_path = None
+    
+    attachment_paths = []
+    files = request.files.getlist('attachment') 
 
-    file = request.files.get('attachment')
-    if file and file.filename:
-        try:
-            fs_save_path, url_path = _get_upload_paths(project_name, file.filename)
-            file.save(fs_save_path)
-            attachment_path = url_path
-        except Exception as e:
-            flash(f"Error saving file: {e}", "danger")
-            return redirect(url_for('business_profile', user_id=session['user_id']))
+    for file in files:
+        if file and file.filename:
+            try:
+                fs_save_path, url_path = _get_upload_paths(project_name, file.filename)
+                file.save(fs_save_path)
+                attachment_paths.append(url_path) 
+            except Exception as e:
+                flash(f"Error saving file {file.filename}: {e}", "danger")
+                return redirect(url_for('business_profile', user_id=session['user_id']))
+
+    attachment_path_str = ";".join(attachment_paths) if attachment_paths else None
 
     try:
         with engine.connect() as connection:
@@ -77,7 +81,7 @@ def create_project(request, engine):
                 "name": project_name,
                 "description": project_description,
                 "status": status,
-                "attachment_path": attachment_path
+                "attachment_path": attachment_path_str 
             }
             connection.execute(insert_query, params)
             connection.commit()
@@ -364,17 +368,55 @@ def update_project(project_id, request, engine):
         flash("Project name and description cannot be empty.", "danger")
         return redirect(url_for('project_page', project_id=project_id))
 
-    attachment_path = project.attachment_path 
-    file = request.files.get('attachment')
+    # --- NEW LOGIC FOR APPENDING/DELETING FILES ---
 
-    if file and file.filename:
-        try:
-            fs_save_path, url_path = _get_upload_paths(project.name, file.filename)
-            file.save(fs_save_path)
-            attachment_path = url_path
-        except Exception as e:
-            flash(f"Error saving file: {e}", "danger")
-            return redirect(url_for('project_page', project_id=project_id))
+    # 1. Get list of files to delete from the form
+    files_to_delete = request.form.getlist('files_to_delete')
+    
+    # 2. Get the current list of files from the DB
+    current_paths = []
+    if project.attachment_path:
+        current_paths = project.attachment_path.split(';')
+
+    paths_to_keep = []
+    
+    # 3. Handle deletions
+    if files_to_delete:
+        for path in current_paths:
+            if path in files_to_delete:
+                # Delete the physical file
+                try:
+                    file_path = os.path.join('.', path.lstrip('/'))
+                    if os.path.exists(file_path):
+                        os.remove(file_path)
+                except Exception as e:
+                    print(f"Error deleting old file {path}: {e}")
+            else:
+                # This file was not marked for deletion, so we keep it
+                paths_to_keep.append(path)
+    else:
+        # No deletions requested, so keep all current paths
+        paths_to_keep = current_paths
+
+    # 4. Handle additions
+    new_files = request.files.getlist('attachment')
+    new_paths = []
+    if new_files and any(f.filename for f in new_files):
+        for file in new_files:
+            if file and file.filename:
+                try:
+                    fs_save_path, url_path = _get_upload_paths(project.name, file.filename)
+                    file.save(fs_save_path)
+                    new_paths.append(url_path)
+                except Exception as e:
+                    flash(f"Error saving new file {file.filename}: {e}", "danger")
+                    return redirect(url_for('project_page', project_id=project_id))
+
+    # 5. Combine lists and save
+    final_paths = paths_to_keep + new_paths
+    final_attachment_path_str = ";".join(final_paths) if final_paths else None
+    
+    # --- END NEW LOGIC ---
 
     try:
         with engine.connect() as connection:
@@ -386,7 +428,7 @@ def update_project(project_id, request, engine):
             params = {
                 "name": new_name, 
                 "description": new_description, 
-                "attachment_path": attachment_path,
+                "attachment_path": final_attachment_path_str,
                 "project_id": project_id, 
                 "user_id": session['user_id']
             }
@@ -397,6 +439,7 @@ def update_project(project_id, request, engine):
         flash(f"An error occurred while updating the project: {e}", "danger")
         
     return redirect(url_for('project_page', project_id=project_id))
+
 
 def delete_project(project_id, engine):
     if 'user_id' not in session:
@@ -516,7 +559,8 @@ def add_comment_to_project(project_id, request, engine):
         flash("You must be logged in to comment.", "warning")
         return redirect(url_for('login'))
 
-    if not comment_text:
+    files = request.files.getlist('attachment')
+    if not comment_text and not any(f.filename for f in files):
         flash("Comment cannot be empty.", "danger")
         return redirect(url_for('project_page', project_id=project_id))
 
@@ -529,17 +573,18 @@ def add_comment_to_project(project_id, request, engine):
         flash("You do not have permission to comment on this project.", "danger")
         return redirect(url_for('project_page', project_id=project_id))
 
-    attachment_path = None
-    file = request.files.get('attachment')
+    attachment_paths = []
+    for file in files:
+        if file and file.filename:
+            try:
+                fs_save_path, url_path = _get_upload_paths(project.name, file.filename)
+                file.save(fs_save_path)
+                attachment_paths.append(url_path)
+            except Exception as e:
+                flash(f"Error saving file {file.filename}: {e}", "danger")
+                return redirect(url_for('project_page', project_id=project_id))
 
-    if file and file.filename:
-        try:
-            fs_save_path, url_path = _get_upload_paths(project.name, file.filename)
-            file.save(fs_save_path)
-            attachment_path = url_path
-        except Exception as e:
-            flash(f"Error saving file: {e}", "danger")
-            return redirect(url_for('project_page', project_id=project_id))
+    attachment_path_str = ";".join(attachment_paths) if attachment_paths else None
 
     try:
         with engine.connect() as conn:
@@ -551,7 +596,7 @@ def add_comment_to_project(project_id, request, engine):
                 "user_id": user_id,
                 "project_id": project_id,
                 "comment": comment_text,
-                "attachment_path": attachment_path
+                "attachment_path": attachment_path_str
             })
             conn.commit()
             flash("Comment added successfully.", "success")
@@ -569,7 +614,7 @@ def delete_comment_on_project(project_id, comment_id, engine):
 
     try:
         with engine.connect() as conn:
-            with conn.begin():
+            with conn.begin(): 
                 
                 query_details = text("""
                     SELECT user_id, attachment_path 
@@ -590,14 +635,17 @@ def delete_comment_on_project(project_id, comment_id, engine):
                     return redirect(url_for('project_page', project_id=project_id))
                 
                 if comment.attachment_path:
-                    try:
-                        file_path = os.path.join('.', comment.attachment_path.lstrip('/'))
-                        if os.path.exists(file_path):
-                            os.remove(file_path)
-                        else:
-                            print(f"Warning: File not found, cannot delete: {file_path}")
-                    except Exception as e:
-                        print(f"Error deleting file {comment.attachment_path}: {e}")
+                    paths_to_delete = comment.attachment_path.split(';')
+                    for path in paths_to_delete:
+                        if not path: continue
+                        try:
+                            file_path = os.path.join('.', path.lstrip('/'))
+                            if os.path.exists(file_path):
+                                os.remove(file_path)
+                            else:
+                                print(f"Warning: File not found, cannot delete: {file_path}")
+                        except Exception as e:
+                            print(f"Error deleting file {path}: {e}")
 
                 delete_query = text("DELETE FROM comments WHERE id = :comment_id")
                 conn.execute(delete_query, {"comment_id": comment_id})
