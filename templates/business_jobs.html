@@ -9,6 +9,53 @@
       {% else %}
         <p class="text-gray-400 italic dark:text-gray-500">This business has not provided a bio.</p>
       {% endif %}
+
+      {% if session.user_id == business_user.id %}
+        <div class="mt-6 flex justify-center gap-4">
+          <button popovertarget="project-form" class="text">Create New Project</button>
+          <button popovertarget="job-form" class="text">Post New Job</button>
+        </div>
+      {% endif %}
+    </div>
+
+    <div id="project-form" popover class="card mx-auto mt-5 p-0 backdrop:bg-black/50 md:w-1/2">
+      <div class="flex items-center justify-between border-b p-4 dark:border-gray-700">
+        <h3 class="text text-2xl font-semibold">Create a New Project</h3>
+        <button popovertarget="project-form" popovertargetaction="hide" class="text-2xl text-gray-400 hover:text-gray-600 dark:hover:text-gray-200">&times;</button>
+      </div>
+      <form action="/project/create" method="POST" enctype="multipart/form-data" class="p-6">
+        <div class="mb-4">
+          <label for="name" class="mb-2 block text-sm font-medium text-gray-900 dark:text-white">Project Name</label>
+          <input type="text" name="name" id="name" class="input text" placeholder="My Awesome Project" required />
+        </div>
+        <div class="mb-6">
+          <label for="description" class="mb-2 block text-sm font-medium text-gray-900 dark:text-white">Description</label>
+          <textarea name="description" id="description" class="input text field-sizing-content min-h-[100px]" placeholder="A description of what your project is about." required></textarea>
+        </div>
+        <div class="mb-6">
+          <label for="attachment" class="mb-2 block text-sm font-medium text-gray-900 dark:text-white">Project Attachment (Optional)</label>
+          <input type="file" name="attachment" id="attachment" class="input text w-full file:mr-4 file:rounded-md file:border-0 file:bg-gray-200 file:px-4 file:py-2 file:text-sm file:font-semibold hover:file:bg-gray-300 dark:file:bg-gray-700 dark:file:text-gray-200 dark:hover:file:bg-gray-600" />
+        </div>
+        <button type="submit" class="w-full rounded-lg bg-blue-700 px-5 py-2.5 text-center text-sm font-medium text-white hover:bg-blue-800">Create Project</button>
+      </form>
+    </div>
+
+    <div id="job-form" popover class="card mx-auto mt-5 p-0 backdrop:bg-black/50 md:w-1/2">
+      <div class="flex items-center justify-between border-b p-4 dark:border-gray-700">
+        <h3 class="text text-2xl font-semibold">Create a New Job</h3>
+        <button popovertarget="job-form" popovertargetaction="hide" class="text-2xl text-gray-400 hover:text-gray-600 dark:hover:text-gray-200">&times;</button>
+      </div>
+      <form action="/job/create" method="POST" class="space-y-4 p-6">
+        <div>
+          <label for="title" class="text mb-2 block text-sm font-medium">Job Title</label>
+          <input type="text" name="title" id="title" class="input text" placeholder="e.g., Senior Web Developer" required />
+        </div>
+        <div>
+          <label for="description" class="text mb-2 block text-sm font-medium">Job Description</label>
+          <textarea name="description" id="description" class="input text field-sizing-content min-h-[120px]" placeholder="Describe the role, responsibilities, and qualifications..." required></textarea>
+        </div>
+        <button type="submit" class="w-full rounded-lg bg-blue-700 px-5 py-2.5 text-center text-sm font-medium text-white hover:bg-blue-800">Post Job</button>
+      </form>
     </div>
 
     <div class="mb-8 flex justify-center gap-x-8 border-b border-gray-200 dark:border-gray-700">

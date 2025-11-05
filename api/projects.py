@@ -52,7 +52,7 @@ def create_project(request, engine):
 
     if not project_name or not project_description:
         flash("Project name and description are required.", "danger")
-        return redirect(url_for('profile'))
+        return redirect(url_for('business_profile', user_id=session['user_id']))
 
     status = 1 if session.get('role') == 0 else 0
     attachment_path = None
@@ -65,7 +65,7 @@ def create_project(request, engine):
             attachment_path = url_path
         except Exception as e:
             flash(f"Error saving file: {e}", "danger")
-            return redirect(url_for('profile'))
+            return redirect(url_for('business_profile', user_id=session['user_id']))
 
     try:
         with engine.connect() as connection:
@@ -85,7 +85,7 @@ def create_project(request, engine):
     except Exception as e:
         flash(f"An error occurred while creating the project: {e}", "danger")
 
-    return redirect(url_for('profile'))
+    return redirect(url_for('business_profile', user_id=session['user_id']))
 
 def approve_project(project_id, engine):
     if session.get('role') != 0:

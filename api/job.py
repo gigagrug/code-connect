@@ -16,7 +16,7 @@ def create_job(request, engine):
 
     if not title or not description:
         flash("Job title and description are required.", "danger")
-        return redirect(url_for('profile'))
+        return redirect(url_for('business_jobs', user_id=session['user_id']))
 
     try:
         with engine.connect() as connection:
@@ -35,7 +35,7 @@ def create_job(request, engine):
     except Exception as e:
         flash(f"An error occurred while creating the job: {e}", "danger")
 
-    return redirect(url_for('profile'))
+    return redirect(url_for('business_jobs', user_id=session['user_id']))
 
 def get_job_by_id(job_id, engine):
     try:
