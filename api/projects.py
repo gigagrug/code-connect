@@ -260,7 +260,6 @@ def load_projects_html(engine):
     return render_template('partials/projects_list.html', projects=projects)
 
 def check_if_user_can_edit_links(user_id, project, engine):
-    """Checks if a user is the project owner or a student in an assigned team."""
     if not user_id:
         return False
     
@@ -279,7 +278,6 @@ def check_if_user_can_edit_links(user_id, project, engine):
 
 
 def update_project_links(project_id, engine):
-    """Updates the project and github links for a project."""
     user_id = session.get('user_id')
     project = get_project_by_id(project_id, engine)
 
@@ -368,23 +366,17 @@ def update_project(project_id, request, engine):
         flash("Project name and description cannot be empty.", "danger")
         return redirect(url_for('project_page', project_id=project_id))
 
-    # --- NEW LOGIC FOR APPENDING/DELETING FILES ---
-
-    # 1. Get list of files to delete from the form
     files_to_delete = request.form.getlist('files_to_delete')
     
-    # 2. Get the current list of files from the DB
     current_paths = []
     if project.attachment_path:
         current_paths = project.attachment_path.split(';')
 
     paths_to_keep = []
     
-    # 3. Handle deletions
     if files_to_delete:
         for path in current_paths:
             if path in files_to_delete:
-                # Delete the physical file
                 try:
                     file_path = os.path.join('.', path.lstrip('/'))
                     if os.path.exists(file_path):
@@ -392,13 +384,10 @@ def update_project(project_id, request, engine):
                 except Exception as e:
                     print(f"Error deleting old file {path}: {e}")
             else:
-                # This file was not marked for deletion, so we keep it
                 paths_to_keep.append(path)
     else:
-        # No deletions requested, so keep all current paths
         paths_to_keep = current_paths
 
-    # 4. Handle additions
     new_files = request.files.getlist('attachment')
     new_paths = []
     if new_files and any(f.filename for f in new_files):
@@ -412,11 +401,9 @@ def update_project(project_id, request, engine):
                     flash(f"Error saving new file {file.filename}: {e}", "danger")
                     return redirect(url_for('project_page', project_id=project_id))
 
-    # 5. Combine lists and save
     final_paths = paths_to_keep + new_paths
     final_attachment_path_str = ";".join(final_paths) if final_paths else None
     
-    # --- END NEW LOGIC ---
 
     try:
         with engine.connect() as connection:

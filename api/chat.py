@@ -22,8 +22,6 @@ def _get_upload_paths(project_name, original_filename):
 
 
 def init_chat(socketio, engine):
-    """Initializes all Socket.IO chat event handlers."""
-
     @socketio.on('join')
     def on_join(data):
         project_id = data.get('project_id')

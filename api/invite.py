@@ -100,7 +100,6 @@ def handle_instructor_request(request_id, engine):
     return redirect(url_for('user_mgt'))
 
 def dismiss_denied_request(request_id, engine):
-    """Allows an instructor to dismiss/delete a denied request."""
     if 'user_id' not in session or session.get('role') != 0:
         flash("Only instructors can handle requests.", "danger")
         return redirect(url_for('user_mgt'))

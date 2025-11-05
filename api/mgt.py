@@ -84,15 +84,15 @@ def assign_project_to_group(team_id, engine):
                 result = conn.execute(old_project_query, {"team_id": team_id}).scalar_one_or_none()
 
                 if result:
-                    update_old_project = text("UPDATE projects SET status = 1 WHERE id = :project_id")
+                    update_old_project = text("UPDATE projects SET status = 2 WHERE id = :project_id")
                     conn.execute(update_old_project, {"project_id": result})
 
                 update_team_query = text("UPDATE teams SET project_id = :project_id WHERE id = :team_id")
                 conn.execute(update_team_query, {"project_id": project_id, "team_id": team_id})
 
-                update_new_project = text("UPDATE projects SET status = 2 WHERE id = :project_id")
+                update_new_project = text("UPDATE projects SET status = 3 WHERE id = :project_id")
                 conn.execute(update_new_project, {"project_id": project_id})
-        
+
         flash("Project assigned to group successfully.", "success")
     except Exception as e:
         flash(f"Error assigning project: {e}", "danger")
@@ -154,7 +154,7 @@ def delete_group(team_id, engine):
                 team_count_result = conn.execute(count_query, {"project_id": project_id}).mappings().first()
                 
                 if team_count_result['team_count'] == 0:
-                    update_project_query = text("UPDATE projects SET status = 1 WHERE id = :project_id")
+                    update_project_query = text("UPDATE projects SET status = 2 WHERE id = :project_id")
                     conn.execute(update_project_query, {"project_id": project_id})
         
         flash("Group deleted successfully.", "success")
@@ -201,12 +201,18 @@ def get_user_mgt_data(engine):
         """)
         denied_requests = conn.execute(denied_query, {"instructor_id": instructor_id}).all()
 
-        projects_query = text("SELECT * FROM projects WHERE status = 1")
-        projects = conn.execute(projects_query).mappings().all()
+        projects_query = text("""
+            SELECT p.id, p.name 
+            FROM projects p
+            JOIN instructor_projects ip ON p.id = ip.project_id
+            WHERE p.status = 2 AND ip.instructor_id = :instructor_id
+            ORDER BY p.name
+        """)
+        projects = conn.execute(projects_query, {"instructor_id": instructor_id}).mappings().all()
 
         students_query = text("SELECT id, email FROM users WHERE role = 3 AND instructor_id = :instructor_id")
         all_students = conn.execute(students_query, {"instructor_id": instructor_id}).mappings().all()
- 
+
         teams_query = text("""
             SELECT t.id, t.name, t.project_id, p.name AS project_name
             FROM teams t LEFT JOIN projects p ON t.project_id = p.id

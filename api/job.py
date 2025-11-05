@@ -118,7 +118,6 @@ def delete_job(job_id, engine):
     return redirect(url_for('business_jobs',user_id=session['user_id']))
 
 def get_open_jobs(engine):
-    """Fetches all jobs with status 1 (Open) for the public jobs page."""
     try:
         with engine.connect() as connection:
             query = text("""
