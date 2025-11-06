@@ -124,7 +124,11 @@ def index():
     if 'user_id' in session:
         if session.get('role') == 1:
             return redirect(url_for('business_profile', user_id=session['user_id']))
-
+        if session.get('role') == 3:
+            student_projects = get_projects_for_student(engine)
+            if student_projects:
+                first_project_id = student_projects[0]['project_id']
+                return redirect(url_for('project_page', project_id=first_project_id))
         projects = get_all_projects(engine, session, page=1, per_page=12)
         return render_template('index.html', projects=projects)
     else:

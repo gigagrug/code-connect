@@ -18,7 +18,6 @@ def _get_upload_paths(project_name, original_filename):
     
     return (fs_save_path, url_path)
 
-
 def get_project_by_id(project_id, engine):
     try:
         with engine.connect() as connection:
@@ -319,7 +318,7 @@ def get_projects_for_student(engine):
                 FROM team_members tm
                 JOIN teams t ON tm.team_id = t.id
                 JOIN projects p ON t.project_id = p.id
-                WHERE tm.user_id = :user_id AND p.status IN (1, 2)
+                WHERE tm.user_id = :user_id AND p.status IN (1, 2, 3)
             """)
             student_project_info = conn.execute(student_teams_query, {"user_id": user_id}).mappings().all()
             assignments = []
