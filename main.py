@@ -11,6 +11,7 @@ from api.mgt import *
 from api.invite import *
 from api.chat import *
 from api.admin import *
+from api.adminjobs import *
 from api.job import *
 
 app = Flask(__name__)
@@ -116,6 +117,21 @@ def admin_index():
     if page > total_pages:
         page = total_pages
     return render_template('/admin/admin.html', projects=projects, page=page, per_page=per_page, total=total, total_pages=total_pages, pending_count=pending_count, approved_count=approved_count, taken_count=taken_count)
+
+# Admin Jobs
+@app.route('/admin/jobs', endpoint='adminjobs')
+def admin_jobs_index():
+    page = request.args.get('page', default=1, type=int) or 1
+    per_page = 6
+    jobs, total, total_pages, pending_count, approved_count, taken_count = get_jobs_paginated(engine, page=page, per_page=per_page)
+    if page > total_pages:
+        page = total_pages
+    return render_template('/admin/adminjobs.html', jobs=jobs, page=page, per_page=per_page, total=total, total_pages=total_pages, pending_count=pending_count, approved_count=approved_count, taken_count=taken_count)
+
+@app.route('/uploads/<path:project_name>/<path:filename>')
+def serve_upload(project_name, filename):
+    project_dir = os.path.join(app.config['UPLOAD_DIR'], project_name)
+    return send_from_directory(project_dir, filename)
 # Admin
 
 # Users

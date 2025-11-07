@@ -1,0 +1,307 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#111827" />
+    <link href="/static/output.css" rel="stylesheet" />
+    <script src="/static/theme.js"></script>
+    {% block head %}{% endblock %}
+    <title>Code Connect – Admin Jobs</title>
+  </head>
+
+  <body class="bg-white text-gray-900">
+    <main class="mx-auto max-w-6xl px-4 py-8">
+      <!-- Header -->
+      <header class="mb-6 flex items-end justify-between gap-4">
+        <div>
+          <h1 class="text-3xl font-extrabold tracking-tight text-gray-900">
+            Jobs (Admin)
+          </h1>
+          <p class="text-sm font-semibold text-gray-600">
+            Manage and review all jobs.
+          </p>
+        </div>
+        <div class="text-sm font-semibold text-gray-700">
+          Total: <span class="font-bold">{{ total }}</span>
+        </div>
+      </header>
+
+      <!-- Dashboard cards -->
+      <section class="mb-6 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <div class="rounded-xl border border-gray-200 bg-white p-4 text-gray-900">
+          <div class="text-sm text-gray-600">Total Jobs</div>
+          <div class="text-2xl font-extrabold">{{ total }}</div>
+        </div>
+        <div class="rounded-xl border border-green-200 bg-white p-4 text-gray-900">
+          <div class="text-sm text-gray-600">Approved</div>
+          <div class="text-2xl font-extrabold text-green-600">{{ approved_count or 0 }}</div>
+        </div>
+        <div class="rounded-xl border border-amber-200 bg-white p-4 text-gray-900">
+          <div class="text-sm text-gray-600">Pending</div>
+          <div class="text-2xl font-extrabold text-amber-600">{{ pending_count or 0 }}</div>
+        </div>
+        <div class="rounded-xl border border-blue-200 bg-white p-4 text-gray-900">
+          <div class="text-sm text-gray-600">Taken</div>
+          <div class="text-2xl font-extrabold text-blue-600">{{ taken_count or 0 }}</div>
+        </div>
+      </section>
+
+      <!-- Approval rate bar -->
+      {% set approved = (approved_count or 0) %}
+      {% set total_safe = (total or 0) %}
+      {% set rate = (approved / total_safe * 100) if total_safe > 0 else 0 %}
+      <section class="mb-6 rounded-xl border border-gray-200 bg-white p-4 text-gray-900">
+        <div class="mb-2 flex items-center justify-between text-sm text-gray-700">
+          <span>Approval Rate</span>
+          <span class="font-semibold">{{ '%.0f' % rate }}%</span>
+        </div>
+        <div class="h-2 w-full overflow-hidden rounded bg-gray-200">
+          <div class="h-full bg-emerald-500" style="width: {{ rate }}%"></div>
+        </div>
+      </section>
+
+      {% if jobs and jobs|length %}
+        <!-- Controls -->
+        <section class="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <div class="flex items-center gap-2">
+            <label for="search" class="sr-only">Search</label>
+            <input id="search" type="search" placeholder="Search by title, description, ID"
+                   class="w-72 rounded-lg border bg-white px-3 py-2 text-sm shadow-sm outline-none placeholder:text-gray-400 focus:ring-2 focus:ring-indigo-500 dark:border-gray-800 dark:bg-gray-900" />
+          </div>
+          <div class="flex items-center gap-2">
+            <label for="statusFilter" class="text-sm text-gray-700">Status</label>
+            <select id="statusFilter"
+                    class="rounded-lg border bg-white px-2 py-2 text-sm shadow-sm outline-none focus:ring-2 focus:ring-indigo-500 dark:border-gray-800 dark:bg-gray-900">
+              <option value="">All</option>
+              <option value="0">Pending</option>
+              <option value="1">Approved</option>
+              <option value="2">Taken</option>
+            </select>
+          </div>
+        </section>
+
+        <!-- Table -->
+        <div class="overflow-x-auto rounded-xl border bg-white shadow-sm dark:bg-gray-900">
+          <table id="jobsTable" class="min-w-full text-sm">
+            <thead class="sticky top-0 z-10 bg-gray-50 text-left text-gray-800 shadow-sm dark:bg-gray-800 dark:text-gray-100">
+              <tr>
+                <th data-sort="number" class="select-none px-4 py-3 font-semibold cursor-pointer">ID</th>
+                <th data-sort="text" class="select-none px-4 py-3 font-semibold cursor-pointer">Title</th>
+                <th data-sort="number" class="select-none px-4 py-3 font-semibold cursor-pointer">Status</th>
+                <th data-sort="date" class="select-none px-4 py-3 font-semibold cursor-pointer">Created</th>
+                <th class="px-4 py-3 font-semibold">Links</th>
+                <th class="px-4 py-3 font-semibold">Actions</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-gray-200 dark:divide-gray-800">
+              {% for j in jobs %}
+                <tr class="hover:bg-gray-50/60 dark:hover:bg-gray-800/60" data-status="{{ j.status }}">
+                  <td class="px-4 py-3 text-gray-700 dark:text-gray-200" data-value="{{ j.id }}">{{ j.id }}</td>
+                  <td class="px-4 py-3" data-value="{{ j.title }}">
+                    <div class="font-semibold">{{ j.title or ('Job #' ~ j.id) }}</div>
+                    <div class="line-clamp-2 text-xs text-gray-500 dark:text-gray-400">{{ j.description }}</div>
+                  </td>
+                  <td class="px-4 py-3" data-value="{{ j.status }}">
+                    {% if j.status == 2 %}
+                      <span class="inline-flex items-center rounded-md border border-blue-200 bg-blue-50 px-2 py-0.5 text-xs font-medium text-blue-700 dark:border-blue-900/50 dark:bg-blue-900/30 dark:text-blue-300">Taken</span>
+                    {% elif j.status == 1 %}
+                      <span class="inline-flex items-center rounded-md border border-green-200 bg-green-50 px-2 py-0.5 text-xs font-medium text-green-700 dark:border-green-900/50 dark:bg-green-900/30 dark:text-green-300">Approved</span>
+                    {% else %}
+                      <span class="inline-flex items-center rounded-md border border-amber-200 bg-amber-50 px-2 py-0.5 text-xs font-medium text-amber-800 dark:border-amber-900/50 dark:bg-amber-900/30 dark:text-amber-300">Pending</span>
+                    {% endif %}
+                  </td>
+                  <td class="px-4 py-3 text-xs text-gray-600 dark:text-gray-300">
+                    <time class="js-relative-time" datetime="{{ (j.created_at)|string }}">{{ j.created_at or '' }}</time>
+                  </td>
+                  <td class="px-4 py-3 text-xs">
+                    {% if j.apply_link %}
+                      <a class="inline-flex items-center gap-1 text-indigo-600 hover:underline dark:text-indigo-400" href="{{ j.apply_link }}" target="_blank" rel="noopener" title="Open link">
+                        Link
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="h-3 w-3"><path d="M5 10a1 1 0 011-1h5.586L9.293 6.707a1 1 0 111.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 11-1.414-1.414L11.586 11H6a1 1 0 01-1-1z"/></svg>
+                      </a>
+                    {% else %}
+                      <span class="text-gray-400">—</span>
+                    {% endif %}
+                  </td>
+                  <td class="px-4 py-3 text-sm">
+                    <a href="{{ url_for('job_page', job_id=j.id) }}" class="rounded-lg border px-3 py-1 hover:bg-gray-50 dark:hover:bg-gray-800">View</a>
+                  </td>
+                </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      {% else %}
+        <div class="rounded-xl border bg-white dark:bg-gray-900 p-8 text-center">
+          <p class="text-gray-700 dark:text-gray-200">No jobs yet.</p>
+          <p class="text-sm text-gray-500 dark:text-gray-400">Please check back later.</p>
+        </div>
+      {% endif %}
+
+      <!-- Pagination -->
+      {% if total_pages > 1 %}
+        {% set window = 2 %}
+        {% set start = page - window if page - window > 1 else 1 %}
+        {% set end   = page + window if page + window < total_pages else total_pages %}
+
+        <nav class="mt-8 flex items-center justify-between" aria-label="Pagination">
+          <div class="text-sm">
+            Page <span class="font-semibold">{{ page }}</span>
+            of <span class="font-semibold">{{ total_pages }}</span>
+            &bull; Total jobs: <span class="font-semibold">{{ total }}</span>
+          </div>
+
+          <ul class="inline-flex items-center gap-1">
+            <!-- First -->
+            <li>
+              <a href="{{ url_for('adminjobs', page=1) }}"
+                 rel="first"
+                 aria-disabled="{{ 'true' if page == 1 else 'false' }}"
+                 tabindex="{{ '-1' if page == 1 else '0' }}"
+                 class="px-3 py-1.5 rounded-lg border text-sm {{ 'pointer-events-none opacity-40' if page == 1 }}">
+                First
+              </a>
+            </li>
+
+            <!-- Prev -->
+            <li>
+              <a href="{{ url_for('adminjobs', page=page-1) }}"
+                 rel="prev"
+                 aria-disabled="{{ 'true' if page == 1 else 'false' }}"
+                 tabindex="{{ '-1' if page == 1 else '0' }}"
+                 class="px-3 py-1.5 rounded-lg border text-sm {{ 'pointer-events-none opacity-40' if page == 1 }}">
+                Prev
+              </a>
+            </li>
+
+            <!-- leading ellipsis -->
+            {% if start > 1 %}
+              <li><a href="{{ url_for('adminjobs', page=1) }}" class="px-3 py-1.5 rounded-lg border text-sm">1</a></li>
+              {% if start > 2 %}<li class="px-2">&hellip;</li>{% endif %}
+            {% endif %}
+
+            <!-- number window -->
+            {% for pnum in range(start, end + 1) %}
+              <li>
+                {% if pnum == page %}
+                  <span aria-current="page" class="px-3 py-1.5 rounded-lg border text-sm">{{ pnum }}</span>
+                {% else %}
+                  <a href="{{ url_for('adminjobs', page=pnum) }}" class="px-3 py-1.5 rounded-lg border text-sm">{{ pnum }}</a>
+                {% endif %}
+              </li>
+            {% endfor %}
+
+            <!-- trailing ellipsis -->
+            {% if end < total_pages %}
+              {% if end < total_pages - 1 %}<li class="px-2">&hellip;</li>{% endif %}
+              <li><a href="{{ url_for('adminjobs', page=total_pages) }}" class="px-3 py-1.5 rounded-lg border text-sm">{{ total_pages }}</a></li>
+            {% endif %}
+
+            <!-- Next -->
+            <li>
+              <a href="{{ url_for('adminjobs', page=page+1) }}"
+                 rel="next"
+                 aria-disabled="{{ 'true' if page == total_pages else 'false' }}"
+                 tabindex="{{ '-1' if page == total_pages else '0' }}"
+                 class="px-3 py-1.5 rounded-lg border text-sm {{ 'pointer-events-none opacity-40' if page == total_pages }}">
+                Next
+              </a>
+            </li>
+
+            <!-- Last -->
+            <li>
+              <a href="{{ url_for('adminjobs', page=total_pages) }}"
+                 rel="last"
+                 aria-disabled="{{ 'true' if page == total_pages else 'false' }}"
+                 tabindex="{{ '-1' if page == total_pages else '0' }}"
+                 class="px-3 py-1.5 rounded-lg border text-sm {{ 'pointer-events-none opacity-40' if page == total_pages }}">
+                Last
+              </a>
+            </li>
+          </ul>
+        </nav>
+      {% endif %}
+
+      <!-- Inline enhancements (search, filter, sort, relative time) -->
+      <script>
+        (function(){
+          const table = document.getElementById('jobsTable');
+          const tbody = table?.querySelector('tbody');
+          const search = document.getElementById('search');
+          const statusFilter = document.getElementById('statusFilter');
+
+          const getText = (el) => (el?.textContent || '').toLowerCase();
+
+          function applyFilters() {
+            const q = (search?.value || '').toLowerCase();
+            const status = statusFilter?.value || '';
+            if (!tbody) return;
+            Array.from(tbody.rows).forEach(row => {
+              const id = row.querySelector('td:nth-child(1)')?.textContent || '';
+              const titleCell = row.querySelector('td:nth-child(2)');
+              const title = getText(titleCell);
+              const desc = getText(titleCell?.querySelector('div:nth-child(2)'));
+              const rowStatus = row.getAttribute('data-status') || '';
+              const matchesQ = !q || id.includes(q) || title.includes(q) || desc.includes(q);
+              const matchesStatus = !status || rowStatus === status;
+              row.style.display = (matchesQ && matchesStatus) ? '' : 'none';
+            });
+          }
+
+          search?.addEventListener('input', () => { window.requestAnimationFrame(applyFilters); });
+          statusFilter?.addEventListener('change', applyFilters);
+
+          const comparators = {
+            number: (a,b) => (parseFloat(a)||0) - (parseFloat(b)||0),
+            text: (a,b) => a.localeCompare(b),
+            date: (a,b) => new Date(a).getTime() - new Date(b).getTime(),
+          };
+
+          function sortBy(th) {
+            if (!tbody) return;
+            const type = th.getAttribute('data-sort') || 'text';
+            const idx = Array.from(th.parentElement.children).indexOf(th);
+            const dir = th.getAttribute('data-dir') === 'asc' ? 'desc' : 'asc';
+            th.setAttribute('data-dir', dir);
+            const rows = Array.from(tbody.rows).filter(r => r.style.display !== 'none');
+            rows.sort((r1, r2) => {
+              const v1 = r1.cells[idx].getAttribute('data-value') || r1.cells[idx].textContent.trim();
+              const v2 = r2.cells[idx].getAttribute('data-value') || r2.cells[idx].textContent.trim();
+              const sv1 = String(v1).toLowerCase();
+              const sv2 = String(v2).toLowerCase();
+              const cmp = (comparators[type] || comparators.text)(sv1, sv2);
+              return dir === 'asc' ? cmp : -cmp;
+            });
+            rows.forEach(r => tbody.appendChild(r));
+          }
+
+          table?.querySelectorAll('thead th[data-sort]')
+            .forEach(th => th.addEventListener('click', () => sortBy(th)));
+
+          function timeAgo(ts){
+            const t = new Date(ts);
+            if (isNaN(t)) return '';
+            const s = Math.floor((Date.now() - t.getTime())/1000);
+            if (s < 60) return `${s}s ago`;
+            const m = Math.floor(s/60); if (m < 60) return `${m}m ago`;
+            const h = Math.floor(m/60); if (h < 24) return `${h}h ago`;
+            const d = Math.floor(h/24); if (d < 30) return `${d}d ago`;
+            const mo = Math.floor(d/30); if (mo < 12) return `${mo}mo ago`;
+            const y = Math.floor(mo/12); return `${y}y ago`;
+          }
+
+          function refreshTimes(){
+            document.querySelectorAll('.js-relative-time').forEach(el => {
+              const ts = el.getAttribute('datetime');
+              const rel = timeAgo(ts);
+              if (rel) el.textContent = rel;
+            });
+          }
+          refreshTimes();
+          setInterval(refreshTimes, 60000);
+        })();
+      </script>
+    </main>
+  </body>
+</html>
