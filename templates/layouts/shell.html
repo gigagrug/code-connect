@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <link href="/static/output.css" rel="stylesheet" />
     <script src="/static/theme.js"></script>
-    <script src="/static/at.js"></script>
     {% block head %}{% endblock %}
     <title>Code Connect</title>
   </head>
@@ -22,7 +21,9 @@
         </a>
         <ul class="flex flex-row space-x-4 font-medium">
           {% if 'email' in session %}
-            <a href="/jobs" class="text">Jobs</a>
+            {% if session['email'] and session.get('role') in [3] %}
+              <a href="/jobs" class="text">Jobs</a>
+            {% endif %}
             <a href="/profile" class="text">Profile</a>
             {% if session['email'] and session.get('role') in [0] %}
               <a href="/userMgt" class="text">UserMgt</a>

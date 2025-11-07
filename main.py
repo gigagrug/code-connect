@@ -102,14 +102,18 @@ if app.debug:
 socketio = SocketIO(app)
 init_chat(socketio, engine)
 
+@app.route('/uploads/<path:project_name>/<path:filename>')
+def serve_upload(project_name, filename):
+    project_dir = os.path.join(app.config['UPLOAD_DIR'], project_name)
+    return send_from_directory(project_dir, filename)
+
 # Admin 
 ## create routes only under '/admin/' 
-
-@app.route('/admin', endpoint='admin') # ← add endpoint; you can keep a trailing slash if you prefer 
-def admin_index(): # ← optional: rename for clarity (avoid two functions named "index") 
+@app.route('/admin', endpoint='admin')
+def admin_index():
     page = request.args.get('page', default=1, type=int) or 1
     per_page = 6
-    projects, total, total_pages, pending_count, approved_count, taken_count = get_projects_paginated(engine, page=page, per_page=per_page) # optional: clamp very large ?page=
+    projects, total, total_pages, pending_count, approved_count, taken_count = get_projects_paginated(engine, page=page, per_page=per_page)
     if page > total_pages:
         page = total_pages
     return render_template('/admin/admin.html', projects=projects, page=page, per_page=per_page, total=total, total_pages=total_pages, pending_count=pending_count, approved_count=approved_count, taken_count=taken_count)
@@ -131,9 +135,16 @@ def serve_upload(project_name, filename):
 # Admin
 
 # Users
-@app.route('/')
+@app.route('/', methods=['GET'])
 def index():
     if 'user_id' in session:
+        if session.get('role') == 1:
+            return redirect(url_for('business_profile', user_id=session['user_id']))
+        if session.get('role') == 3:
+            student_projects = get_projects_for_student(engine)
+            if student_projects:
+                first_project_id = student_projects[0]['project_id']
+                return redirect(url_for('project_page', project_id=first_project_id))
         projects = get_all_projects(engine, session, page=1, per_page=12)
         return render_template('index.html', projects=projects)
     else:
@@ -166,7 +177,7 @@ def project_page(project_id):
         if can_chat:
             with engine.connect() as conn:
                 history_query = text("""
-                    SELECT c.id AS message_id, u.email, c.message_text, c.timestamp
+                    SELECT c.id AS message_id, u.email, c.message_text, c.timestamp, c.attachment_path
                     FROM chat_messages c JOIN users u ON c.user_id = u.id
                     WHERE c.project_id = :project_id ORDER BY c.timestamp ASC
                 """)
@@ -262,6 +273,10 @@ def job_delete_route(job_id):
 def project_comment_route(project_id):
     return add_comment_to_project(project_id, request, engine)
 
+@app.route('/project/<int:project_id>/comment/<int:comment_id>/delete', methods=['POST'])
+def project_comment_delete_route(project_id, comment_id):
+    return delete_comment_on_project(project_id, comment_id, engine)
+
 @app.route('/profile')
 def profile():
     if 'user_id' not in session:
@@ -277,14 +292,21 @@ def profile_update_route():
 def admin_message_route():
     return create_admin_message(request, engine)
 
-@app.route('/business/<int:user_id>')
+@app.route('/business/<int:user_id>', methods=['GET'])
 def business_profile(user_id):
     profile_page = get_business_profile_data(user_id, engine)
     if profile_page is None:
         return redirect(url_for('index'))
     return profile_page
 
-@app.route('/userMgt')
+@app.route('/business/<int:user_id>/jobs', methods=['GET'])
+def business_jobs(user_id):
+    profile_page = get_business_jobs_data(user_id, engine)
+    if profile_page is None:
+        return redirect(url_for('index'))
+    return profile_page
+
+@app.route('/userMgt', methods=['GET'])
 def user_mgt():
     if 'user_id' not in session or session.get('role') != 0:
         flash("Access restricted to instructors.", "danger")

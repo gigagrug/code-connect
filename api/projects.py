@@ -1,14 +1,11 @@
 import os
 import uuid
+import shutil
 from sqlalchemy import text
 from flask import flash, redirect, url_for, session, request, jsonify, render_template
 from werkzeug.utils import secure_filename
 
 def _get_upload_paths(project_name, original_filename):
-    """
-    Generates a secure filesystem path and a URL path for a new file.
-    Returns (fs_save_path, url_path)
-    """
     sanitized_project_name = secure_filename(str(project_name))[:50]
     safe_filename = secure_filename(original_filename)
     unique_filename = f"{uuid.uuid4()}_{safe_filename}"
@@ -20,7 +17,6 @@ def _get_upload_paths(project_name, original_filename):
     url_path = f"/uploads/{sanitized_project_name}/{unique_filename}"
     
     return (fs_save_path, url_path)
-
 
 def get_project_by_id(project_id, engine):
     try:
@@ -55,20 +51,24 @@ def create_project(request, engine):
 
     if not project_name or not project_description:
         flash("Project name and description are required.", "danger")
-        return redirect(url_for('profile'))
+        return redirect(url_for('business_profile', user_id=session['user_id']))
 
     status = 1 if session.get('role') == 0 else 0
-    attachment_path = None
+    
+    attachment_paths = []
+    files = request.files.getlist('attachment') 
 
-    file = request.files.get('attachment')
-    if file and file.filename:
-        try:
-            fs_save_path, url_path = _get_upload_paths(project_name, file.filename)
-            file.save(fs_save_path)
-            attachment_path = url_path
-        except Exception as e:
-            flash(f"Error saving file: {e}", "danger")
-            return redirect(url_for('profile'))
+    for file in files:
+        if file and file.filename:
+            try:
+                fs_save_path, url_path = _get_upload_paths(project_name, file.filename)
+                file.save(fs_save_path)
+                attachment_paths.append(url_path) 
+            except Exception as e:
+                flash(f"Error saving file {file.filename}: {e}", "danger")
+                return redirect(url_for('business_profile', user_id=session['user_id']))
+
+    attachment_path_str = ";".join(attachment_paths) if attachment_paths else None
 
     try:
         with engine.connect() as connection:
@@ -80,7 +80,7 @@ def create_project(request, engine):
                 "name": project_name,
                 "description": project_description,
                 "status": status,
-                "attachment_path": attachment_path
+                "attachment_path": attachment_path_str 
             }
             connection.execute(insert_query, params)
             connection.commit()
@@ -88,7 +88,7 @@ def create_project(request, engine):
     except Exception as e:
         flash(f"An error occurred while creating the project: {e}", "danger")
 
-    return redirect(url_for('profile'))
+    return redirect(url_for('business_profile', user_id=session['user_id']))
 
 def approve_project(project_id, engine):
     if session.get('role') != 0:
@@ -109,7 +109,7 @@ def approve_project(project_id, engine):
 
     try:
         with engine.connect() as connection:
-            if new_status == 2:  # Approved - Only ONE instructor is allowed
+            if new_status == 2:
                 clear_other_instructors_query = text("""
                     DELETE FROM instructor_projects
                     WHERE project_id = :project_id AND instructor_id != :instructor_id
@@ -130,7 +130,7 @@ def approve_project(project_id, engine):
                     "status": new_status
                 })
 
-            elif new_status == 1:  # Pending - MULTIPLE instructors are allowed
+            elif new_status == 1:
                 upsert_query = text("""
                     INSERT INTO instructor_projects (instructor_id, project_id, status)
                     VALUES (:instructor_id, :project_id, :status)
@@ -142,7 +142,7 @@ def approve_project(project_id, engine):
                     "status": new_status
                 })
 
-            else:  # Status is 0 (Unlisted)
+            else:  
                 delete_query = text("""
                     DELETE FROM instructor_projects
                     WHERE instructor_id = :instructor_id AND project_id = :project_id
@@ -216,7 +216,7 @@ def get_all_projects(engine, session, page=1, per_page=12):
                 instructor_id = result.instructor_id
 
             query_text = """
-                SELECT p.id, p.name, p.description, p.status, u.name, u.role
+                SELECT p.id, p.name, p.description, p.status, u.name AS business_name, u.role
                 FROM projects p
                 JOIN users u ON p.user_id = u.id
                 JOIN instructor_projects ip ON p.id = ip.project_id
@@ -231,7 +231,7 @@ def get_all_projects(engine, session, page=1, per_page=12):
             }
         else:
             query_text = """
-                SELECT p.id, p.name, p.description, p.status, u.name, u.role
+                SELECT p.id, p.name, p.description, p.status, u.name AS business_name, u.role
                 FROM projects p
                 JOIN users u ON p.user_id = u.id
                 WHERE p.status IN (0, 1)
@@ -259,7 +259,6 @@ def load_projects_html(engine):
     return render_template('partials/projects_list.html', projects=projects)
 
 def check_if_user_can_edit_links(user_id, project, engine):
-    """Checks if a user is the project owner or a student in an assigned team."""
     if not user_id:
         return False
     
@@ -278,7 +277,6 @@ def check_if_user_can_edit_links(user_id, project, engine):
 
 
 def update_project_links(project_id, engine):
-    """Updates the project and github links for a project."""
     user_id = session.get('user_id')
     project = get_project_by_id(project_id, engine)
 
@@ -320,7 +318,7 @@ def get_projects_for_student(engine):
                 FROM team_members tm
                 JOIN teams t ON tm.team_id = t.id
                 JOIN projects p ON t.project_id = p.id
-                WHERE tm.user_id = :user_id AND p.status IN (1, 2)
+                WHERE tm.user_id = :user_id AND p.status IN (1, 2, 3)
             """)
             student_project_info = conn.execute(student_teams_query, {"user_id": user_id}).mappings().all()
             assignments = []
@@ -367,17 +365,44 @@ def update_project(project_id, request, engine):
         flash("Project name and description cannot be empty.", "danger")
         return redirect(url_for('project_page', project_id=project_id))
 
-    attachment_path = project.attachment_path 
-    file = request.files.get('attachment')
+    files_to_delete = request.form.getlist('files_to_delete')
+    
+    current_paths = []
+    if project.attachment_path:
+        current_paths = project.attachment_path.split(';')
 
-    if file and file.filename:
-        try:
-            fs_save_path, url_path = _get_upload_paths(project.name, file.filename)
-            file.save(fs_save_path)
-            attachment_path = url_path
-        except Exception as e:
-            flash(f"Error saving file: {e}", "danger")
-            return redirect(url_for('project_page', project_id=project_id))
+    paths_to_keep = []
+    
+    if files_to_delete:
+        for path in current_paths:
+            if path in files_to_delete:
+                try:
+                    file_path = os.path.join('.', path.lstrip('/'))
+                    if os.path.exists(file_path):
+                        os.remove(file_path)
+                except Exception as e:
+                    print(f"Error deleting old file {path}: {e}")
+            else:
+                paths_to_keep.append(path)
+    else:
+        paths_to_keep = current_paths
+
+    new_files = request.files.getlist('attachment')
+    new_paths = []
+    if new_files and any(f.filename for f in new_files):
+        for file in new_files:
+            if file and file.filename:
+                try:
+                    fs_save_path, url_path = _get_upload_paths(project.name, file.filename)
+                    file.save(fs_save_path)
+                    new_paths.append(url_path)
+                except Exception as e:
+                    flash(f"Error saving new file {file.filename}: {e}", "danger")
+                    return redirect(url_for('project_page', project_id=project_id))
+
+    final_paths = paths_to_keep + new_paths
+    final_attachment_path_str = ";".join(final_paths) if final_paths else None
+    
 
     try:
         with engine.connect() as connection:
@@ -389,7 +414,7 @@ def update_project(project_id, request, engine):
             params = {
                 "name": new_name, 
                 "description": new_description, 
-                "attachment_path": attachment_path,
+                "attachment_path": final_attachment_path_str,
                 "project_id": project_id, 
                 "user_id": session['user_id']
             }
@@ -400,6 +425,7 @@ def update_project(project_id, request, engine):
         flash(f"An error occurred while updating the project: {e}", "danger")
         
     return redirect(url_for('project_page', project_id=project_id))
+
 
 def delete_project(project_id, engine):
     if 'user_id' not in session:
@@ -412,13 +438,32 @@ def delete_project(project_id, engine):
         return redirect(url_for('project_page', project_id=project_id))
         
     try:
+        project_name = project.name 
+
         with engine.connect() as connection:
             delete_query = text("DELETE FROM projects WHERE id = :project_id AND user_id = :user_id")
             connection.execute(delete_query, {"project_id": project_id, "user_id": session['user_id']})
             connection.commit()
-            flash("Project deleted successfully.", "success")
-    except Exception as e:
-        flash(f"An error occurred while deleting the project: {e}", "danger")
+
+        try:
+            sanitized_project_name = secure_filename(str(project_name))[:50]
+            fs_upload_dir = os.path.join('.', 'uploads', sanitized_project_name)
+            
+            if os.path.isdir(fs_upload_dir):
+                shutil.rmtree(fs_upload_dir)
+                print(f"Successfully deleted directory: {fs_upload_dir}")
+            else:
+                print(f"Directory not found, skipping deletion: {fs_upload_dir}")
+                
+        except Exception as file_e:
+            print(f"Error deleting project directory: {file_e}")
+            flash("Project deleted, but an error occurred while cleaning up associated files.", "warning")
+            return redirect(url_for('profile'))
+            
+        flash("Project deleted successfully.", "success")
+
+    except Exception as db_e:
+        flash(f"An error occurred while deleting the project: {db_e}", "danger")
         return redirect(url_for('project_page', project_id=project_id))
         
     return redirect(url_for('profile'))
@@ -480,7 +525,7 @@ def get_comments_for_project(project_id, engine):
         with engine.connect() as conn:
             query = text("""
                 SELECT c.id, c.comment, c.created_at, c.attachment_path,
-                       u.name, u.email, u.role
+                       u.name, u.email, u.role, c.user_id
                 FROM comments c
                 JOIN users u ON c.user_id = u.id
                 WHERE c.project_id = :project_id
@@ -500,7 +545,8 @@ def add_comment_to_project(project_id, request, engine):
         flash("You must be logged in to comment.", "warning")
         return redirect(url_for('login'))
 
-    if not comment_text:
+    files = request.files.getlist('attachment')
+    if not comment_text and not any(f.filename for f in files):
         flash("Comment cannot be empty.", "danger")
         return redirect(url_for('project_page', project_id=project_id))
 
@@ -513,17 +559,18 @@ def add_comment_to_project(project_id, request, engine):
         flash("You do not have permission to comment on this project.", "danger")
         return redirect(url_for('project_page', project_id=project_id))
 
-    attachment_path = None
-    file = request.files.get('attachment')
+    attachment_paths = []
+    for file in files:
+        if file and file.filename:
+            try:
+                fs_save_path, url_path = _get_upload_paths(project.name, file.filename)
+                file.save(fs_save_path)
+                attachment_paths.append(url_path)
+            except Exception as e:
+                flash(f"Error saving file {file.filename}: {e}", "danger")
+                return redirect(url_for('project_page', project_id=project_id))
 
-    if file and file.filename:
-        try:
-            fs_save_path, url_path = _get_upload_paths(project.name, file.filename)
-            file.save(fs_save_path)
-            attachment_path = url_path
-        except Exception as e:
-            flash(f"Error saving file: {e}", "danger")
-            return redirect(url_for('project_page', project_id=project_id))
+    attachment_path_str = ";".join(attachment_paths) if attachment_paths else None
 
     try:
         with engine.connect() as conn:
@@ -535,11 +582,63 @@ def add_comment_to_project(project_id, request, engine):
                 "user_id": user_id,
                 "project_id": project_id,
                 "comment": comment_text,
-                "attachment_path": attachment_path
+                "attachment_path": attachment_path_str
             })
             conn.commit()
             flash("Comment added successfully.", "success")
     except Exception as e:
         flash(f"An error occurred while posting your comment: {e}", "danger")
+
+    return redirect(url_for('project_page', project_id=project_id))
+
+def delete_comment_on_project(project_id, comment_id, engine):
+    """Handles deleting a comment and its associated attachment."""
+    user_id = session.get('user_id')
+    if not user_id:
+        flash("You must be logged in to delete a comment.", "warning")
+        return redirect(url_for('project_page', project_id=project_id))
+
+    try:
+        with engine.connect() as conn:
+            with conn.begin(): 
+                
+                query_details = text("""
+                    SELECT user_id, attachment_path 
+                    FROM comments 
+                    WHERE id = :comment_id AND project_id = :project_id
+                """)
+                comment = conn.execute(query_details, {
+                    "comment_id": comment_id, 
+                    "project_id": project_id
+                }).mappings().first()
+
+                if not comment:
+                    flash("Comment not found.", "danger")
+                    return redirect(url_for('project_page', project_id=project_id))
+
+                if comment.user_id != user_id:
+                    flash("You do not have permission to delete this comment.", "danger")
+                    return redirect(url_for('project_page', project_id=project_id))
+                
+                if comment.attachment_path:
+                    paths_to_delete = comment.attachment_path.split(';')
+                    for path in paths_to_delete:
+                        if not path: continue
+                        try:
+                            file_path = os.path.join('.', path.lstrip('/'))
+                            if os.path.exists(file_path):
+                                os.remove(file_path)
+                            else:
+                                print(f"Warning: File not found, cannot delete: {file_path}")
+                        except Exception as e:
+                            print(f"Error deleting file {path}: {e}")
+
+                delete_query = text("DELETE FROM comments WHERE id = :comment_id")
+                conn.execute(delete_query, {"comment_id": comment_id})
+                
+                flash("Comment deleted successfully.", "success")
+                
+    except Exception as e:
+        flash(f"An error occurred while deleting the comment: {e}", "danger")
 
     return redirect(url_for('project_page', project_id=project_id))

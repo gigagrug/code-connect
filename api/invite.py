@@ -65,8 +65,7 @@ def handle_instructor_request(request_id, engine):
 
     try:
         with engine.connect() as conn:
-            with conn.begin(): # Start transaction
-                # MODIFIED: Allow handling requests with status 0 (pending) OR 2 (denied)
+            with conn.begin():
                 req_query = text("""
                     SELECT student_id FROM instructor_requests 
                     WHERE id = :request_id 
@@ -82,18 +81,15 @@ def handle_instructor_request(request_id, engine):
                 student_id = req_result.student_id
 
                 if action == 'accept':
-                    # 1. Update the user table to assign the student
                     update_user_query = text("UPDATE users SET instructor_id = :instructor_id WHERE id = :student_id")
                     conn.execute(update_user_query, {"instructor_id": instructor_id, "student_id": student_id})
 
-                    # 2. Update the request status to accepted
                     update_req_query = text("UPDATE instructor_requests SET status = 1 WHERE id = :request_id")
                     conn.execute(update_req_query, {"request_id": request_id})
 
                     flash("Student request accepted.", "success")
                 
                 elif action == 'deny':
-                    # Update the request status to denied
                     update_req_query = text("UPDATE instructor_requests SET status = 2 WHERE id = :request_id")
                     conn.execute(update_req_query, {"request_id": request_id})
                     flash("Student request denied.", "info")
@@ -104,7 +100,6 @@ def handle_instructor_request(request_id, engine):
     return redirect(url_for('user_mgt'))
 
 def dismiss_denied_request(request_id, engine):
-    """Allows an instructor to dismiss/delete a denied request."""
     if 'user_id' not in session or session.get('role') != 0:
         flash("Only instructors can handle requests.", "danger")
         return redirect(url_for('user_mgt'))
@@ -113,7 +108,6 @@ def dismiss_denied_request(request_id, engine):
     
     try:
         with engine.connect() as conn:
-            # Ensure the instructor can only delete their own denied requests
             query = text("""
                 DELETE FROM instructor_requests 
                 WHERE id = :request_id 
