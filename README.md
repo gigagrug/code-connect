@@ -1,7 +1,6 @@
 # CodeConnect
 
 - Informing the client about the progress of currently developed requirements 
-- Handle files similar to how Blackboard does it
 - Pictures for landing page
 - Lists of projects should have limited information such that multiple of them can fit onto the page
 - Job forms should add external links
