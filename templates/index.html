@@ -4,12 +4,23 @@
   <div class="container mx-auto px-4 py-8">
     <h2 class="text mb-6 text-center text-3xl font-bold">Explore All Projects</h2>
 
-    <div id="projects-grid" class="grid grid-cols-1 gap-8 md:grid-cols-2 lg:grid-cols-3">
-      {% for project in projects %}
-        {% include "partials/project_card.html" %}
-      {% endfor %}
+    <div class="card overflow-hidden rounded-lg shadow-md">
+      <table class="w-full text-left text-sm">
+        <thead class="bg-neutral-50 text-xs text-neutral-700 uppercase dark:bg-neutral-700 dark:text-neutral-400">
+          <tr>
+            <th scope="col" class="px-6 py-3">Status</th>
+            <th scope="col" class="px-6 py-3">Project Name</th>
+            <th scope="col" class="px-6 py-3">Description</th>
+            <th scope="col" class="px-6 py-3">Created By</th>
+          </tr>
+        </thead>
+        <tbody id="projects-grid" class="text divide-y divide-gray-200 dark:divide-gray-700">
+          {% for project in projects %}
+            {% include "partials/project_card.html" %}
+          {% endfor %}
+        </tbody>
+      </table>
     </div>
-
     <div id="loader" class="py-8 text-center text-2xl" style="display: none;">Loading...</div>
   </div>
 

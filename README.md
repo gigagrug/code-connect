@@ -2,7 +2,6 @@
 
 - Informing the client about the progress of currently developed requirements 
 - Pictures for landing page
-- Lists of projects should have limited information such that multiple of them can fit onto the page
 - Job forms should add external links
 - User management search students
 - For approved projects, instructors can edit all files
