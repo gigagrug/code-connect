@@ -1,6 +1,5 @@
 # CodeConnect
 
-- Informing the client about the progress of currently developed requirements 
 - Pictures for landing page
 - Job forms should add external links
 - User management search students
