@@ -1,7 +1,6 @@
 # CodeConnect
 
 - Pictures for landing page
-- Job forms should add external links
 - User management search students
 - For approved projects, instructors can edit all files
 - Title for file names
