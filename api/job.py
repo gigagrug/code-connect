@@ -12,21 +12,28 @@ def create_job(request, engine):
 
     title = request.form.get('title')
     description = request.form.get('description')
+    link = request.form.get('link')
     user_id = session['user_id']
 
     if not title or not description:
         flash("Job title and description are required.", "danger")
         return redirect(url_for('business_jobs', user_id=session['user_id']))
 
+    if link:
+        link = link.strip()
+        if not link.startswith('http://') and not link.startswith('https://'):
+            link = 'https://' + link
+
     try:
         with engine.connect() as connection:
             insert_query = text(
-                "INSERT INTO jobs (user_id, title, description, status) VALUES (:user_id, :title, :description, :status)"
+                "INSERT INTO jobs (user_id, title, description, link, status) VALUES (:user_id, :title, :description, :link, :status)"
             )
             params = {
                 "user_id": user_id,
                 "title": title,
                 "description": description,
+                "link": link,
                 "status": 0 
             }
             connection.execute(insert_query, params)
@@ -42,7 +49,7 @@ def get_job_by_id(job_id, engine):
         with engine.connect() as connection:
             query = text("""
                 SELECT 
-                    j.id, j.title, j.description, j.status, j.user_id,
+                    j.id, j.title, j.description, j.link, j.status, j.user_id,
                     u.name AS user_name, u.email
                 FROM jobs j
                 JOIN users u ON j.user_id = u.id

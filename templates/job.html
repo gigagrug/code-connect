@@ -28,6 +28,9 @@
               </div>
               <div class="text max-w-none text-lg">
                 <p class="whitespace-pre-line">{{ job.description }}</p>
+                {% if job.link %}
+                  <a href="{{ job.link }}" target="blank">Apply Externally</a>
+                {% endif %}
               </div>
             </div>
 
