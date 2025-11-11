@@ -272,11 +272,13 @@ def project_comment_route(project_id):
 def project_comment_delete_route(project_id, comment_id):
     return delete_comment_on_project(project_id, comment_id, engine)
 
-# --- NEW ROUTE FOR INSTRUCTOR FILE MANAGEMENT ---
 @app.route('/project/<int:project_id>/instructor-manage-files', methods=['POST'])
 def instructor_files_route(project_id):
     return instructor_manage_files(project_id, request, engine)
-# --- END NEW ROUTE ---
+
+@app.route('/project/<int:project_id>/file/rename', methods=['POST'])
+def rename_file_route(project_id):
+    return rename_project_attachment(project_id, request, engine)
 
 @app.route('/profile')
 def profile():

@@ -5,18 +5,39 @@ from sqlalchemy import text
 from flask import flash, redirect, url_for, session, request, jsonify, render_template
 from werkzeug.utils import secure_filename
 
+# --- NEW HELPER FUNCTION ---
+def _check_and_get_unique_path(fs_save_path):
+    if not os.path.exists(fs_save_path):
+        return fs_save_path, os.path.basename(fs_save_path)
+
+    directory, filename = os.path.split(fs_save_path)
+    filename_base, extension = os.path.splitext(filename)
+    
+    counter = 1
+    while True:
+        # Create a new filename like file(1).pdf
+        new_filename = f"{filename_base}({counter}){extension}"
+        new_fs_save_path = os.path.join(directory, new_filename)
+        if not os.path.exists(new_fs_save_path):
+            return new_fs_save_path, new_filename
+        counter += 1
+
 def _get_upload_paths(project_name, original_filename):
     sanitized_project_name = secure_filename(str(project_name))[:50]
     safe_filename = secure_filename(original_filename)
-    unique_filename = f"{uuid.uuid4()}_{safe_filename}"
     
     fs_upload_dir = os.path.join('.', 'uploads', sanitized_project_name)
     os.makedirs(fs_upload_dir, exist_ok=True)
     
-    fs_save_path = os.path.join(fs_upload_dir, unique_filename)
-    url_path = f"/uploads/{sanitized_project_name}/{unique_filename}"
+    fs_save_path = os.path.join(fs_upload_dir, safe_filename)
     
-    return (fs_save_path, url_path)
+    # Check for uniqueness and get the final path and filename
+    final_fs_save_path, final_filename = _check_and_get_unique_path(fs_save_path)
+    
+    url_path = f"/uploads/{sanitized_project_name}/{final_filename}"
+    
+    return (final_fs_save_path, url_path) 
+
 
 def get_project_by_id(project_id, engine):
     try:
@@ -504,10 +525,8 @@ def check_if_user_can_comment(user_id, project, engine):
     if user_id == project.user_id:
         return True
 
-    # --- UPDATED: Allow instructors to comment on 'Taken' projects ---
     if session.get('role') == 0 and project.status in [1, 2, 3]:
         return True
-    # --- END UPDATE ---
 
     with engine.connect() as conn:
         query = text("""
@@ -522,7 +541,6 @@ def check_if_user_can_comment(user_id, project, engine):
 
     return False
 
-# --- FUNCTION UPDATED: Re-implemented complex logic ---
 def get_comments_for_project(project_id, engine, session):
     """Fetches comments for a given project based on complex visibility rules."""
     
@@ -530,11 +548,10 @@ def get_comments_for_project(project_id, engine, session):
     user_role = session.get('role')
 
     if not user_id:
-        return [] # Not logged in, can't see comments
+        return [] 
 
     try:
         with engine.connect() as conn:
-            # Get the project owner's ID
             owner_id_query = text("SELECT user_id FROM projects WHERE id = :project_id")
             project_owner_id = conn.execute(owner_id_query, {"project_id": project_id}).scalar()
 
@@ -550,19 +567,17 @@ def get_comments_for_project(project_id, engine, session):
                 WHERE c.project_id = :project_id
             """
             
-            # Rule 1: Project Owner (Role 1) sees all
             if user_id == project_owner_id:
                 query_sql = f"{query_base} ORDER BY c.created_at ASC"
                 params = {"project_id": project_id}
 
-            # Rule 2: Instructor (Role 0)
             elif user_role == 0:
                 query_sql = f"""
                     {query_base}
                     AND (
-                        c.user_id = :project_owner_id  -- Project owner's comments
-                        OR c.user_id = :current_user_id -- Their own comments
-                        OR (u.role = 3 AND c.user_id IN ( -- Any student on this project
+                        c.user_id = :project_owner_id  
+                        OR c.user_id = :current_user_id 
+                        OR (u.role = 3 AND c.user_id IN ( 
                             SELECT tm.user_id
                             FROM team_members tm
                             JOIN teams t ON tm.team_id = t.id
@@ -577,9 +592,7 @@ def get_comments_for_project(project_id, engine, session):
                     "current_user_id": user_id
                 }
 
-            # Rule 3: Student (Role 3)
             elif user_role == 3:
-                # Find this student's team ID *for this project*
                 team_id_query = text("""
                     SELECT tm.team_id
                     FROM team_members tm
@@ -589,11 +602,9 @@ def get_comments_for_project(project_id, engine, session):
                 """)
                 team_id = conn.execute(team_id_query, {"current_user_id": user_id, "project_id": project_id}).scalar()
 
-                # Find this student's instructor ID
                 instructor_id_query = text("SELECT instructor_id FROM users WHERE id = :current_user_id")
                 instructor_id = conn.execute(instructor_id_query, {"current_user_id": user_id}).scalar()
 
-                # Build the query parts
                 query_conditions = ["c.user_id = :project_owner_id"]
                 params = {"project_id": project_id, "project_owner_id": project_owner_id, "current_user_id": user_id}
 
@@ -605,7 +616,6 @@ def get_comments_for_project(project_id, engine, session):
                     query_conditions.append("c.user_id IN (SELECT user_id FROM team_members WHERE team_id = :team_id)")
                     params["team_id"] = team_id
                 else:
-                    # If not on a team, they can still see their own comment
                     query_conditions.append("c.user_id = :current_user_id")
 
                 query_sql = f"""
@@ -616,9 +626,8 @@ def get_comments_for_project(project_id, engine, session):
                     ORDER BY c.created_at ASC
                 """
 
-            # Rule 4: Other roles (Alumni, etc.)
             else:
-                return [] # They can't see any comments
+                return [] 
 
             result = conn.execute(text(query_sql), params).mappings().all()
             return result
@@ -626,7 +635,6 @@ def get_comments_for_project(project_id, engine, session):
     except Exception as e:
         print(f"Database error fetching comments: {e}")
         return []
-# --- END UPDATED FUNCTION ---
 
 
 def add_comment_to_project(project_id, request, engine):
@@ -683,7 +691,6 @@ def add_comment_to_project(project_id, request, engine):
 
     return redirect(url_for('project_page', project_id=project_id))
 
-# --- FUNCTION UPDATED: Enhanced Permissions ---
 def delete_comment_on_project(project_id, comment_id, engine):
     """Handles deleting a comment and its associated attachment."""
     user_id = session.get('user_id')
@@ -695,7 +702,6 @@ def delete_comment_on_project(project_id, comment_id, engine):
         with engine.connect() as conn:
             with conn.begin(): 
                 
-                # 1. Get comment details (owner, role) and project owner
                 query_details = text("""
                     SELECT 
                         c.user_id AS comment_owner_id, 
@@ -716,18 +722,15 @@ def delete_comment_on_project(project_id, comment_id, engine):
                     flash("Comment not found.", "danger")
                     return redirect(url_for('project_page', project_id=project_id))
 
-                # 2. Check permissions
                 is_my_comment = (comment.comment_owner_id == user_id)
                 is_instructor = (session.get('role') == 0)
                 is_student_comment = (comment.comment_role == 3)
-                is_owner_comment = (comment.comment_role == 1) # or (comment.comment_owner_id == comment.project_owner_id)
+                is_owner_comment = (comment.comment_role == 1) 
 
-                # Allow if: I am the owner OR I am an instructor AND it's a student's or owner's comment
                 if not is_my_comment and not (is_instructor and (is_student_comment or is_owner_comment)):
                     flash("You do not have permission to delete this comment.", "danger")
                     return redirect(url_for('project_page', project_id=project_id))
                 
-                # 3. Delete files
                 if comment.attachment_path:
                     paths_to_delete = comment.attachment_path.split(';')
                     for path in paths_to_delete:
@@ -741,7 +744,6 @@ def delete_comment_on_project(project_id, comment_id, engine):
                         except Exception as e:
                             print(f"Error deleting file {path}: {e}")
 
-                # 4. Delete the comment from the database
                 delete_query = text("DELETE FROM comments WHERE id = :comment_id")
                 conn.execute(delete_query, {"comment_id": comment_id})
                 
@@ -751,9 +753,7 @@ def delete_comment_on_project(project_id, comment_id, engine):
         flash(f"An error occurred while deleting the comment: {e}", "danger")
 
     return redirect(url_for('project_page', project_id=project_id))
-# --- END UPDATED FUNCTION ---
 
-# --- NEW FUNCTION ---
 def instructor_manage_files(project_id, request, engine):
     """Allows an instructor to add/remove files from a project."""
     if 'user_id' not in session or session.get('role') != 0:
@@ -765,7 +765,6 @@ def instructor_manage_files(project_id, request, engine):
         flash("Project not found.", "danger")
         return redirect(url_for('index'))
 
-    # Permission check: Must be an instructor and project must be approved or taken
     if not (session.get('role') == 0 and project.status in [2, 3]):
         flash("You can only manage files for approved or taken projects.", "danger")
         return redirect(url_for('project_page', project_id=project_id))
@@ -823,4 +822,74 @@ def instructor_manage_files(project_id, request, engine):
         flash(f"An error occurred while updating files: {e}", "danger")
         
     return redirect(url_for('project_page', project_id=project_id))
-# --- END NEW FUNCTION ---
+
+# --- NEW FUNCTION ---
+def rename_project_attachment(project_id, request, engine):
+    """Renames a single project attachment."""
+    if 'user_id' not in session:
+        flash("You must be logged in.", "danger")
+        return redirect(url_for('project_page', project_id=project_id))
+    
+    user_id = session.get('user_id')
+    project = get_project_by_id(project_id, engine)
+
+    # Permission check: Must be project owner or instructor
+    is_owner = (project.user_id == user_id)
+    is_instructor = (session.get('role') == 0)
+    
+    if not (is_owner or (is_instructor and project.status in [2, 3])):
+        flash("You do not have permission to rename files for this project.", "danger")
+        return redirect(url_for('project_page', project_id=project_id))
+
+    old_path = request.form.get('old_path')
+    new_filename = request.form.get('new_filename')
+
+    if not old_path or not new_filename:
+        flash("Invalid rename request.", "danger")
+        return redirect(url_for('project_page', project_id=project_id))
+
+    try:
+        # 1. Sanitize and get file extension
+        original_extension = os.path.splitext(old_path)[1]
+        new_filename_base = os.path.splitext(new_filename)[0]
+        safe_new_filename = secure_filename(f"{new_filename_base}{original_extension}")
+
+        if not safe_new_filename:
+            flash("Invalid new filename.", "danger")
+            return redirect(url_for('project_page', project_id=project_id))
+
+        # 2. Get file paths
+        sanitized_project_name = secure_filename(str(project.name))[:50]
+        upload_dir = os.path.join('.', 'uploads', sanitized_project_name)
+        old_fs_path = os.path.join('.', old_path.lstrip('/'))
+        
+        # 3. Check for uniqueness
+        new_fs_path_base = os.path.join(upload_dir, safe_new_filename)
+        final_fs_path, final_filename = _check_and_get_unique_path(new_fs_path_base)
+        new_url_path = f"/uploads/{sanitized_project_name}/{final_filename}"
+        
+        # 4. Rename the file
+        if os.path.exists(old_fs_path):
+            os.rename(old_fs_path, final_fs_path)
+        else:
+            flash("File not found. Cannot rename.", "danger")
+            return redirect(url_for('project_page', project_id=project_id))
+            
+        # 5. Update the database
+        with engine.connect() as conn:
+            current_paths = project.attachment_path.split(';')
+            # Rebuild the list, replacing the old path
+            new_paths_list = [new_url_path if p == old_path else p for p in current_paths]
+            new_paths_string = ";".join(new_paths_list)
+            
+            update_query = text("UPDATE projects SET attachment_path = :attachment_path WHERE id = :project_id")
+            conn.execute(update_query, {"attachment_path": new_paths_string, "project_id": project_id})
+            conn.commit()
+            
+        flash(f"File renamed to {final_filename} successfully!", "success")
+    
+    except Exception as e:
+        print(f"Error renaming file: {e}")
+        flash("An error occurred while renaming the file.", "danger")
+        
+    return redirect(url_for('project_page', project_id=project_id))

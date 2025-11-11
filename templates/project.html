@@ -51,8 +51,7 @@
                     {% set paths = project.attachment_path.split(';') %}
                     {% for path in paths %}
                       {% if path %}
-                        {% set full_filename = path.split('/')[-1] %}
-                        {% set original_filename = full_filename.split('_', 1)[-1] %}
+                        {% set original_filename = path.split('/')[-1] %}
                         {% set extension = original_filename.split('.')[-1].lower() %}
 
                         {% if extension in ['jpg', 'jpeg', 'png', 'gif', 'webp'] %}
@@ -73,6 +72,13 @@
                         {% else %}
                           <a href="{{ path }}" target="_blank" class="text-blue-500 hover:underline"> View ({{ original_filename }}) </a>
                         {% endif %}
+                        
+                        {% if session.user_id == project.user_id or (session.get('role') == 0 and project.status in [2, 3]) %}
+                          <button type="button" class="text-xs text-gray-500 hover:text-blue-500" popovertarget="rename-popover" onclick="openRenamePopover('{{ path }}', '{{ original_filename }}')">
+                            (Edit Name)
+                          </button>
+                        {% endif %}
+
                       {% endif %}
                     {% endfor %}
                   </div>
@@ -128,8 +134,7 @@
                           {% set paths = comment.attachment_path.split(';') %}
                           {% for path in paths %}
                             {% if path %}
-                              {% set full_filename = path.split('/')[-1] %}
-                              {% set original_filename = full_filename.split('_', 1)[-1] %}
+                              {% set original_filename = path.split('/')[-1] %}
                               {% set extension = original_filename.split('.')[-1].lower() %}
 
                               {% if extension in ['jpg', 'jpeg', 'png', 'gif', 'webp'] %}
@@ -195,7 +200,6 @@
 
                   <div>
                     <label class="text mb-2 block text-sm font-medium">Manage Attachments</label>
-
                     {% if project.attachment_path %}
                       <div class="mb-2 text-sm">
                         <p>Current Files:</p>
@@ -203,8 +207,7 @@
                           {% set paths = project.attachment_path.split(';') %}
                           {% for path in paths %}
                             {% if path %}
-                              {% set full_filename = path.split('/')[-1] %}
-                              {% set original_filename = full_filename.split('_', 1)[-1] %}
+                              {% set original_filename = path.split('/')[-1] %}
                               {% set extension = original_filename.split('.')[-1].lower() %}
                               
                               <div class="flex items-center justify-between">
@@ -213,18 +216,21 @@
                                   <span class="text-red-500">Delete</span>
                                 </label>
                                 
-                                {% if extension in ['jpg', 'jpeg', 'png', 'gif', 'webp'] %}
-                                   <a href="{{ path }}" target="_blank" class="text-blue-500 hover:underline">{{ original_filename }} (Image)</a>
-                                
-                                {% elif extension == 'docx' %}
-                                  <button type="button" class="text-blue-500 hover:underline" popovertarget="file-viewer-popover" onclick="viewDocx('{{ path }}', '{{ original_filename }}')">{{ original_filename }}</button>
-                                
-                                {% elif extension in ['xlsx', 'xls'] %}
-                                  <button type="button" class="text-blue-500 hover:underline" popovertarget="file-viewer-popover" onclick="viewExcel('{{ path }}', '{{ original_filename }}')">{{ original_filename }}</button>
-                                
-                                {% else %}
-                                  <a href="{{ path }}" target="_blank" class="text-blue-500 hover:underline">{{ original_filename }}</a>
-                                {% endif %}
+                                <div class="flex items-center gap-2">
+                                  {% if extension in ['jpg', 'jpeg', 'png', 'gif', 'webp'] %}
+                                     <a href="{{ path }}" target="_blank" class="text-blue-500 hover:underline">{{ original_filename }} (Image)</a>
+                                  {% elif extension == 'docx' %}
+                                    <button type="button" class="text-blue-500 hover:underline" popovertarget="file-viewer-popover" onclick="viewDocx('{{ path }}', '{{ original_filename }}')">{{ original_filename }}</button>
+                                  {% elif extension in ['xlsx', 'xls'] %}
+                                    <button type="button" class="text-blue-500 hover:underline" popovertarget="file-viewer-popover" onclick="viewExcel('{{ path }}', '{{ original_filename }}')">{{ original_filename }}</button>
+                                  {% else %}
+                                    <a href="{{ path }}" target="_blank" class="text-blue-500 hover:underline">{{ original_filename }}</a>
+                                  {% endif %}
+                                  
+                                  <button type="button" class="text-xs text-gray-500 hover:text-blue-500" popovertarget="rename-popover" onclick="openRenamePopover('{{ path }}', '{{ original_filename }}')">
+                                    (Edit)
+                                  </button>
+                                </div>
                               </div>
                             {% endif %}
                           {% endfor %}
@@ -268,8 +274,7 @@
                             {% set paths = project.attachment_path.split(';') %}
                             {% for path in paths %}
                               {% if path %}
-                                {% set full_filename = path.split('/')[-1] %}
-                                {% set original_filename = full_filename.split('_', 1)[-1] %}
+                                {% set original_filename = path.split('/')[-1] %}
                                 {% set extension = original_filename.split('.')[-1].lower() %}
                                 
                                 <div class="flex items-center justify-between">
@@ -278,15 +283,21 @@
                                     <span class="text-red-500">Delete</span>
                                   </label>
                                   
-                                  {% if extension in ['jpg', 'jpeg', 'png', 'gif', 'webp'] %}
-                                     <a href="{{ path }}" target="_blank" class="text-blue-500 hover:underline">{{ original_filename }} (Image)</a>
-                                  {% elif extension == 'docx' %}
-                                    <button type="button" class="text-blue-500 hover:underline" popovertarget="file-viewer-popover" onclick="viewDocx('{{ path }}', '{{ original_filename }}')">{{ original_filename }}</button>
-                                  {% elif extension in ['xlsx', 'xls'] %}
-                                    <button type="button" class="text-blue-500 hover:underline" popovertarget="file-viewer-popover" onclick="viewExcel('{{ path }}', '{{ original_filename }}')">{{ original_filename }}</button>
-                                  {% else %}
-                                    <a href="{{ path }}" target="_blank" class="text-blue-500 hover:underline">{{ original_filename }}</a>
-                                  {% endif %}
+                                  <div class="flex items-center gap-2">
+                                    {% if extension in ['jpg', 'jpeg', 'png', 'gif', 'webp'] %}
+                                       <a href="{{ path }}" target="_blank" class="text-blue-500 hover:underline">{{ original_filename }} (Image)</a>
+                                    {% elif extension == 'docx' %}
+                                      <button type="button" class="text-blue-500 hover:underline" popovertarget="file-viewer-popover" onclick="viewDocx('{{ path }}', '{{ original_filename }}')">{{ original_filename }}</button>
+                                    {% elif extension in ['xlsx', 'xls'] %}
+                                      <button type="button" class="text-blue-500 hover:underline" popovertarget="file-viewer-popover" onclick="viewExcel('{{ path }}', '{{ original_filename }}')">{{ original_filename }}</button>
+                                    {% else %}
+                                      <a href="{{ path }}" target="_blank" class="text-blue-500 hover:underline">{{ original_filename }}</a>
+                                    {% endif %}
+                                    
+                                    <button type="button" class="text-xs text-gray-500 hover:text-blue-500" popovertarget="rename-popover" onclick="openRenamePopover('{{ path }}', '{{ original_filename }}')">
+                                      (Edit)
+                                    </button>
+                                  </div>
                                 </div>
                               {% endif %}
                             {% endfor %}
@@ -307,7 +318,7 @@
                   </div>
                 </div>
               {% endif %}
-              {% endif %}
+            {% endif %}
           </div>
         </div>
       </div>
@@ -329,8 +340,7 @@
                     {{ msg.message_text }}
 
                     {% if msg.attachment_path %}
-                      {% set full_filename = msg.attachment_path.split('/')[-1] %}
-                      {% set original_filename = full_filename.split('_', 1)[-1] %}
+                      {% set original_filename = msg.attachment_path.split('/')[-1] %}
                       {% set extension = original_filename.split('.')[-1].lower() %}
                       
                       {% if extension in ['jpg', 'jpeg', 'png', 'gif', 'webp'] %}
@@ -389,6 +399,23 @@
     <div id="file-viewer-content" class="overflow-auto p-6" style="max-height: 80vh;"></div>
   </div>
 
+  <div id="rename-popover" popover class="card max-w-lg p-0 backdrop:bg-black/50">
+    <div class="flex items-center justify-between border-b p-4 dark:border-gray-700">
+      <h3 class="text text-2xl font-semibold">Rename File</h3>
+      <button popovertarget="rename-popover" popovertargetaction="hide" class="text-2xl text-gray-400 hover:text-gray-600 dark:hover:text-gray-200">&times;</button>
+    </div>
+    <form id="rename-form" action="" method="POST" class="space-y-4 p-6">
+      <input type="hidden" name="old_path" id="rename-old-path" />
+      <div>
+        <label for="rename-new-name" class="text mb-2 block text-sm font-medium">New Filename</label>
+        <input type="text" name="new_filename" id="rename-new-name" class="input text" required />
+        <p class="mt-1 text-xs text-gray-500">The file extension will be preserved.</p>
+      </div>
+      <button type="submit" class="btn-primary w-full">Rename</button>
+    </form>
+  </div>
+
+
   <script>
     function toggleEditForm() {
       document.getElementById("edit-form").classList.toggle("hidden");
@@ -399,7 +426,6 @@
       document.getElementById("links-control-buttons").classList.toggle("hidden");
     }
     
-    // NEW: Toggle function for the new instructor form
     function toggleInstructorFileForm() {
       document.getElementById("instructor-file-form").classList.toggle("hidden");
       document.getElementById("instructor-file-controls").classList.toggle("hidden");
@@ -409,6 +435,20 @@
     const titleEl = document.getElementById("file-viewer-title");
     const contentEl = document.getElementById("file-viewer-content");
     const downloadBtn = document.getElementById("file-viewer-download");
+
+    // NEW: JS function for the rename popover
+    function openRenamePopover(oldPath, oldFilename) {
+      const form = document.getElementById("rename-form");
+      const oldPathInput = document.getElementById("rename-old-path");
+      const newNameInput = document.getElementById("rename-new-name");
+
+      // Set the form's action URL dynamically
+      form.action = `/project/{{ project.id }}/file/rename`;
+      
+      // Pre-fill the form fields
+      oldPathInput.value = oldPath;
+      newNameInput.value = oldFilename;
+    }
 
     async function viewDocx(url, filename) {
       const fullUrl = rootUrl + url;
@@ -505,9 +545,9 @@
           messageBody.textContent = data.message;
 
           if (data.attachment_path) {
-            const full_filename = data.attachment_path.split("/").pop();
-            const original_filename = full_filename.substring(full_filename.indexOf("_") + 1);
-            const extension = full_filename.split(".").pop().toLowerCase();
+            // UPDATED: Removed the split logic to get the real filename
+            const original_filename = data.attachment_path.split("/").pop();
+            const extension = original_filename.split(".").pop().toLowerCase();
 
             if (["jpg", "jpeg", "png", "gif", "webp"].includes(extension)) {
               const attachmentLink = document.createElement("a");
