@@ -210,7 +210,7 @@ def get_user_mgt_data(engine):
         """)
         projects = conn.execute(projects_query, {"instructor_id": instructor_id}).mappings().all()
 
-        students_query = text("SELECT id, email FROM users WHERE role = 3 AND instructor_id = :instructor_id")
+        students_query = text("SELECT id, name, email FROM users WHERE role = 3 AND instructor_id = :instructor_id")
         all_students = conn.execute(students_query, {"instructor_id": instructor_id}).mappings().all()
 
         teams_query = text("""
