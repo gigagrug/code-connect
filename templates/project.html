@@ -59,10 +59,17 @@
                           <a href="{{ path }}" target="_blank">
                             <img src="{{ path }}" alt="Project Attachment" class="mt-2 h-24 w-24 rounded-lg object-cover shadow-md" />
                           </a>
+                        
                         {% elif extension == 'docx' %}
-                          <button type="button" class="text-blue-500 hover:underline" popovertarget="file-viewer-popover" onclick="viewDocx('{{ path }}', '{{ original_filename }}')">View ({{ original_filename }})</button>
+                          <button type="button" class="text-blue-500 hover:underline" popovertarget="file-viewer-popover" onclick="viewDocx('{{ path }}', '{{ original_filename }}')">
+                            View ({{ original_filename }})
+                          </button>
+                        
                         {% elif extension in ['xlsx', 'xls'] %}
-                          <button type="button" class="text-blue-500 hover:underline" popovertarget="file-viewer-popover" onclick="viewExcel('{{ path }}', '{{ original_filename }}')">View ({{ original_filename }})</button>
+                          <button type="button" class="text-blue-500 hover:underline" popovertarget="file-viewer-popover" onclick="viewExcel('{{ path }}', '{{ original_filename }}')">
+                            View ({{ original_filename }})
+                          </button>
+
                         {% else %}
                           <a href="{{ path }}" target="_blank" class="text-blue-500 hover:underline"> View ({{ original_filename }}) </a>
                         {% endif %}
@@ -107,7 +114,7 @@
                         <div class="flex items-center gap-3">
                           <span class="text-xs text-gray-500 dark:text-gray-400"> {{ comment.created_at.strftime('%b %d, %Y at %I:%M %p') }} </span>
 
-                          {% if session.user_id == comment.user_id %}
+                          {% if session.user_id == comment.user_id or (session.get('role') == 0 and (comment.role == 1 or comment.role == 3)) %}
                             <form action="/project/{{ project.id }}/comment/{{ comment.id }}/delete" method="POST" onsubmit="return confirm('Are you sure you want to delete this comment?');">
                               <button type="submit" class="text-lg font-bold text-gray-400 hover:text-red-500" title="Delete comment">&times;</button>
                             </form>
@@ -129,10 +136,13 @@
                                 <a href="{{ path }}" target="_blank">
                                   <img src="{{ path }}" alt="Comment Attachment" class="mt-2 h-20 w-20 rounded-lg object-cover shadow-md" />
                                 </a>
+                              
                               {% elif extension == 'docx' %}
                                 <button type="button" class="text-sm text-blue-500 hover:underline" popovertarget="file-viewer-popover" onclick="viewDocx('{{ path }}', '{{ original_filename }}')">View ({{ original_filename }})</button>
+                              
                               {% elif extension in ['xlsx', 'xls'] %}
                                 <button type="button" class="text-sm text-blue-500 hover:underline" popovertarget="file-viewer-popover" onclick="viewExcel('{{ path }}', '{{ original_filename }}')">View ({{ original_filename }})</button>
+                              
                               {% else %}
                                 <a href="{{ path }}" target="_blank" class="text-sm text-blue-500 hover:underline"> View ({{ original_filename }}) </a>
                               {% endif %}
@@ -196,19 +206,22 @@
                               {% set full_filename = path.split('/')[-1] %}
                               {% set original_filename = full_filename.split('_', 1)[-1] %}
                               {% set extension = original_filename.split('.')[-1].lower() %}
-
+                              
                               <div class="flex items-center justify-between">
                                 <label for="del-{{ loop.index }}" class="flex items-center gap-2">
                                   <input type="checkbox" name="files_to_delete" value="{{ path }}" id="del-{{ loop.index }}" class="rounded text-red-500 focus:ring-red-400" />
                                   <span class="text-red-500">Delete</span>
                                 </label>
-
+                                
                                 {% if extension in ['jpg', 'jpeg', 'png', 'gif', 'webp'] %}
-                                  <a href="{{ path }}" target="_blank" class="text-blue-500 hover:underline">{{ original_filename }} (Image)</a>
+                                   <a href="{{ path }}" target="_blank" class="text-blue-500 hover:underline">{{ original_filename }} (Image)</a>
+                                
                                 {% elif extension == 'docx' %}
                                   <button type="button" class="text-blue-500 hover:underline" popovertarget="file-viewer-popover" onclick="viewDocx('{{ path }}', '{{ original_filename }}')">{{ original_filename }}</button>
+                                
                                 {% elif extension in ['xlsx', 'xls'] %}
                                   <button type="button" class="text-blue-500 hover:underline" popovertarget="file-viewer-popover" onclick="viewExcel('{{ path }}', '{{ original_filename }}')">{{ original_filename }}</button>
+                                
                                 {% else %}
                                   <a href="{{ path }}" target="_blank" class="text-blue-500 hover:underline">{{ original_filename }}</a>
                                 {% endif %}
@@ -241,7 +254,60 @@
                   <button type="submit" name="new_status" value="0" class="w-full rounded-lg bg-red-600 px-5 py-2.5 text-center text-sm font-medium text-white hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-50" {% if project.status == 0 %}disabled{% endif %}>Unlist Project</button>
                 </form>
               </div>
-            {% endif %}
+
+              {% if project.status in [2, 3] and session.user_id != project.user_id %}
+                <div class="mt-8 border-t border-gray-200 pt-6 dark:border-gray-700">
+                  <h3 class="text mb-4 text-lg font-semibold">Instructor File Management</h3>
+                  <form action="/project/{{ project.id }}/instructor-manage-files" method="POST" id="instructor-file-form" class="mb-6 hidden space-y-4" enctype="multipart/form-data">
+                    <div>
+                      <label class="text mb-2 block text-sm font-medium">Manage Attachments</label>
+                      {% if project.attachment_path %}
+                        <div class="mb-2 text-sm">
+                          <p>Current Files:</p>
+                          <div class="space-y-2 rounded-md border p-2 dark:border-gray-600">
+                            {% set paths = project.attachment_path.split(';') %}
+                            {% for path in paths %}
+                              {% if path %}
+                                {% set full_filename = path.split('/')[-1] %}
+                                {% set original_filename = full_filename.split('_', 1)[-1] %}
+                                {% set extension = original_filename.split('.')[-1].lower() %}
+                                
+                                <div class="flex items-center justify-between">
+                                  <label for="inst-del-{{ loop.index }}" class="flex items-center gap-2">
+                                    <input type="checkbox" name="files_to_delete" value="{{ path }}" id="inst-del-{{ loop.index }}" class="rounded text-red-500 focus:ring-red-400" />
+                                    <span class="text-red-500">Delete</span>
+                                  </label>
+                                  
+                                  {% if extension in ['jpg', 'jpeg', 'png', 'gif', 'webp'] %}
+                                     <a href="{{ path }}" target="_blank" class="text-blue-500 hover:underline">{{ original_filename }} (Image)</a>
+                                  {% elif extension == 'docx' %}
+                                    <button type="button" class="text-blue-500 hover:underline" popovertarget="file-viewer-popover" onclick="viewDocx('{{ path }}', '{{ original_filename }}')">{{ original_filename }}</button>
+                                  {% elif extension in ['xlsx', 'xls'] %}
+                                    <button type="button" class="text-blue-500 hover:underline" popovertarget="file-viewer-popover" onclick="viewExcel('{{ path }}', '{{ original_filename }}')">{{ original_filename }}</button>
+                                  {% else %}
+                                    <a href="{{ path }}" target="_blank" class="text-blue-500 hover:underline">{{ original_filename }}</a>
+                                  {% endif %}
+                                </div>
+                              {% endif %}
+                            {% endfor %}
+                          </div>
+                        </div>
+                      {% endif %}
+                      <label for="inst-attachment" class="text mt-4 mb-2 block text-sm font-medium">Add New Attachment(s)</label>
+                      <input type="file" name="attachment" id="inst-attachment" multiple class="input text w-full file:mr-4 file:rounded-md file:border-0 file:bg-gray-200 file:px-4 file:py-2 file:text-sm file:font-semibold hover:file:bg-gray-300 dark:file:bg-gray-700 dark:file:text-gray-200 dark:hover:file:bg-gray-600" />
+                      <p class="mt-1 text-xs text-gray-500">Uploading new files will add them to the project. Use the checkboxes to delete old ones.</p>
+                    </div>
+                    <div class="flex items-center gap-4">
+                      <button type="submit" class="btn-primary text">Save File Changes</button>
+                      <button type="button" onclick="toggleInstructorFileForm()" class="btn-secondary text">Cancel</button>
+                    </div>
+                  </form>
+                  <div class="text flex items-center gap-4" id="instructor-file-controls">
+                    <button onclick="toggleInstructorFileForm()" class="btn-secondary">Manage Project Files</button>
+                  </div>
+                </div>
+              {% endif %}
+              {% endif %}
           </div>
         </div>
       </div>
@@ -266,23 +332,26 @@
                       {% set full_filename = msg.attachment_path.split('/')[-1] %}
                       {% set original_filename = full_filename.split('_', 1)[-1] %}
                       {% set extension = original_filename.split('.')[-1].lower() %}
-
+                      
                       {% if extension in ['jpg', 'jpeg', 'png', 'gif', 'webp'] %}
                         <a href="{{ msg.attachment_path }}" target="_blank">
                           <img src="{{ msg.attachment_path }}" alt="Chat Attachment" class="mt-2 h-auto max-w-[200px] rounded-lg" />
                         </a>
+                      
                       {% elif extension == 'docx' %}
                         {% if msg.email == session.email %}
                           <button type="button" class="mt-1 block text-sm font-bold text-white underline dark:text-blue-300" popovertarget="file-viewer-popover" onclick="viewDocx('{{ msg.attachment_path }}', '{{ original_filename }}')">View ({{ original_filename }})</button>
                         {% else %}
                           <button type="button" class="mt-1 block text-sm font-bold text-blue-500 underline dark:text-blue-400" popovertarget="file-viewer-popover" onclick="viewDocx('{{ msg.attachment_path }}', '{{ original_filename }}')">View ({{ original_filename }})</button>
                         {% endif %}
+                      
                       {% elif extension in ['xlsx', 'xls'] %}
                         {% if msg.email == session.email %}
                           <button type="button" class="mt-1 block text-sm font-bold text-white underline dark:text-blue-300" popovertarget="file-viewer-popover" onclick="viewExcel('{{ msg.attachment_path }}', '{{ original_filename }}')">View ({{ original_filename }})</button>
                         {% else %}
                           <button type="button" class="mt-1 block text-sm font-bold text-blue-500 underline dark:text-blue-400" popovertarget="file-viewer-popover" onclick="viewExcel('{{ msg.attachment_path }}', '{{ original_filename }}')">View ({{ original_filename }})</button>
                         {% endif %}
+                      
                       {% else %}
                         {% if msg.email == session.email %}
                           <a href="{{ msg.attachment_path }}" target="_blank" class="mt-1 block text-sm font-bold text-white underline dark:text-blue-300"> View ({{ original_filename }}) </a>
@@ -291,6 +360,7 @@
                         {% endif %}
                       {% endif %}
                     {% endif %}
+                    
                   </div>
                 </div>
               {% endfor %}
@@ -312,7 +382,7 @@
     <div class="flex flex-wrap items-center justify-between gap-4 border-b p-4 dark:border-gray-700">
       <h3 id="file-viewer-title" class="text text-2xl font-semibold">File Viewer</h3>
       <div class="flex items-center gap-4">
-        <a id="file-viewer-download" href="#" download="file" class="text text-sm">Download</a>
+        <a id="file-viewer-download" href="#" download="file" class="btn-secondary text-sm">Download</a>
         <button popovertarget="file-viewer-popover" popovertargetaction="hide" class="text-2xl text-gray-400 hover:text-gray-600 dark:hover:text-gray-200">&times;</button>
       </div>
     </div>
@@ -328,11 +398,16 @@
       document.getElementById("links-form").classList.toggle("hidden");
       document.getElementById("links-control-buttons").classList.toggle("hidden");
     }
+    
+    // NEW: Toggle function for the new instructor form
+    function toggleInstructorFileForm() {
+      document.getElementById("instructor-file-form").classList.toggle("hidden");
+      document.getElementById("instructor-file-controls").classList.toggle("hidden");
+    }
 
     const rootUrl = "{{ request.url_root.rstrip('/') }}";
     const titleEl = document.getElementById("file-viewer-title");
     const contentEl = document.getElementById("file-viewer-content");
-    // NEW: Get the download button
     const downloadBtn = document.getElementById("file-viewer-download");
 
     async function viewDocx(url, filename) {
@@ -342,7 +417,6 @@
       contentEl.innerHTML = '<p class="text">Loading document...</p>';
       contentEl.className = "p-6 overflow-y-auto docx-preview-wrapper";
 
-      // NEW: Set download button properties
       downloadBtn.href = fullUrl;
       downloadBtn.setAttribute("download", filename);
 
@@ -350,7 +424,7 @@
         const response = await fetch(fullUrl);
         const blob = await response.blob();
 
-        contentEl.innerHTML = "";
+        contentEl.innerHTML = ""; 
 
         window.docx.renderAsync(blob, contentEl);
       } catch (error) {
@@ -366,7 +440,6 @@
       contentEl.innerHTML = '<p class="text">Loading workbook...</p>';
       contentEl.className = "p-6 overflow-auto";
 
-      // NEW: Set download button properties
       downloadBtn.href = fullUrl;
       downloadBtn.setAttribute("download", filename);
 
@@ -406,7 +479,7 @@
         const messageInput = document.getElementById("message-input");
         const fileInput = document.getElementById("chat-file-input");
         const socket = io();
-
+        
         const rootUrl = "{{ request.url_root.rstrip('/') }}";
 
         if (messagesContainer) {
@@ -446,12 +519,13 @@
               img.className = "mt-2 max-w-[200px] h-auto rounded-lg";
               attachmentLink.appendChild(img);
               messageBody.appendChild(attachmentLink);
-            } else if (extension === "docx") {
+            
+            } else if (extension === 'docx') {
               const viewButton = document.createElement("button");
               viewButton.type = "button";
               viewButton.setAttribute("popovertarget", "file-viewer-popover");
               viewButton.onclick = () => viewDocx(data.attachment_path, original_filename);
-
+              
               if (isCurrentUser) {
                 viewButton.className = "mt-1 block text-sm font-bold text-white underline dark:text-blue-300";
               } else {
@@ -459,12 +533,13 @@
               }
               viewButton.textContent = `View (${original_filename})`;
               messageBody.appendChild(viewButton);
-            } else if (extension === "xlsx" || extension === "xls") {
+            
+            } else if (extension === 'xlsx' || extension === 'xls') {
               const viewButton = document.createElement("button");
               viewButton.type = "button";
               viewButton.setAttribute("popovertarget", "file-viewer-popover");
               viewButton.onclick = () => viewExcel(data.attachment_path, original_filename);
-
+              
               if (isCurrentUser) {
                 viewButton.className = "mt-1 block text-sm font-bold text-white underline dark:text-blue-300";
               } else {
@@ -472,11 +547,12 @@
               }
               viewButton.textContent = `View (${original_filename})`;
               messageBody.appendChild(viewButton);
+
             } else {
               const attachmentLink = document.createElement("a");
               attachmentLink.href = data.attachment_path;
               attachmentLink.target = "_blank";
-
+              
               if (isCurrentUser) {
                 attachmentLink.className = "mt-1 block text-sm font-bold text-white underline dark:text-blue-300";
               } else {

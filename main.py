@@ -165,7 +165,8 @@ def project_page(project_id):
 
         # Data
         teams = get_teams_for_project(project_id, engine)
-        comments = get_comments_for_project(project_id, engine)
+        # --- UPDATED: Passed session to the function ---
+        comments = get_comments_for_project(project_id, engine, session)
         chat_history = []
         
         if can_chat:
@@ -270,6 +271,12 @@ def project_comment_route(project_id):
 @app.route('/project/<int:project_id>/comment/<int:comment_id>/delete', methods=['POST'])
 def project_comment_delete_route(project_id, comment_id):
     return delete_comment_on_project(project_id, comment_id, engine)
+
+# --- NEW ROUTE FOR INSTRUCTOR FILE MANAGEMENT ---
+@app.route('/project/<int:project_id>/instructor-manage-files', methods=['POST'])
+def instructor_files_route(project_id):
+    return instructor_manage_files(project_id, request, engine)
+# --- END NEW ROUTE ---
 
 @app.route('/profile')
 def profile():
