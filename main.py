@@ -165,7 +165,6 @@ def project_page(project_id):
 
         # Data
         teams = get_teams_for_project(project_id, engine)
-        # --- UPDATED: Passed session to the function ---
         comments = get_comments_for_project(project_id, engine, session)
         chat_history = []
         
@@ -235,6 +234,10 @@ def jobs_page():
     if 'user_id' not in session:
         flash("You must be logged in to view this page.", "warning")
         return redirect(url_for('login'))
+    
+    if session.get('role') not in [2, 3]:
+        flash("You do not have permission to view this page.", "danger")
+        return redirect(url_for('index'))
         
     open_jobs = get_open_jobs(engine)
     return render_template('jobs.html', jobs=open_jobs)
