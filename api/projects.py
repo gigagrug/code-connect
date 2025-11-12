@@ -2,7 +2,7 @@ import os
 import uuid
 import shutil
 from sqlalchemy import text
-from flask import flash, redirect, url_for, session, request, jsonify, render_template
+from flask import flash, redirect, url_for, session, request, jsonify, render_template, current_app
 from werkzeug.utils import secure_filename
 
 # --- NEW HELPER FUNCTION ---
@@ -26,17 +26,18 @@ def _get_upload_paths(project_name, original_filename):
     sanitized_project_name = secure_filename(str(project_name))[:50]
     safe_filename = secure_filename(original_filename)
     
-    fs_upload_dir = os.path.join('.', 'uploads', sanitized_project_name)
+    base_upload_dir = current_app.config['UPLOAD_DIR']
+    fs_upload_dir = os.path.join(base_upload_dir, sanitized_project_name)
+    
     os.makedirs(fs_upload_dir, exist_ok=True)
     
     fs_save_path = os.path.join(fs_upload_dir, safe_filename)
     
-    # Check for uniqueness and get the final path and filename
     final_fs_save_path, final_filename = _check_and_get_unique_path(fs_save_path)
     
     url_path = f"/uploads/{sanitized_project_name}/{final_filename}"
     
-    return (final_fs_save_path, url_path) 
+    return (final_fs_save_path, url_path)
 
 
 def get_project_by_id(project_id, engine):
