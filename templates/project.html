@@ -58,27 +58,17 @@
                           <a href="{{ path }}" target="_blank">
                             <img src="{{ path }}" alt="Project Attachment" class="mt-2 h-24 w-24 rounded-lg object-cover shadow-md" />
                           </a>
-                        
                         {% elif extension == 'docx' %}
-                          <button type="button" class="text-blue-500 hover:underline" popovertarget="file-viewer-popover" onclick="viewDocx('{{ path }}', '{{ original_filename }}')">
-                            View ({{ original_filename }})
-                          </button>
-                        
+                          <button type="button" class="text-blue-500 hover:underline" popovertarget="file-viewer-popover" onclick="viewDocx('{{ path }}', '{{ original_filename }}')">View ({{ original_filename }})</button>
                         {% elif extension in ['xlsx', 'xls'] %}
-                          <button type="button" class="text-blue-500 hover:underline" popovertarget="file-viewer-popover" onclick="viewExcel('{{ path }}', '{{ original_filename }}')">
-                            View ({{ original_filename }})
-                          </button>
-
+                          <button type="button" class="text-blue-500 hover:underline" popovertarget="file-viewer-popover" onclick="viewExcel('{{ path }}', '{{ original_filename }}')">View ({{ original_filename }})</button>
                         {% else %}
                           <a href="{{ path }}" target="_blank" class="text-blue-500 hover:underline"> View ({{ original_filename }}) </a>
                         {% endif %}
-                        
-                        {% if session.user_id == project.user_id or (session.get('role') == 0 and project.status in [2, 3]) %}
-                          <button type="button" class="text-xs text-gray-500 hover:text-blue-500" popovertarget="rename-popover" onclick="openRenamePopover('{{ path }}', '{{ original_filename }}')">
-                            (Edit Name)
-                          </button>
-                        {% endif %}
 
+                        {% if session.user_id == project.user_id or (session.get('role') == 0 and project.status in [2, 3]) %}
+                          <button type="button" class="text-xs text-gray-500 hover:text-blue-500" popovertarget="rename-popover" onclick="openRenamePopover('{{ path }}', '{{ original_filename }}')">(Edit Name)</button>
+                        {% endif %}
                       {% endif %}
                     {% endfor %}
                   </div>
@@ -141,13 +131,10 @@
                                 <a href="{{ path }}" target="_blank">
                                   <img src="{{ path }}" alt="Comment Attachment" class="mt-2 h-20 w-20 rounded-lg object-cover shadow-md" />
                                 </a>
-                              
                               {% elif extension == 'docx' %}
                                 <button type="button" class="text-sm text-blue-500 hover:underline" popovertarget="file-viewer-popover" onclick="viewDocx('{{ path }}', '{{ original_filename }}')">View ({{ original_filename }})</button>
-                              
                               {% elif extension in ['xlsx', 'xls'] %}
                                 <button type="button" class="text-sm text-blue-500 hover:underline" popovertarget="file-viewer-popover" onclick="viewExcel('{{ path }}', '{{ original_filename }}')">View ({{ original_filename }})</button>
-                              
                               {% else %}
                                 <a href="{{ path }}" target="_blank" class="text-sm text-blue-500 hover:underline"> View ({{ original_filename }}) </a>
                               {% endif %}
@@ -209,16 +196,16 @@
                             {% if path %}
                               {% set original_filename = path.split('/')[-1] %}
                               {% set extension = original_filename.split('.')[-1].lower() %}
-                              
+
                               <div class="flex items-center justify-between">
                                 <label for="del-{{ loop.index }}" class="flex items-center gap-2">
                                   <input type="checkbox" name="files_to_delete" value="{{ path }}" id="del-{{ loop.index }}" class="rounded text-red-500 focus:ring-red-400" />
                                   <span class="text-red-500">Delete</span>
                                 </label>
-                                
+
                                 <div class="flex items-center gap-2">
                                   {% if extension in ['jpg', 'jpeg', 'png', 'gif', 'webp'] %}
-                                     <a href="{{ path }}" target="_blank" class="text-blue-500 hover:underline">{{ original_filename }} (Image)</a>
+                                    <a href="{{ path }}" target="_blank" class="text-blue-500 hover:underline">{{ original_filename }} (Image)</a>
                                   {% elif extension == 'docx' %}
                                     <button type="button" class="text-blue-500 hover:underline" popovertarget="file-viewer-popover" onclick="viewDocx('{{ path }}', '{{ original_filename }}')">{{ original_filename }}</button>
                                   {% elif extension in ['xlsx', 'xls'] %}
@@ -226,10 +213,8 @@
                                   {% else %}
                                     <a href="{{ path }}" target="_blank" class="text-blue-500 hover:underline">{{ original_filename }}</a>
                                   {% endif %}
-                                  
-                                  <button type="button" class="text-xs text-gray-500 hover:text-blue-500" popovertarget="rename-popover" onclick="openRenamePopover('{{ path }}', '{{ original_filename }}')">
-                                    (Edit)
-                                  </button>
+
+                                  <button type="button" class="text-xs text-gray-500 hover:text-blue-500" popovertarget="rename-popover" onclick="openRenamePopover('{{ path }}', '{{ original_filename }}')">(Edit)</button>
                                 </div>
                               </div>
                             {% endif %}
@@ -276,16 +261,16 @@
                               {% if path %}
                                 {% set original_filename = path.split('/')[-1] %}
                                 {% set extension = original_filename.split('.')[-1].lower() %}
-                                
+
                                 <div class="flex items-center justify-between">
                                   <label for="inst-del-{{ loop.index }}" class="flex items-center gap-2">
                                     <input type="checkbox" name="files_to_delete" value="{{ path }}" id="inst-del-{{ loop.index }}" class="rounded text-red-500 focus:ring-red-400" />
                                     <span class="text-red-500">Delete</span>
                                   </label>
-                                  
+
                                   <div class="flex items-center gap-2">
                                     {% if extension in ['jpg', 'jpeg', 'png', 'gif', 'webp'] %}
-                                       <a href="{{ path }}" target="_blank" class="text-blue-500 hover:underline">{{ original_filename }} (Image)</a>
+                                      <a href="{{ path }}" target="_blank" class="text-blue-500 hover:underline">{{ original_filename }} (Image)</a>
                                     {% elif extension == 'docx' %}
                                       <button type="button" class="text-blue-500 hover:underline" popovertarget="file-viewer-popover" onclick="viewDocx('{{ path }}', '{{ original_filename }}')">{{ original_filename }}</button>
                                     {% elif extension in ['xlsx', 'xls'] %}
@@ -293,10 +278,8 @@
                                     {% else %}
                                       <a href="{{ path }}" target="_blank" class="text-blue-500 hover:underline">{{ original_filename }}</a>
                                     {% endif %}
-                                    
-                                    <button type="button" class="text-xs text-gray-500 hover:text-blue-500" popovertarget="rename-popover" onclick="openRenamePopover('{{ path }}', '{{ original_filename }}')">
-                                      (Edit)
-                                    </button>
+
+                                    <button type="button" class="text-xs text-gray-500 hover:text-blue-500" popovertarget="rename-popover" onclick="openRenamePopover('{{ path }}', '{{ original_filename }}')">(Edit)</button>
                                   </div>
                                 </div>
                               {% endif %}
@@ -342,26 +325,23 @@
                     {% if msg.attachment_path %}
                       {% set original_filename = msg.attachment_path.split('/')[-1] %}
                       {% set extension = original_filename.split('.')[-1].lower() %}
-                      
+
                       {% if extension in ['jpg', 'jpeg', 'png', 'gif', 'webp'] %}
                         <a href="{{ msg.attachment_path }}" target="_blank">
                           <img src="{{ msg.attachment_path }}" alt="Chat Attachment" class="mt-2 h-auto max-w-[200px] rounded-lg" />
                         </a>
-                      
                       {% elif extension == 'docx' %}
                         {% if msg.email == session.email %}
                           <button type="button" class="mt-1 block text-sm font-bold text-white underline dark:text-blue-300" popovertarget="file-viewer-popover" onclick="viewDocx('{{ msg.attachment_path }}', '{{ original_filename }}')">View ({{ original_filename }})</button>
                         {% else %}
                           <button type="button" class="mt-1 block text-sm font-bold text-blue-500 underline dark:text-blue-400" popovertarget="file-viewer-popover" onclick="viewDocx('{{ msg.attachment_path }}', '{{ original_filename }}')">View ({{ original_filename }})</button>
                         {% endif %}
-                      
                       {% elif extension in ['xlsx', 'xls'] %}
                         {% if msg.email == session.email %}
                           <button type="button" class="mt-1 block text-sm font-bold text-white underline dark:text-blue-300" popovertarget="file-viewer-popover" onclick="viewExcel('{{ msg.attachment_path }}', '{{ original_filename }}')">View ({{ original_filename }})</button>
                         {% else %}
                           <button type="button" class="mt-1 block text-sm font-bold text-blue-500 underline dark:text-blue-400" popovertarget="file-viewer-popover" onclick="viewExcel('{{ msg.attachment_path }}', '{{ original_filename }}')">View ({{ original_filename }})</button>
                         {% endif %}
-                      
                       {% else %}
                         {% if msg.email == session.email %}
                           <a href="{{ msg.attachment_path }}" target="_blank" class="mt-1 block text-sm font-bold text-white underline dark:text-blue-300"> View ({{ original_filename }}) </a>
@@ -370,7 +350,6 @@
                         {% endif %}
                       {% endif %}
                     {% endif %}
-                    
                   </div>
                 </div>
               {% endfor %}
@@ -415,7 +394,6 @@
     </form>
   </div>
 
-
   <script>
     function toggleEditForm() {
       document.getElementById("edit-form").classList.toggle("hidden");
@@ -425,7 +403,7 @@
       document.getElementById("links-form").classList.toggle("hidden");
       document.getElementById("links-control-buttons").classList.toggle("hidden");
     }
-    
+
     function toggleInstructorFileForm() {
       document.getElementById("instructor-file-form").classList.toggle("hidden");
       document.getElementById("instructor-file-controls").classList.toggle("hidden");
@@ -444,7 +422,7 @@
 
       // Set the form's action URL dynamically
       form.action = `/project/{{ project.id }}/file/rename`;
-      
+
       // Pre-fill the form fields
       oldPathInput.value = oldPath;
       newNameInput.value = oldFilename;
@@ -464,7 +442,7 @@
         const response = await fetch(fullUrl);
         const blob = await response.blob();
 
-        contentEl.innerHTML = ""; 
+        contentEl.innerHTML = "";
 
         window.docx.renderAsync(blob, contentEl);
       } catch (error) {
@@ -519,7 +497,7 @@
         const messageInput = document.getElementById("message-input");
         const fileInput = document.getElementById("chat-file-input");
         const socket = io();
-        
+
         const rootUrl = "{{ request.url_root.rstrip('/') }}";
 
         if (messagesContainer) {
@@ -559,13 +537,12 @@
               img.className = "mt-2 max-w-[200px] h-auto rounded-lg";
               attachmentLink.appendChild(img);
               messageBody.appendChild(attachmentLink);
-            
-            } else if (extension === 'docx') {
+            } else if (extension === "docx") {
               const viewButton = document.createElement("button");
               viewButton.type = "button";
               viewButton.setAttribute("popovertarget", "file-viewer-popover");
               viewButton.onclick = () => viewDocx(data.attachment_path, original_filename);
-              
+
               if (isCurrentUser) {
                 viewButton.className = "mt-1 block text-sm font-bold text-white underline dark:text-blue-300";
               } else {
@@ -573,13 +550,12 @@
               }
               viewButton.textContent = `View (${original_filename})`;
               messageBody.appendChild(viewButton);
-            
-            } else if (extension === 'xlsx' || extension === 'xls') {
+            } else if (extension === "xlsx" || extension === "xls") {
               const viewButton = document.createElement("button");
               viewButton.type = "button";
               viewButton.setAttribute("popovertarget", "file-viewer-popover");
               viewButton.onclick = () => viewExcel(data.attachment_path, original_filename);
-              
+
               if (isCurrentUser) {
                 viewButton.className = "mt-1 block text-sm font-bold text-white underline dark:text-blue-300";
               } else {
@@ -587,12 +563,11 @@
               }
               viewButton.textContent = `View (${original_filename})`;
               messageBody.appendChild(viewButton);
-
             } else {
               const attachmentLink = document.createElement("a");
               attachmentLink.href = data.attachment_path;
               attachmentLink.target = "_blank";
-              
+
               if (isCurrentUser) {
                 attachmentLink.className = "mt-1 block text-sm font-bold text-white underline dark:text-blue-300";
               } else {

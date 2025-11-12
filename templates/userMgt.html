@@ -75,7 +75,7 @@
 
         <div class="card p-5">
           <h3 class="text mb-4 text-2xl font-semibold">Unassigned Students</h3>
-          
+
           <div class="mb-4">
             <label for="student-search" class="text sr-only">Search Students</label>
             <input type="search" id="student-search" class="input text" placeholder="Search students..." />
@@ -84,7 +84,6 @@
           <div id="unassigned-list" class="user-list min-h-[100px] rounded-md bg-gray-100 p-2 dark:bg-gray-700" data-team-id="null">
             {% for student in unassigned_students %}
               <div class="user-item my-1 flex cursor-grab items-center justify-between rounded bg-white p-2 shadow-sm dark:bg-gray-800" data-user-id="{{ student.id }}">
-                
                 <div class="text">
                   {% if student.name %}
                     <strong>{{ student.name }}</strong>
@@ -93,7 +92,7 @@
                     <strong>{{ student.email }}</strong>
                   {% endif %}
                 </div>
-                
+
                 <form action="{{ url_for('delete_user_route', user_id=student.id) }}" method="POST" onsubmit="return confirm('Are you sure you want to delete this user?');">
                   <button type="submit" class="text-red-500 hover:text-red-700">&times;</button>
                 </form>
@@ -134,7 +133,6 @@
                 <div class="user-list min-h-[80px] rounded-md bg-gray-100 p-2 dark:bg-gray-700" data-team-id="{{ team.id }}">
                   {% for member in team.members %}
                     <div class="user-item my-1 flex cursor-grab items-center justify-between rounded bg-white p-2 shadow-sm dark:bg-gray-800" data-user-id="{{ member.id }}">
-                      
                       <div class="text">
                         {% if member.name %}
                           <strong>{{ member.name }}</strong>
@@ -143,7 +141,7 @@
                           <strong>{{ member.email }}</strong>
                         {% endif %}
                       </div>
-                      
+
                       <form action="{{ url_for('delete_user_route', user_id=member.id) }}" method="POST" onsubmit="return confirm('Are you sure you want to delete this user?');">
                         <button type="submit" class="text-red-500 hover:text-red-700">&times;</button>
                       </form>
@@ -199,10 +197,10 @@
 
       searchInput.addEventListener("keyup", (e) => {
         const searchTerm = e.target.value.toLowerCase();
-        
+
         allStudents.forEach((studentItem) => {
           const itemText = studentItem.textContent.toLowerCase();
-          
+
           if (itemText.includes(searchTerm)) {
             studentItem.style.display = "flex";
           } else {
