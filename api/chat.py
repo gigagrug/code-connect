@@ -4,10 +4,17 @@ from flask import session, current_app
 from flask_socketio import emit, join_room
 from sqlalchemy import text
 from .projects import check_if_user_can_chat, get_project_by_id, _get_upload_paths
+# --- NEW IMPORT ---
+from .job import check_if_user_can_chat_application
+
+# ... (init_chat function remains exactly the same) ...
 
 def init_chat(socketio, engine):
+    """Initializes all Socket.IO chat event handlers."""
+
     @socketio.on('join')
     def on_join(data):
+        # ... (this function is unchanged) ...
         project_id = data.get('project_id')
         user_id = session.get('user_id')
         if not project_id or not user_id:
@@ -18,6 +25,7 @@ def init_chat(socketio, engine):
 
     @socketio.on('new_message')
     def on_new_message(data):
+        # ... (this function is unchanged) ...
         project_id = data.get('project_id')
         message_text = data.get('message')
         user_id = session.get('user_id')
@@ -41,8 +49,8 @@ def init_chat(socketio, engine):
                 if not project:
                     print(f"Chat Error: Project not found for ID {project_id}")
                     return
-
-                with current_app.app_context():
+                
+                with current_app.app_context(): 
                     fs_save_path, url_path = _get_upload_paths(project.name, original_filename)
                 
                 file_content = base64.b64decode(file_data.split(',')[1])
@@ -85,6 +93,7 @@ def init_chat(socketio, engine):
 
     @socketio.on('delete_message')
     def on_delete_message(data):
+        # ... (this function is unchanged) ...
         message_id = data.get('message_id')
         user_id = session.get('user_id')
         if not message_id or not user_id:
@@ -118,3 +127,88 @@ def init_chat(socketio, engine):
                         emit('message_deleted', {'message_id': message_id}, to=room)
         except Exception as e:
             print(f"Error deleting message: {e}")
+
+# --- NEW FUNCTION FOR APPLICATION CHAT ---
+def init_application_chat(socketio, engine):
+    """Initializes all Socket.IO chat event handlers for job applications."""
+
+    @socketio.on('join_application_room')
+    def on_join_application_room(data):
+        application_id = data.get('application_id')
+        user_id = session.get('user_id')
+        if not application_id or not user_id:
+            return
+        
+        # Use the specific permission checker for application chat
+        if check_if_user_can_chat_application(user_id, application_id, engine):
+            room = f'application-{application_id}'
+            join_room(room)
+
+    @socketio.on('new_application_message')
+    def on_new_application_message(data):
+        application_id = data.get('application_id')
+        message_text = data.get('message')
+        user_id = session.get('user_id')
+        email = session.get('email')
+        
+        if not all([application_id, message_text, user_id, email]):
+            return
+        if not check_if_user_can_chat_application(user_id, application_id, engine):
+            return
+
+        # Note: File uploads are not implemented for this chat yet.
+        # It would follow the same pattern as the project chat.
+        attachment_path = None 
+
+        try:
+            with engine.connect() as conn:
+                with conn.begin():
+                    query = text("""
+                        INSERT INTO application_messages (application_id, user_id, message_text, attachment_path)
+                        VALUES (:application_id, :user_id, :message_text, :attachment_path)
+                    """)
+                    result = conn.execute(query, {
+                        "application_id": application_id,
+                        "user_id": user_id,
+                        "message_text": message_text,
+                        "attachment_path": attachment_path
+                    })
+                    
+                    last_id = result.lastrowid
+                    ts_query = text("SELECT timestamp FROM application_messages WHERE id = :id")
+                    timestamp = conn.execute(ts_query, {"id": last_id}).scalar_one()
+
+                room = f'application-{application_id}'
+                emit('application_message_broadcast', {
+                    'message_id': last_id,
+                    'email': email,
+                    'message': message_text,
+                    'attachment_path': attachment_path,
+                    'timestamp': timestamp.strftime('%b %d, %Y %I:%M %p')
+                }, to=room)
+        except Exception as e:
+            print(f"Error saving application chat message: {e}")
+
+    @socketio.on('delete_application_message')
+    def on_delete_application_message(data):
+        message_id = data.get('message_id')
+        user_id = session.get('user_id')
+        if not message_id or not user_id:
+            return
+
+        try:
+            with engine.connect() as conn:
+                with conn.begin():
+                    msg_query = text("SELECT user_id, application_id, attachment_path FROM application_messages WHERE id = :id")
+                    message = conn.execute(msg_query, {"id": message_id}).first()
+
+                    if message and message.user_id == user_id:
+                        # (File deletion logic would go here if implemented)
+                                
+                        delete_query = text("DELETE FROM application_messages WHERE id = :id")
+                        conn.execute(delete_query, {"id": message_id})
+
+                        room = f'application-{message.application_id}'
+                        emit('application_message_deleted', {'message_id': message_id}, to=room)
+        except Exception as e:
+            print(f"Error deleting application message: {e}")

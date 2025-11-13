@@ -15,7 +15,6 @@ from api.job import *
 
 app = Flask(__name__)
 app.secret_key = os.getenv("FLASK_SECRET_KEY", 'a_default_dev_secret_key')
-app.config['MAX_CONTENT_LENGTH'] = 100 * 1024 * 1024
 UPLOAD_DIR = os.path.join(os.path.abspath(os.path.dirname(__file__)), 'uploads')
 app.config['UPLOAD_DIR'] = UPLOAD_DIR
 db_url = os.getenv("DB_URL")
@@ -96,11 +95,13 @@ def reset_database_on_startup():
             print(f"\n🔥 Database reset failed: {e} 🔥")
             sys.exit(1)
 
+
 if app.debug:
     reset_database_on_startup()
 
 socketio = SocketIO(app)
 init_chat(socketio, engine)
+init_application_chat(socketio, engine) 
 
 @app.route('/uploads/<path:project_name>/<path:filename>')
 def serve_upload(project_name, filename):
@@ -108,7 +109,7 @@ def serve_upload(project_name, filename):
     return send_from_directory(project_dir, filename)
 
 # Admin 
-## create routes only under '/admin/' 
+# ... (admin routes are unchanged) ...
 @app.route('/admin', endpoint='admin')
 def admin_index():
     page = request.args.get('page', default=1, type=int) or 1
@@ -126,7 +127,7 @@ def admin_jobs_index():
     if page > total_pages:
         page = total_pages
     return render_template('/admin/adminjobs.html', jobs=jobs, page=page, per_page=per_page, total=total, total_pages=total_pages, pending_count=pending_count, approved_count=approved_count, taken_count=taken_count)
-# Admin
+
 
 # Users
 @app.route('/', methods=['GET'])
@@ -177,7 +178,6 @@ def project_page(project_id):
                 """)
                 chat_history = conn.execute(history_query, {"project_id": project_id}).all()
 
-        # Check if the current instructor has this project marked as 'pending'
         is_pending_by_current_instructor = False
         if session.get('role') == 0:
             with engine.connect() as conn:
@@ -246,6 +246,7 @@ def jobs_page():
 def job_create_route():
     return create_job(request, engine)
 
+# --- UPDATED: This route now fetches the user's specific application ID ---
 @app.route('/job/<int:job_id>', methods=['GET'])
 def job_page(job_id):
     if 'user_id' not in session:
@@ -254,10 +255,25 @@ def job_page(job_id):
         
     job = get_job_by_id(job_id, engine)
     if job:
-        return render_template('job.html', job=job)
+        applications = []
+        my_application = None # Changed from has_applied
+        
+        # If user is the job owner, get all applications
+        if session.get('user_id') == job.user_id:
+            applications = get_job_applications(job_id, engine)
+        
+        # If user is student/alumni, check if they've already applied
+        elif session.get('role') in [2, 3]:
+            with engine.connect() as conn:
+                # Fetch the *entire* application row (so we can get the ID)
+                query = text("SELECT * FROM job_applications WHERE job_id = :job_id AND user_id = :user_id")
+                my_application = conn.execute(query, {"job_id": job_id, "user_id": session.get('user_id')}).mappings().first()
+                    
+        return render_template('job.html', job=job, applications=applications, my_application=my_application)
     else:
         flash("Job not found.", "danger")
         return redirect(url_for('index'))
+# --- END UPDATE ---
 
 @app.route('/job/<int:job_id>/update', methods=['POST'])
 def job_update_route(job_id):
@@ -266,6 +282,10 @@ def job_update_route(job_id):
 @app.route('/job/<int:job_id>/delete', methods=['POST'])
 def job_delete_route(job_id):
     return delete_job(job_id, engine)
+
+@app.route('/job/<int:job_id>/apply', methods=['POST'])
+def apply_to_job_route(job_id):
+    return apply_to_job(job_id, request, engine)
 
 @app.route('/project/<int:project_id>/comment', methods=['POST'])
 def project_comment_route(project_id):
@@ -282,6 +302,26 @@ def instructor_files_route(project_id):
 @app.route('/project/<int:project_id>/file/rename', methods=['POST'])
 def rename_file_route(project_id):
     return rename_project_attachment(project_id, request, engine)
+
+@app.route('/application/<int:application_id>')
+def view_application(application_id):
+    if 'user_id' not in session:
+        flash("You must be logged in to view this page.", "warning")
+        return redirect(url_for('login'))
+        
+    app_data = get_application_by_id(application_id, engine)
+    
+    if not app_data:
+        flash("Application not found or you do not have permission to view it.", "danger")
+        return redirect(url_for('index'))
+        
+    chat_history = get_application_chat_history(application_id, engine)
+    
+    return render_template(
+        'application.html',
+        application=app_data,
+        chat_history=chat_history
+    )
 
 @app.route('/profile')
 def profile():

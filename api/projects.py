@@ -7,10 +7,8 @@ from werkzeug.utils import secure_filename
 def _check_and_get_unique_path(fs_save_path):
     if not os.path.exists(fs_save_path):
         return fs_save_path, os.path.basename(fs_save_path)
-
     directory, filename = os.path.split(fs_save_path)
     filename_base, extension = os.path.splitext(filename)
-    
     counter = 1
     while True:
         new_filename = f"{filename_base}({counter}){extension}"
@@ -22,20 +20,13 @@ def _check_and_get_unique_path(fs_save_path):
 def _get_upload_paths(project_name, original_filename):
     sanitized_project_name = secure_filename(str(project_name))[:50]
     safe_filename = secure_filename(original_filename)
-    
     base_upload_dir = current_app.config['UPLOAD_DIR']
     fs_upload_dir = os.path.join(base_upload_dir, sanitized_project_name)
-    
     os.makedirs(fs_upload_dir, exist_ok=True)
-    
     fs_save_path = os.path.join(fs_upload_dir, safe_filename)
-    
     final_fs_save_path, final_filename = _check_and_get_unique_path(fs_save_path)
-    
     url_path = f"/uploads/{sanitized_project_name}/{final_filename}"
-    
     return (final_fs_save_path, url_path)
-
 
 def get_project_by_id(project_id, engine):
     try:
