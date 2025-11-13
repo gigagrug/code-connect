@@ -1,11 +1,9 @@
 import os
-import uuid
 import shutil
 from sqlalchemy import text
-from flask import flash, redirect, url_for, session, request, jsonify, render_template, current_app
+from flask import flash, redirect, url_for, session, request, render_template, current_app
 from werkzeug.utils import secure_filename
 
-# --- NEW HELPER FUNCTION ---
 def _check_and_get_unique_path(fs_save_path):
     if not os.path.exists(fs_save_path):
         return fs_save_path, os.path.basename(fs_save_path)
@@ -15,7 +13,6 @@ def _check_and_get_unique_path(fs_save_path):
     
     counter = 1
     while True:
-        # Create a new filename like file(1).pdf
         new_filename = f"{filename_base}({counter}){extension}"
         new_fs_save_path = os.path.join(directory, new_filename)
         if not os.path.exists(new_fs_save_path):

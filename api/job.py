@@ -1,5 +1,5 @@
 from sqlalchemy import text
-from flask import flash, redirect, url_for, session, request, render_template
+from flask import flash, redirect, url_for, session, render_template
 
 def create_job(request, engine):
     if 'user_id' not in session:

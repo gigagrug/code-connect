@@ -1,7 +1,6 @@
 import bcrypt
 from flask import request, redirect, url_for, flash, session, jsonify, render_template
 from sqlalchemy import text
-from .projects import get_projects_for_user, get_projects_for_student
 
 def instructor_only():
     if 'role' not in session or session['role'] != 0:

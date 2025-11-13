@@ -1,7 +1,6 @@
 import bcrypt
 from sqlalchemy import text
-from flask import request, flash, redirect, url_for, session, render_template, jsonify
-from .projects import get_projects_for_user, get_projects_for_student
+from flask import flash, redirect, url_for, session
 
 def register_admin(request, engine, is_debug=False):
     email = request.form.get('email')

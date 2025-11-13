@@ -1,6 +1,5 @@
 import os
 import sys
-import bcrypt
 import sqlalchemy
 from sqlalchemy import text
 from flask import Flask, render_template, request, redirect, url_for, flash, session, send_from_directory
@@ -66,7 +65,7 @@ def execute_sql_from_file(db_engine, file_path):
         sql_script = file.read()
     rollback_marker = "-- schema rollback"
     if rollback_marker in sql_script:
-        print(f"  -> Rollback marker found. Executing creation part only.")
+        print("  -> Rollback marker found. Executing creation part only.")
         sql_script = sql_script.split(rollback_marker, 1)[0]
     statements = [stmt.strip() for stmt in sql_script.split(';') if stmt.strip()]
     try:
