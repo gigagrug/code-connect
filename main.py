@@ -15,6 +15,7 @@ from api.job import *
 
 app = Flask(__name__)
 app.secret_key = os.getenv("FLASK_SECRET_KEY", 'a_default_dev_secret_key')
+app.config['MAX_CONTENT_LENGTH'] = 100 * 1024 * 1024
 UPLOAD_DIR = os.path.join(os.path.abspath(os.path.dirname(__file__)), 'uploads')
 app.config['UPLOAD_DIR'] = UPLOAD_DIR
 db_url = os.getenv("DB_URL")

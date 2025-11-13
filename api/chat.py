@@ -1,25 +1,9 @@
 import os
-import uuid
 import base64
-from flask import session
+from flask import session, current_app
 from flask_socketio import emit, join_room
 from sqlalchemy import text
-from werkzeug.utils import secure_filename
-from .projects import check_if_user_can_chat, get_project_by_id
-
-def _get_upload_paths(project_name, original_filename):
-    sanitized_project_name = secure_filename(str(project_name))[:50]
-    safe_filename = secure_filename(original_filename)
-    unique_filename = f"{uuid.uuid4()}_{safe_filename}"
-    
-    fs_upload_dir = os.path.join('.', 'uploads', sanitized_project_name)
-    os.makedirs(fs_upload_dir, exist_ok=True)
-    
-    fs_save_path = os.path.join(fs_upload_dir, unique_filename)
-    url_path = f"/uploads/{sanitized_project_name}/{unique_filename}"
-    
-    return (fs_save_path, url_path)
-
+from .projects import check_if_user_can_chat, get_project_by_id, _get_upload_paths
 
 def init_chat(socketio, engine):
     @socketio.on('join')
@@ -58,7 +42,8 @@ def init_chat(socketio, engine):
                     print(f"Chat Error: Project not found for ID {project_id}")
                     return
 
-                fs_save_path, url_path = _get_upload_paths(project.name, original_filename)
+                with current_app.app_context():
+                    fs_save_path, url_path = _get_upload_paths(project.name, original_filename)
                 
                 file_content = base64.b64decode(file_data.split(',')[1])
                 
@@ -115,7 +100,10 @@ def init_chat(socketio, engine):
                         
                         if message.attachment_path:
                             try:
-                                file_path = os.path.join('.', message.attachment_path.lstrip('/'))
+                                base_upload_dir = current_app.config['UPLOAD_DIR']
+                                relative_path = message.attachment_path.split('/uploads/', 1)[-1]
+                                file_path = os.path.join(base_upload_dir, relative_path)
+
                                 if os.path.exists(file_path):
                                     os.remove(file_path)
                                 else:
