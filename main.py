@@ -112,6 +112,10 @@ def admin():
     per_page = 25
     projects, total, total_pages = get_projects_paginated(engine, page=page, per_page=per_page)
     return render_template('admin/admin.html', projects=projects, page=page, per_page=per_page, total=total, total_pages=total_pages)
+
+@app.route('/admin/users')
+def adminusers():
+    
 # Users
 @app.route('/')
 def index():
