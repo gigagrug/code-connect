@@ -96,7 +96,7 @@
             </thead>
             <tbody class="divide-y divide-gray-200 dark:divide-gray-800">
               {% for j in jobs %}
-                <tr class="hover:bg-gray-50/60 dark:hover:bg-gray-800/60" data-status="{{ j.status }}">
+                <tr class="hover:bg-gray-50/60 dark:hover:bg-gray-800/60" data-status="{{ j.status }}" data-job-id="{{ j.id }}">
                   <td class="px-4 py-3 text-gray-700 dark:text-gray-200" data-value="{{ j.id }}">{{ j.id }}</td>
                   <td class="px-4 py-3" data-value="{{ j.title }}">
                     <div class="font-semibold">{{ j.title or ('Job #' ~ j.id) }}</div>
@@ -104,7 +104,7 @@
                   </td>
                   <td class="px-4 py-3" data-value="{{ j.status }}">
                     {% if j.status == 2 %}
-                      <span class="inline-flex items-center rounded-md border border-blue-200 bg-blue-50 px-2 py-0.5 text-xs font-medium text-blue-700 dark:border-blue-900/50 dark:bg-blue-900/30 dark:text-blue-300">Taken</span>
+                      <span class="inline-flex items-center rounded-md border border-rose-200 bg-rose-50 px-2 py-0.5 text-xs font-medium text-rose-700 dark:border-rose-900/50 dark:bg-rose-900/30 dark:text-rose-300">Declined</span>
                     {% elif j.status == 1 %}
                       <span class="inline-flex items-center rounded-md border border-green-200 bg-green-50 px-2 py-0.5 text-xs font-medium text-green-700 dark:border-green-900/50 dark:bg-green-900/30 dark:text-green-300">Approved</span>
                     {% else %}
@@ -125,7 +125,18 @@
                     {% endif %}
                   </td>
                   <td class="px-4 py-3 text-sm">
-                    <a href="{{ url_for('job_page', job_id=j.id) }}" class="rounded-lg border px-3 py-1 hover:bg-gray-50 dark:hover:bg-gray-800">View</a>
+                    <div class="flex items-center gap-2">
+                      <a href="{{ url_for('job_page', job_id=j.id) }}" class="rounded-lg border px-3 py-1 hover:bg-gray-50 dark:hover:bg-gray-800">View</a>
+
+                      <select class="js-status-select rounded-lg border bg-white px-2 py-1 text-sm dark:border-gray-800 dark:bg-gray-900" aria-label="Change status">
+                        <option value="0" {% if j.status == 0 %}selected{% endif %}>Pending</option>
+                        <option value="1" {% if j.status == 1 %}selected{% endif %}>Approved</option>
+                        <option value="2" {% if j.status == 2 %}selected{% endif %}>Declined</option>
+                      </select>
+                      <button type="button" class="js-status-save rounded-lg border px-3 py-1 text-sm hover:bg-gray-50 dark:hover:bg-gray-800">Save</button>
+
+                      <button type="button" class="js-delete-job rounded-lg border border-red-300 text-red-600 px-3 py-1 text-sm hover:bg-red-50 dark:hover:bg-red-900/20">Delete</button>
+                    </div>
                   </td>
                 </tr>
               {% endfor %}
@@ -278,6 +289,88 @@
 
           table?.querySelectorAll('thead th[data-sort]')
             .forEach(th => th.addEventListener('click', () => sortBy(th)));
+
+          // Admin actions: update status + delete
+          function encodeForm(data){
+            return Object.entries(data).map(([k,v]) => `${encodeURIComponent(k)}=${encodeURIComponent(v)}`).join('&');
+          }
+
+          async function updateStatus(row){
+            const jobId = row.getAttribute('data-job-id');
+            const select = row.querySelector('.js-status-select');
+            if (!jobId || !select) return;
+            const status = select.value;
+            try {
+              const res = await fetch(`/admin/jobs/${jobId}/update`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                credentials: 'same-origin',
+                body: encodeForm({ status })
+              });
+              const text = await res.text();
+              let data = null; try { data = JSON.parse(text); } catch {}
+              if (!res.ok) {
+                const msg = (data && (data.error || data.message)) || `HTTP ${res.status}`;
+                throw new Error(msg);
+              }
+              // Update badge + filter attr
+              row.setAttribute('data-status', String(status));
+              const statusCell = row.cells[2];
+              if (statusCell){
+                const s = Number(status);
+                let html = '';
+                if (s === 1) {
+                  html = '<span class="inline-flex items-center rounded-md border border-green-200 bg-green-50 px-2 py-0.5 text-xs font-medium text-green-700 dark:border-green-900/50 dark:bg-green-900/30 dark:text-green-300">Approved</span>';
+                } else if (s === 2) {
+                  html = '<span class="inline-flex items-center rounded-md border border-rose-200 bg-rose-50 px-2 py-0.5 text-xs font-medium text-rose-700 dark:border-rose-900/50 dark:bg-rose-900/30 dark:text-rose-300">Declined</span>';
+                } else {
+                  html = '<span class="inline-flex items-center rounded-md border border-amber-200 bg-amber-50 px-2 py-0.5 text-xs font-medium text-amber-800 dark:border-amber-900/50 dark:bg-amber-900/30 dark:text-amber-300">Pending</span>';
+                }
+                statusCell.innerHTML = html;
+              }
+              // Brief visual feedback
+              const btn = row.querySelector('.js-status-save');
+              if (btn) {
+                const old = btn.textContent; btn.textContent = 'Saved';
+                setTimeout(() => { btn.textContent = old; }, 800);
+              }
+            } catch (e) {
+              alert(`Failed to update status. ${e?.message || ''}`.trim());
+            }
+          }
+
+          async function deleteJob(row){
+            const jobId = row.getAttribute('data-job-id');
+            if (!jobId) return;
+            if (!confirm('Are you sure you want to delete this job?')) return;
+            try {
+              const res = await fetch(`/admin/jobs/${jobId}/delete`, { method: 'POST', credentials: 'same-origin' });
+              const text = await res.text();
+              let data = null; try { data = JSON.parse(text); } catch {}
+              if (!res.ok) {
+                const msg = (data && (data.error || data.message)) || `HTTP ${res.status}`;
+                throw new Error(msg);
+              }
+              row.remove();
+            } catch (e) {
+              alert(`Failed to delete job. ${e?.message || ''}`.trim());
+            }
+          }
+
+          tbody?.addEventListener('click', (ev) => {
+            const target = ev.target;
+            if (!(target instanceof Element)) return;
+            if (target.classList.contains('js-status-save')){
+              ev.preventDefault();
+              const row = target.closest('tr');
+              if (row) updateStatus(row);
+            }
+            if (target.classList.contains('js-delete-job')){
+              ev.preventDefault();
+              const row = target.closest('tr');
+              if (row) deleteJob(row);
+            }
+          });
 
           function timeAgo(ts){
             const t = new Date(ts);

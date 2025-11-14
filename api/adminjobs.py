@@ -58,3 +58,30 @@ def get_jobs_paginated(engine, page: int = 1, per_page: int = 6, q: str | None =
         counts.get("approved_count", 0),
         counts.get("taken_count", 0),
     )
+
+
+def admin_update_job_status(engine, job_id: int, status: int) -> bool:
+    if engine is None:
+        return False
+    try:
+        with engine.connect() as conn:
+            conn.execute(
+                text("UPDATE jobs SET status = :status WHERE id = :job_id"),
+                {"status": int(status), "job_id": int(job_id)},
+            )
+            conn.commit()
+        return True
+    except Exception:
+        return False
+
+
+def admin_delete_job(engine, job_id: int) -> bool:
+    if engine is None:
+        return False
+    try:
+        with engine.connect() as conn:
+            conn.execute(text("DELETE FROM jobs WHERE id = :job_id"), {"job_id": int(job_id)})
+            conn.commit()
+        return True
+    except Exception:
+        return False

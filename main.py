@@ -3,7 +3,7 @@ import sys
 import bcrypt
 import sqlalchemy
 from sqlalchemy import text
-from flask import Flask, render_template, request, redirect, url_for, flash, session, send_from_directory
+from flask import Flask, render_template, request, redirect, url_for, flash, session, send_from_directory, jsonify
 from flask_socketio import SocketIO
 from api.auth import *
 from api.projects import *
@@ -120,12 +120,39 @@ def admin_index():
 
 @app.route('/admin/jobs', endpoint='adminjobs')
 def admin_jobs_index():
+    if 'user_id' not in session:
+        flash("You must be logged in to access admin jobs.", "warning")
+        return redirect(url_for('login'))
     page = request.args.get('page', default=1, type=int) or 1
     per_page = 6
     jobs, total, total_pages, pending_count, approved_count, taken_count = get_jobs_paginated(engine, page=page, per_page=per_page)
     if page > total_pages:
         page = total_pages
     return render_template('/admin/adminjobs.html', jobs=jobs, page=page, per_page=per_page, total=total, total_pages=total_pages, pending_count=pending_count, approved_count=approved_count, taken_count=taken_count)
+
+@app.route('/admin/jobs/<int:job_id>/update', methods=['POST'])
+def admin_job_update(job_id):
+    # Minimal auth: any logged-in user can perform admin UI actions (dev mode)
+    # Adjust this check to your exact admin logic if needed.
+    if 'user_id' not in session:
+        return jsonify({"error": "Unauthorized"}), 403
+    status = request.form.get('status', type=int)
+    if status not in (0, 1, 2):
+        return jsonify({"error": "Invalid status"}), 400
+    ok = admin_update_job_status(engine, job_id, status)
+    if not ok:
+        return jsonify({"error": "Update failed"}), 500
+    return jsonify({"ok": True, "job_id": job_id, "status": status})
+
+@app.route('/admin/jobs/<int:job_id>/delete', methods=['POST'])
+def admin_job_delete(job_id):
+    # Minimal auth: any logged-in user can perform admin UI actions (dev mode)
+    if 'user_id' not in session:
+        return jsonify({"error": "Unauthorized"}), 403
+    ok = admin_delete_job(engine, job_id)
+    if not ok:
+        return jsonify({"error": "Delete failed"}), 500
+    return jsonify({"ok": True, "job_id": job_id})
 # Admin
 
 # Users
