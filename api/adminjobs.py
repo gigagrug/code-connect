@@ -1,12 +1,6 @@
 from sqlalchemy import text
 
-
 def get_jobs_paginated(engine, page: int = 1, per_page: int = 6, q: str | None = None, status: str | None = None):
-    """
-    Returns (rows, total, total_pages, pending_count, approved_count, taken_count).
-    - q: optional substring match on title/description
-    - status: optional exact status filter value (0=pending, 1=approved, 2=taken)
-    """
     page = max(int(page or 1), 1)
     per_page = max(int(per_page or 1), 1)
     offset = (page - 1) * per_page

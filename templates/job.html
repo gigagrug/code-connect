@@ -28,13 +28,52 @@
               </div>
               <div class="text max-w-none text-lg">
                 <p class="whitespace-pre-line">{{ job.description }}</p>
+                {% if job.link %}
+                  <a href="{{ job.link }}" target="blank" class="btn-primary mt-4 inline-block">Apply Externally</a>
+                {% endif %}
               </div>
             </div>
+
+            {% if session.get('role') in [2, 3] and job.status == 1 %}
+              <div class="mt-8 border-t border-gray-200 pt-6 dark:border-gray-700">
+                {% if my_application %}
+                  <a href="/application/{{ my_application.id }}" class="btn-secondary">View Application & Chat</a>
+                {% else %}
+                  <button class="btn-primary" popovertarget="apply-popover">Apply Now</button>
+                {% endif %}
+              </div>
+            {% endif %}
+            {% if session.user_id == job.user_id %}
+              <div class="mt-8 border-t border-gray-200 pt-6 dark:border-gray-700">
+                <h3 class="text mb-4 text-2xl font-semibold">Applications</h3>
+                <div class="space-y-4">
+                  {% if applications %}
+                    {% for app in applications %}
+                      <div class="rounded-lg bg-gray-100 p-4 dark:bg-gray-800">
+                        <div class="flex items-center justify-between">
+                          <span class="text font-semibold">{{ app.name or app.email }}</span>
+                          <a href="/application/{{ app.id }}" class="btn-secondary text-sm">View & Chat</a>
+                        </div>
+                        <div class="mt-2 flex gap-4">
+                          {% if app.resume_path %}
+                            <a href="{{ app.resume_path }}" target="_blank" class="text-sm text-blue-500 hover:underline">View Resume</a>
+                          {% endif %}
+                          {% if app.cover_letter_path %}
+                            <a href="{{ app.cover_letter_path }}" target="_blank" class="text-sm text-blue-500 hover:underline">View Cover Letter</a>
+                          {% endif %}
+                        </div>
+                      </div>
+                    {% endfor %}
+                  {% else %}
+                    <p class="text text-gray-500">No applications yet.</p>
+                  {% endif %}
+                </div>
+              </div>
+            {% endif %}
 
             {% if session.user_id == job.user_id %}
               <div class="mt-8 border-t border-gray-200 pt-6 dark:border-gray-700">
                 <h3 class="text mb-4 text-lg font-semibold">Owner Controls</h3>
-
                 <form action="/job/{{ job.id }}/update" method="POST" id="edit-form" class="mb-6 hidden space-y-4">
                   <div>
                     <label for="title" class="text mb-2 block text-sm font-medium">Job Title</label>
@@ -72,6 +111,24 @@
 
       <div class="lg:col-span-1"></div>
     </div>
+  </div>
+
+  <div id="apply-popover" popover class="card max-w-lg p-0 backdrop:bg-black/50">
+    <div class="flex items-center justify-between border-b p-4 dark:border-gray-700">
+      <h3 class="text text-2xl font-semibold">Apply for: {{ job.title }}</h3>
+      <button popovertarget="apply-popover" popovertargetaction="hide" class="text-2xl text-gray-400 hover:text-gray-600 dark:hover:text-gray-200">&times;</button>
+    </div>
+    <form action="/job/{{ job.id }}/apply" method="POST" enctype="multipart/form-data" class="space-y-4 p-6">
+      <div>
+        <label for="resume" class="text mb-2 block text-sm font-medium">Resume (Optional)</label>
+        <input type="file" name="resume" id="resume" class="input text w-full file:mr-4 file:rounded-md file:border-0 file:bg-gray-200 file:px-4 file:py-2 file:text-sm file:font-semibold hover:file:bg-gray-300 dark:file:bg-gray-700 dark:file:text-gray-200 dark:hover:file:bg-gray-600" />
+      </div>
+      <div>
+        <label for="cover_letter" class="text mb-2 block text-sm font-medium">Cover Letter (Optional)</label>
+        <input type="file" name="cover_letter" id="cover_letter" class="input text w-full file:mr-4 file:rounded-md file:border-0 file:bg-gray-200 file:px-4 file:py-2 file:text-sm file:font-semibold hover:file:bg-gray-300 dark:file:bg-gray-700 dark:file:text-gray-200 dark:hover:file:bg-gray-600" />
+      </div>
+      <button type="submit" class="btn-primary w-full">Submit Application</button>
+    </form>
   </div>
 
   <script>

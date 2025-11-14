@@ -54,6 +54,10 @@
           <label for="description" class="text mb-2 block text-sm font-medium">Job Description</label>
           <textarea name="description" id="description" class="input text field-sizing-content min-h-[120px]" placeholder="Describe the role, responsibilities, and qualifications..." required></textarea>
         </div>
+        <div>
+          <label for="link" class="text mb-2 block text-sm font-medium">External Job Link</label>
+          <input name="link" id="link" class="input text" placeholder="https://www.example.com" />
+        </div>
         <button type="submit" class="w-full rounded-lg bg-blue-700 px-5 py-2.5 text-center text-sm font-medium text-white hover:bg-blue-800">Post Job</button>
       </form>
     </div>
@@ -65,10 +69,22 @@
 
     <div class="mx-auto">
       {% if projects %}
-        <div id="projects-grid" class="grid grid-cols-1 gap-8 md:grid-cols-2 lg:grid-cols-3">
-          {% for project in projects %}
-            {% include "partials/project_card.html" %}
-          {% endfor %}
+        <div class="card overflow-hidden rounded-lg shadow-md">
+          <table class="w-full text-left text-sm">
+            <thead class="bg-gray-50 text-xs text-gray-700 uppercase dark:bg-gray-700 dark:text-gray-400">
+              <tr>
+                <th scope="col" class="px-6 py-3">Status</th>
+                <th scope="col" class="px-6 py-3">Project Name</th>
+                <th scope="col" class="px-6 py-3">Description</th>
+                <th scope="col" class="px-6 py-3">Created By</th>
+              </tr>
+            </thead>
+            <tbody class="text divide-y divide-gray-200 dark:divide-gray-700">
+              {% for project in projects %}
+                {% include "partials/project_card.html" %}
+              {% endfor %}
+            </tbody>
+          </table>
         </div>
       {% else %}
         <div class="card p-6 text-center">
