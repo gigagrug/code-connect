@@ -106,16 +106,28 @@ def serve_upload(project_name, filename):
     return send_from_directory(project_dir, filename)
 # Admin
 ## create routes only under '/admin/'
-@app.route('/admin')
-def admin():
-    page = int(request.args.get('page', 1) or 1)
-    per_page = 25
-    projects, total, total_pages = get_projects_paginated(engine, page=page, per_page=per_page)
-    return render_template('admin/admin.html', projects=projects, page=page, per_page=per_page, total=total, total_pages=total_pages)
+@app.route('/admin', endpoint='admin')
+def admin_index():
+    page = request.args.get('page', default=1, type=int) or 1
+    per_page = 6
+    projects, total, total_pages, pending_count, approved_count, taken_count = get_projects_paginated(engine, page=page, per_page=per_page)
+    if page > total_pages:
+        page = total_pages
+    return render_template('/admin/admin.html', projects=projects, page=page, per_page=per_page, total=total, total_pages=total_pages, pending_count=pending_count, approved_count=approved_count, taken_count=taken_count)
 
-@app.route('/admin/users')
-def adminusers():
-    
+@app.route('/admin/jobs', endpoint='adminjobs')
+def admin_jobs_index():
+    # page = request.args.get('page', default=1, type=int) or 1
+    per_page = 6
+    jobs, total, total_pages, pending_count, approved_count, taken_count = get_jobs_paginated(engine, page=page, per_page=per_page)
+    if page > total_pages:
+        page = total_pages
+    return render_template('/admin/adminjobs.html', jobs=jobs, page=page, per_page=per_page, total=total, total_pages=total_pages, pending_count=pending_count, approved_count=approved_count, taken_count=taken_count)
+
+@app.route('/admin/users', endpoint='adminusers')
+def admin_users_index():
+    page = request.args.get('page', default=q, type=int) or 1
+    per_page = 6
 # Users
 @app.route('/')
 def index():
