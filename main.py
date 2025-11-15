@@ -139,6 +139,8 @@ def index():
     if 'user_id' in session:
         if session.get('role') == 1:
             return redirect(url_for('business_profile', user_id=session['user_id']))
+        if session.get('role') == 2:        
+            return redirect(url_for('jobs_page'))
         if session.get('role') == 3:
             student_projects = get_projects_for_student(engine)
             if student_projects:
