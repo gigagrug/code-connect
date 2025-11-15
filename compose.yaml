@@ -8,7 +8,8 @@ services:
     volumes:
       - .:/app
     depends_on:
-      - db
+      db:
+        condition: service_healthy
     develop:
       watch:
         - action: sync
@@ -16,6 +17,7 @@ services:
           target: /app/main.py
         - action: rebuild
           path: ./requirements.txt
+
   db:
     image: mysql:latest
     environment:
@@ -24,8 +26,14 @@ services:
       - MYSQL_USER=myuser
       - MYSQL_PASSWORD=mypassword
     ports:
-      - 3306:3306
+      - "3306:3306"
     volumes:
       - db-data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+      start_period: 10s
 volumes:
   db-data:
