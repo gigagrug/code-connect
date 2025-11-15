@@ -1,5 +1,0 @@
-CREATE TABLE IF NOT EXISTS _schema_migrations (
-	id INT PRIMARY KEY AUTO_INCREMENT, 
-	file VARCHAR(255) UNIQUE,
-	migrated BOOLEAN DEFAULT false
-);
