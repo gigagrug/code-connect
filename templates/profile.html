@@ -2,10 +2,10 @@
 
 {% block content %}
   <form action="/profile/update" method="POST">
-    <div class="card mx-auto mt-10 max-w-xl p-5">
-      <h2 class="text text-3xl font-bold">Welcome, <span class="text-blue-600">{{ session.email }}</span>!</h2>
+    <div class="mx-auto mt-10 max-w-xl rounded-lg border border-neutral-200 bg-white p-5 shadow-sm dark:border-neutral-700 dark:bg-neutral-800">
+      <h2 class="text-3xl font-bold">Welcome, <span class="text-blue-600">{{ session.email }}</span>!</h2>
       <div class="p-4">
-        <h3 class="text text-xl font-semibold">Account Details</h3>
+        <h3 class="text-xl font-semibold">Account Details</h3>
         <p class="text"><strong>Email:</strong> {{ session.email }}</p>
         <p class="text">
           <strong>Role:</strong>
@@ -21,27 +21,27 @@
         </p>
 
         <div class="mt-4">
-          <label for="name" class="text mb-1 block text-sm font-medium">Display Name</label>
-          <input type="text" name="name" id="name" class="input text card text-sm shadow-none" value="{{ user_data.name or '' }}" placeholder="Your Name or Company" />
+          <label for="name" class="mb-1 block text-sm font-medium">Display Name</label>
+          <input type="text" name="name" id="name" class="w-full rounded-lg border border-neutral-300 bg-white p-2 text-sm placeholder:text-neutral-500 dark:border-neutral-700 dark:bg-neutral-800" value="{{ user_data.name or '' }}" placeholder="Your Name or Company" />
         </div>
 
         {% if session.role == 1 %}
-          <p class="text mt-4">
+          <p class="mt-4">
             <strong>Public Profile:</strong>
             <a href="/business/{{ session.user_id }}" class="underline"> Public Profile </a>
           </p>
           <div class="mt-2">
-            <label for="bio" class="text mb-1 block text-sm font-medium">Bio</label>
-            <textarea name="bio" id="bio" class="input text card min-h-[80px] text-sm shadow-none" placeholder="Tell us about your company or yourself.">{{ user_data.bio or '' }}</textarea>
+            <label for="bio" class="mb-1 block text-sm font-medium">Bio</label>
+            <textarea name="bio" id="bio" class="min-h-[80px] w-full rounded-lg border border-neutral-300 bg-white p-2 text-sm placeholder:text-neutral-500 dark:border-neutral-700 dark:bg-neutral-800" placeholder="Tell us about your company or yourself.">{{ user_data.bio or '' }}</textarea>
           </div>
         {% endif %}
         {% if session.role == 3 %}
           {% if student_info.instructor_id %}
-            <p class="text mt-4"><strong>Assigned Instructor:</strong> {{ student_info.instructor_email }}</p>
+            <p class="mt-4"><strong>Assigned Instructor:</strong> {{ student_info.instructor_email }}</p>
           {% endif %}
           <div class="mt-2">
-            <label for="graduation" class="text mb-1 block text-sm font-medium">Graduation Year</label>
-            <input type="text" name="graduation" id="graduation" class="input text card text-sm shadow-none" value="{{ student_info.graduation or '' }}" placeholder="e.g., 2026" />
+            <label for="graduation" class="mb-1 block text-sm font-medium">Graduation Year</label>
+            <input type="text" name="graduation" id="graduation" class="w-full rounded-lg border border-neutral-300 bg-white p-2 text-sm placeholder:text-neutral-500 dark:border-neutral-700 dark:bg-neutral-800" value="{{ student_info.graduation or '' }}" placeholder="e.g., 2026" />
           </div>
         {% endif %}
       </div>
@@ -56,13 +56,13 @@
     </div>
   </form>
 
-  <div class="card mx-auto mt-5 mb-12 max-w-xl p-5">
-    <h3 class="text mb-4 text-2xl font-semibold">Contact Admin</h3>
+  <div class="mx-auto mt-5 mb-12 max-w-xl rounded-lg border border-neutral-200 bg-white p-5 shadow-sm dark:border-neutral-700 dark:bg-neutral-800">
+    <h3 class="mb-4 text-2xl font-semibold">Contact Admin</h3>
     <p class="mb-4 text-sm text-gray-500 dark:text-gray-400">Have an issue or a request? Send a message directly to the site administrators.</p>
     <form action="/message/admin" method="POST">
       <div class="mb-4">
-        <label for="admin_message" class="text mb-2 block text-sm font-medium">Your Message</label>
-        <textarea name="message" id="admin_message" class="input text field-sizing-content min-h-[100px]" placeholder="Please describe your issue or request..." required></textarea>
+        <label for="admin_message" class="mb-2 block text-sm font-medium">Your Message</label>
+        <textarea name="message" id="admin_message" class="field-sizing-content min-h-[100px] w-full rounded-lg border border-neutral-300 p-2 placeholder:text-neutral-500 dark:border-neutral-700" placeholder="Please describe your issue or request..." required></textarea>
       </div>
       <button type="submit" class="w-full rounded-lg bg-blue-700 px-5 py-2.5 text-center text-sm font-medium text-white hover:bg-blue-800">Send Message</button>
     </form>
@@ -70,19 +70,19 @@
 
   {% if session.role == 3 %}
     {% if not student_info.instructor_id %}
-      <div class="card mx-auto mt-5 mb-12 max-w-xl p-5">
-        <h3 class="text mb-4 text-center text-2xl font-semibold">Join an Instructor</h3>
+      <div class="mx-auto mt-5 mb-12 max-w-xl rounded-lg border border-neutral-200 bg-white p-5 shadow-sm dark:border-neutral-700 dark:bg-neutral-800">
+        <h3 class="mb-4 text-center text-2xl font-semibold">Join an Instructor</h3>
         {% if pending_request %}
-          <p class="text text-center">Your request to join D<strong>{{ pending_request.instructor_email }}</strong> is pending.</p>
+          <p class="text-center">Your request to join D<strong>{{ pending_request.instructor_email }}</strong> is pending.</p>
           <form action="/request/cancel" method="POST" class="mt-4">
             <button type="submit" class="w-full rounded-lg bg-yellow-500 px-5 py-2.5 text-center text-sm font-medium text-white hover:bg-yellow-600">Cancel Request</button>
           </form>
         {% elif instructors %}
-          <p class="text mb-4 text-center">You are not currently assigned to an instructor. Send a request to join one.</p>
+          <p class="mb-4 text-center">You are not currently assigned to an instructor. Send a request to join one.</p>
           <form action="/request/instructor" method="POST">
             <div class="mb-4">
-              <label for="instructor_id" class="text mb-2 block text-sm font-medium">Select Instructor</label>
-              <select name="instructor_id" id="instructor_id" class="input text card shadow-none" required>
+              <label for="instructor_id" class="mb-2 block text-sm font-medium">Select Instructor</label>
+              <select name="instructor_id" id="instructor_id" class="w-full rounded-lg border border-neutral-300 bg-white p-2 shadow-none placeholder:text-neutral-500 dark:border-neutral-700 dark:bg-neutral-800" required>
                 <option value="" disabled selected>Choose an instructor...</option>
                 {% for instructor in instructors %}
                   <option value="{{ instructor.id }}">{{ instructor.email }}</option>
@@ -98,7 +98,7 @@
 
   <div class="container mx-auto p-4">
     {% if session.role == 0 %}
-      <h2 class="text mb-6 text-center text-3xl font-bold">Managed Projects</h2>
+      <h2 class="mb-6 text-center text-3xl font-bold">Managed Projects</h2>
       <div class="grid grid-cols-1 gap-8 md:grid-cols-2 lg:grid-cols-3">
         {% for project in approved_projects %}
           {% include "partials/project_card.html" %}
@@ -107,7 +107,7 @@
         {% endfor %}
       </div>
 
-      <h2 class="text my-8 text-center text-3xl font-bold">My Created Projects</h2>
+      <h2 class="my-8 text-center text-3xl font-bold">My Created Projects</h2>
       <div class="grid grid-cols-1 gap-8 md:grid-cols-2 lg:grid-cols-3">
         {% for project in created_projects %}
           {% include "partials/project_card.html" %}
@@ -115,15 +115,14 @@
           <p class="col-sspan-full text-center text-gray-500 dark:text-gray-400">You have not created any projects.</p>
         {% endfor %}
       </div>
-    
     {% elif session.role == 2 or session.role == 3 %}
-      <h2 class="text mb-6 text-center text-3xl font-bold">My Job Applications</h2>
-      <div class="card mx-auto max-w-2xl p-6">
+      <h2 class="mb-6 text-center text-3xl font-bold">My Job Applications</h2>
+      <div class="mx-auto max-w-2xl rounded-lg border border-neutral-200 bg-white p-6 shadow-sm dark:border-neutral-700 dark:bg-neutral-800">
         <div class="space-y-4">
           {% for app in applications %}
             <div class="flex items-center justify-between rounded-lg bg-gray-100 p-4 dark:bg-gray-800">
               <div>
-                <a href="/job/{{ app.job_id }}" class="text font-semibold hover:underline">{{ app.title }}</a>
+                <a href="/job/{{ app.job_id }}" class="font-semibold hover:underline">{{ app.title }}</a>
                 <p class="text-sm text-gray-500 dark:text-gray-400">at {{ app.business_name }}</p>
               </div>
               <a href="/application/{{ app.id }}" class="btn-secondary text-sm">View & Chat</a>

@@ -127,7 +127,7 @@
                       </select>
                       <button type="button" class="js-status-save rounded-lg border px-3 py-1 text-sm hover:bg-gray-50 dark:hover:bg-gray-800">Save</button>
 
-                      <button type="button" class="js-delete-job rounded-lg border border-red-300 text-red-600 px-3 py-1 text-sm hover:bg-red-50 dark:hover:bg-red-900/20">Delete</button>
+                      <button type="button" class="js-delete-job rounded-lg border border-red-300 px-3 py-1 text-sm text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20">Delete</button>
                     </div>
                   </td>
                 </tr>
@@ -256,34 +256,39 @@
           table?.querySelectorAll("thead th[data-sort]").forEach((th) => th.addEventListener("click", () => sortBy(th)));
 
           // Admin actions: update status + delete
-          function encodeForm(data){
-            return Object.entries(data).map(([k,v]) => `${encodeURIComponent(k)}=${encodeURIComponent(v)}`).join('&');
+          function encodeForm(data) {
+            return Object.entries(data)
+              .map(([k, v]) => `${encodeURIComponent(k)}=${encodeURIComponent(v)}`)
+              .join("&");
           }
 
-          async function updateStatus(row){
-            const jobId = row.getAttribute('data-job-id');
-            const select = row.querySelector('.js-status-select');
+          async function updateStatus(row) {
+            const jobId = row.getAttribute("data-job-id");
+            const select = row.querySelector(".js-status-select");
             if (!jobId || !select) return;
             const status = select.value;
             try {
               const res = await fetch(`/admin/jobs/${jobId}/update`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-                credentials: 'same-origin',
-                body: encodeForm({ status })
+                method: "POST",
+                headers: { "Content-Type": "application/x-www-form-urlencoded" },
+                credentials: "same-origin",
+                body: encodeForm({ status }),
               });
               const text = await res.text();
-              let data = null; try { data = JSON.parse(text); } catch {}
+              let data = null;
+              try {
+                data = JSON.parse(text);
+              } catch {}
               if (!res.ok) {
                 const msg = (data && (data.error || data.message)) || `HTTP ${res.status}`;
                 throw new Error(msg);
               }
               // Update badge + filter attr
-              row.setAttribute('data-status', String(status));
+              row.setAttribute("data-status", String(status));
               const statusCell = row.cells[2];
-              if (statusCell){
+              if (statusCell) {
                 const s = Number(status);
-                let html = '';
+                let html = "";
                 if (s === 1) {
                   html = '<span class="inline-flex items-center rounded-md border border-green-200 bg-green-50 px-2 py-0.5 text-xs font-medium text-green-700 dark:border-green-900/50 dark:bg-green-900/30 dark:text-green-300">Approved</span>';
                 } else if (s === 2) {
@@ -294,45 +299,51 @@
                 statusCell.innerHTML = html;
               }
               // Brief visual feedback
-              const btn = row.querySelector('.js-status-save');
+              const btn = row.querySelector(".js-status-save");
               if (btn) {
-                const old = btn.textContent; btn.textContent = 'Saved';
-                setTimeout(() => { btn.textContent = old; }, 800);
+                const old = btn.textContent;
+                btn.textContent = "Saved";
+                setTimeout(() => {
+                  btn.textContent = old;
+                }, 800);
               }
             } catch (e) {
-              alert(`Failed to update status. ${e?.message || ''}`.trim());
+              alert(`Failed to update status. ${e?.message || ""}`.trim());
             }
           }
 
-          async function deleteJob(row){
-            const jobId = row.getAttribute('data-job-id');
+          async function deleteJob(row) {
+            const jobId = row.getAttribute("data-job-id");
             if (!jobId) return;
-            if (!confirm('Are you sure you want to delete this job?')) return;
+            if (!confirm("Are you sure you want to delete this job?")) return;
             try {
-              const res = await fetch(`/admin/jobs/${jobId}/delete`, { method: 'POST', credentials: 'same-origin' });
+              const res = await fetch(`/admin/jobs/${jobId}/delete`, { method: "POST", credentials: "same-origin" });
               const text = await res.text();
-              let data = null; try { data = JSON.parse(text); } catch {}
+              let data = null;
+              try {
+                data = JSON.parse(text);
+              } catch {}
               if (!res.ok) {
                 const msg = (data && (data.error || data.message)) || `HTTP ${res.status}`;
                 throw new Error(msg);
               }
               row.remove();
             } catch (e) {
-              alert(`Failed to delete job. ${e?.message || ''}`.trim());
+              alert(`Failed to delete job. ${e?.message || ""}`.trim());
             }
           }
 
-          tbody?.addEventListener('click', (ev) => {
+          tbody?.addEventListener("click", (ev) => {
             const target = ev.target;
             if (!(target instanceof Element)) return;
-            if (target.classList.contains('js-status-save')){
+            if (target.classList.contains("js-status-save")) {
               ev.preventDefault();
-              const row = target.closest('tr');
+              const row = target.closest("tr");
               if (row) updateStatus(row);
             }
-            if (target.classList.contains('js-delete-job')){
+            if (target.classList.contains("js-delete-job")) {
               ev.preventDefault();
-              const row = target.closest('tr');
+              const row = target.closest("tr");
               if (row) deleteJob(row);
             }
           });

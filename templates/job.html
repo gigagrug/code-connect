@@ -4,10 +4,10 @@
   <div class="container mx-auto px-4 py-12">
     <div class="grid grid-cols-1 gap-8 lg:grid-cols-3">
       <div class="lg:col-span-2">
-        <div class="card mx-auto w-full overflow-hidden">
+        <div class="mx-auto w-full overflow-hidden rounded-lg border border-neutral-200 bg-white shadow-sm dark:border-neutral-700 dark:bg-neutral-800">
           <div class="p-8 md:p-12">
             <div id="job-details">
-              <h1 class="text mb-4 text-4xl font-extrabold md:text-5xl">{{ job.title }}</h1>
+              <h1 class="mb-4 text-4xl font-extrabold md:text-5xl">{{ job.title }}</h1>
               <div class="mb-6 border-b border-gray-200 pb-4 dark:border-gray-700">
                 <p class="text-md text-gray-500 dark:text-gray-300">
                   <span class="me-5">
@@ -26,7 +26,7 @@
                   {% endif %}
                 </p>
               </div>
-              <div class="text max-w-none text-lg">
+              <div class="max-w-none text-lg">
                 <p class="whitespace-pre-line">{{ job.description }}</p>
                 {% if job.link %}
                   <a href="{{ job.link }}" target="blank" class="btn-primary mt-4 inline-block">Apply Externally</a>
@@ -45,13 +45,13 @@
             {% endif %}
             {% if session.user_id == job.user_id %}
               <div class="mt-8 border-t border-gray-200 pt-6 dark:border-gray-700">
-                <h3 class="text mb-4 text-2xl font-semibold">Applications</h3>
+                <h3 class="mb-4 text-2xl font-semibold">Applications</h3>
                 <div class="space-y-4">
                   {% if applications %}
                     {% for app in applications %}
                       <div class="rounded-lg bg-gray-100 p-4 dark:bg-gray-800">
                         <div class="flex items-center justify-between">
-                          <span class="text font-semibold">{{ app.name or app.email }}</span>
+                          <span class="font-semibold">{{ app.name or app.email }}</span>
                           <a href="/application/{{ app.id }}" class="btn-secondary text-sm">View & Chat</a>
                         </div>
                         <div class="mt-2 flex gap-4">
@@ -65,7 +65,7 @@
                       </div>
                     {% endfor %}
                   {% else %}
-                    <p class="text text-gray-500">No applications yet.</p>
+                    <p class="text-gray-500">No applications yet.</p>
                   {% endif %}
                 </div>
               </div>
@@ -73,19 +73,19 @@
 
             {% if session.user_id == job.user_id %}
               <div class="mt-8 border-t border-gray-200 pt-6 dark:border-gray-700">
-                <h3 class="text mb-4 text-lg font-semibold">Owner Controls</h3>
+                <h3 class="mb-4 text-lg font-semibold">Owner Controls</h3>
                 <form action="/job/{{ job.id }}/update" method="POST" id="edit-form" class="mb-6 hidden space-y-4">
                   <div>
-                    <label for="title" class="text mb-2 block text-sm font-medium">Job Title</label>
-                    <input type="text" name="title" id="title" value="{{ job.title }}" class="input text" required />
+                    <label for="title" class="mb-2 block text-sm font-medium">Job Title</label>
+                    <input type="text" name="title" id="title" value="{{ job.title }}" class="text w-full rounded-lg border border-neutral-300 p-2 placeholder:text-neutral-500 dark:border-neutral-700" required />
                   </div>
                   <div>
-                    <label for="description" class="text mb-2 block text-sm font-medium">Description</label>
-                    <textarea name="description" id="description" class="input text field-sizing-content min-h-[100px]" required>{{ job.description }}</textarea>
+                    <label for="description" class="mb-2 block text-sm font-medium">Description</label>
+                    <textarea name="description" id="description" class="field-sizing-content min-h-[100px] w-full rounded-lg border border-neutral-300 p-2 placeholder:text-neutral-500 dark:border-neutral-700" required>{{ job.description }}</textarea>
                   </div>
                   <div>
-                    <label for="status" class="text mb-2 block text-sm font-medium">Status</label>
-                    <select name="status" id="status" class="input text">
+                    <label for="status" class="mb-2 block text-sm font-medium">Status</label>
+                    <select name="status" id="status" class="text w-full rounded-lg border border-neutral-300 p-2 placeholder:text-neutral-500 dark:border-neutral-700">
                       <option value="0" {% if job.status == 0 %}selected{% endif %}>Draft</option>
                       <option value="1" {% if job.status == 1 %}selected{% endif %}>Open</option>
                       <option value="2" {% if job.status == 2 %}selected{% endif %}>Closed</option>
@@ -97,7 +97,7 @@
                   </div>
                 </form>
 
-                <div class="text flex items-center gap-4" id="control-buttons">
+                <div class="flex items-center gap-4" id="control-buttons">
                   <button onclick="toggleEditForm()" class="btn-secondary">Edit Details</button>
                   <form action="/job/{{ job.id }}/delete" method="POST" onsubmit="return confirm('Are you sure you want to delete this job?');">
                     <button type="submit" class="btn-danger text">Delete Job</button>
@@ -113,19 +113,19 @@
     </div>
   </div>
 
-  <div id="apply-popover" popover class="card max-w-lg p-0 backdrop:bg-black/50">
+  <div id="apply-popover" popover class="max-w-lg rounded-lg border border-neutral-200 bg-white p-0 shadow-sm backdrop:bg-black/50 dark:border-neutral-700 dark:bg-neutral-800">
     <div class="flex items-center justify-between border-b p-4 dark:border-gray-700">
-      <h3 class="text text-2xl font-semibold">Apply for: {{ job.title }}</h3>
+      <h3 class="text-2xl font-semibold">Apply for: {{ job.title }}</h3>
       <button popovertarget="apply-popover" popovertargetaction="hide" class="text-2xl text-gray-400 hover:text-gray-600 dark:hover:text-gray-200">&times;</button>
     </div>
     <form action="/job/{{ job.id }}/apply" method="POST" enctype="multipart/form-data" class="space-y-4 p-6">
       <div>
-        <label for="resume" class="text mb-2 block text-sm font-medium">Resume (Optional)</label>
-        <input type="file" name="resume" id="resume" class="input text w-full file:mr-4 file:rounded-md file:border-0 file:bg-gray-200 file:px-4 file:py-2 file:text-sm file:font-semibold hover:file:bg-gray-300 dark:file:bg-gray-700 dark:file:text-gray-200 dark:hover:file:bg-gray-600" />
+        <label for="resume" class="mb-2 block text-sm font-medium">Resume (Optional)</label>
+        <input type="file" name="resume" id="resume" class="w-full rounded-lg border border-neutral-300 p-2 file:mr-4 file:rounded-md file:border-0 file:bg-gray-200 file:px-4 file:py-2 file:text-sm file:font-semibold placeholder:text-neutral-500 hover:file:bg-gray-300 dark:border-neutral-700 dark:file:bg-gray-700 dark:file:text-gray-200 dark:hover:file:bg-gray-600" />
       </div>
       <div>
-        <label for="cover_letter" class="text mb-2 block text-sm font-medium">Cover Letter (Optional)</label>
-        <input type="file" name="cover_letter" id="cover_letter" class="input text w-full file:mr-4 file:rounded-md file:border-0 file:bg-gray-200 file:px-4 file:py-2 file:text-sm file:font-semibold hover:file:bg-gray-300 dark:file:bg-gray-700 dark:file:text-gray-200 dark:hover:file:bg-gray-600" />
+        <label for="cover_letter" class="mb-2 block text-sm font-medium">Cover Letter (Optional)</label>
+        <input type="file" name="cover_letter" id="cover_letter" class="w-full rounded-lg border border-neutral-300 p-2 file:mr-4 file:rounded-md file:border-0 file:bg-gray-200 file:px-4 file:py-2 file:text-sm file:font-semibold placeholder:text-neutral-500 hover:file:bg-gray-300 dark:border-neutral-700 dark:file:bg-gray-700 dark:file:text-gray-200 dark:hover:file:bg-gray-600" />
       </div>
       <button type="submit" class="btn-primary w-full">Submit Application</button>
     </form>

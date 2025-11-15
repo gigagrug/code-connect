@@ -2,10 +2,10 @@
 
 {% block content %}
   <div class="container mx-auto px-4 py-8">
-    <div class="card mx-auto mb-10 max-w-2xl p-6 text-center">
-      <h2 class="text mb-2 text-3xl font-bold">{{ business_user.name or 'Business Profile' }}</h2>
+    <div class="mx-auto mb-10 max-w-2xl rounded-lg border border-neutral-200 bg-white p-6 text-center shadow-sm dark:border-neutral-700 dark:bg-neutral-800">
+      <h2 class="mb-2 text-3xl font-bold">{{ business_user.name or 'Business Profile' }}</h2>
       {% if business_user.bio %}
-        <p class="text mx-auto max-w-lg">{{ business_user.bio }}</p>
+        <p class="mx-auto max-w-lg">{{ business_user.bio }}</p>
       {% else %}
         <p class="text-gray-400 italic dark:text-gray-500">This business has not provided a bio.</p>
       {% endif %}
@@ -18,60 +18,60 @@
       {% endif %}
     </div>
 
-    <div id="project-form" popover class="card mx-auto mt-5 p-0 backdrop:bg-black/50 md:w-1/2">
+    <div id="project-form" popover class="mx-auto mt-5 rounded-lg border border-neutral-200 bg-white p-0 shadow-sm backdrop:bg-black/50 md:w-1/2 dark:border-neutral-700 dark:bg-neutral-800">
       <div class="flex items-center justify-between border-b p-4 dark:border-gray-700">
-        <h3 class="text text-2xl font-semibold">Create a New Project</h3>
+        <h3 class="text-2xl font-semibold">Create a New Project</h3>
         <button popovertarget="project-form" popovertargetaction="hide" class="text-2xl text-gray-400 hover:text-gray-600 dark:hover:text-gray-200">&times;</button>
       </div>
       <form action="/project/create" method="POST" enctype="multipart/form-data" class="p-6">
         <div class="mb-4">
           <label for="name" class="mb-2 block text-sm font-medium text-gray-900 dark:text-white">Project Name</label>
-          <input type="text" name="name" id="name" class="input text" placeholder="My Awesome Project" required />
+          <input type="text" name="name" id="name" class="text w-full rounded-lg border border-neutral-300 p-2 placeholder:text-neutral-500 dark:border-neutral-700" placeholder="My Awesome Project" required />
         </div>
         <div class="mb-6">
           <label for="description" class="mb-2 block text-sm font-medium text-gray-900 dark:text-white">Description</label>
-          <textarea name="description" id="description" class="input text field-sizing-content min-h-[100px]" placeholder="A description of what your project is about." required></textarea>
+          <textarea name="description" id="description" class="field-sizing-content min-h-[100px] w-full rounded-lg border border-neutral-300 p-2 placeholder:text-neutral-500 dark:border-neutral-700" placeholder="A description of what your project is about." required></textarea>
         </div>
         <div class="mb-6">
           <label for="attachment" class="mb-2 block text-sm font-medium text-gray-900 dark:text-white">Project Attachment(s) (Optional)</label>
-          <input type="file" name="attachment" id="attachment" multiple class="input text w-full file:mr-4 file:rounded-md file:border-0 file:bg-gray-200 file:px-4 file:py-2 file:text-sm file:font-semibold hover:file:bg-gray-300 dark:file:bg-gray-700 dark:file:text-gray-200 dark:hover:file:bg-gray-600" />
+          <input type="file" name="attachment" id="attachment" multiple class="w-full rounded-lg border border-neutral-300 p-2 file:mr-4 file:rounded-md file:border-0 file:bg-gray-200 file:px-4 file:py-2 file:text-sm file:font-semibold placeholder:text-neutral-500 hover:file:bg-gray-300 dark:border-neutral-700 dark:file:bg-gray-700 dark:file:text-gray-200 dark:hover:file:bg-gray-600" />
         </div>
         <button type="submit" class="w-full rounded-lg bg-blue-700 px-5 py-2.5 text-center text-sm font-medium text-white hover:bg-blue-800">Create Project</button>
       </form>
     </div>
 
-    <div id="job-form" popover class="card mx-auto mt-5 p-0 backdrop:bg-black/50 md:w-1/2">
+    <div id="job-form" popover class="mx-auto mt-5 rounded-lg border border-neutral-200 bg-white p-0 shadow-sm backdrop:bg-black/50 md:w-1/2 dark:border-neutral-700 dark:bg-neutral-800">
       <div class="flex items-center justify-between border-b p-4 dark:border-gray-700">
-        <h3 class="text text-2xl font-semibold">Create a New Job</h3>
+        <h3 class="text-2xl font-semibold">Create a New Job</h3>
         <button popovertarget="job-form" popovertargetaction="hide" class="text-2xl text-gray-400 hover:text-gray-600 dark:hover:text-gray-200">&times;</button>
       </div>
       <form action="/job/create" method="POST" class="space-y-4 p-6">
         <div>
-          <label for="title" class="text mb-2 block text-sm font-medium">Job Title</label>
-          <input type="text" name="title" id="title" class="input text" placeholder="e.g., Senior Web Developer" required />
+          <label for="title" class="mb-2 block text-sm font-medium">Job Title</label>
+          <input type="text" name="title" id="title" class="text w-full rounded-lg border border-neutral-300 p-2 placeholder:text-neutral-500 dark:border-neutral-700" placeholder="e.g., Senior Web Developer" required />
         </div>
         <div>
-          <label for="description" class="text mb-2 block text-sm font-medium">Job Description</label>
-          <textarea name="description" id="description" class="input text field-sizing-content min-h-[120px]" placeholder="Describe the role, responsibilities, and qualifications..." required></textarea>
+          <label for="description" class="mb-2 block text-sm font-medium">Job Description</label>
+          <textarea name="description" id="description" class="field-sizing-content min-h-[120px] w-full rounded-lg border border-neutral-300 p-2 placeholder:text-neutral-500 dark:border-neutral-700" placeholder="Describe the role, responsibilities, and qualifications..." required></textarea>
         </div>
         <div>
-          <label for="link" class="text mb-2 block text-sm font-medium">External Job Link</label>
-          <input name="link" id="link" class="input text" placeholder="https://www.example.com" />
+          <label for="link" class="mb-2 block text-sm font-medium">External Job Link</label>
+          <input name="link" id="link" class="text w-full rounded-lg border border-neutral-300 p-2 placeholder:text-neutral-500 dark:border-neutral-700" placeholder="https://www.example.com" />
         </div>
         <button type="submit" class="w-full rounded-lg bg-blue-700 px-5 py-2.5 text-center text-sm font-medium text-white hover:bg-blue-800">Post Job</button>
       </form>
     </div>
 
     <div class="mb-8 flex justify-center gap-x-8 border-b border-gray-200 dark:border-gray-700">
-      <span class="text -mb-px cursor-default border-b-2 border-blue-500 px-4 py-3 text-2xl font-semibold text-blue-500"> Projects </span>
-      <a href="/business/{{ business_user.id }}/jobs" class="text -mb-px border-b-2 border-transparent px-4 py-3 text-2xl font-semibold text-gray-400 hover:border-gray-300 hover:text-gray-600 dark:text-gray-500 dark:hover:border-gray-600 dark:hover:text-gray-300"> Jobs </a>
+      <span class="-mb-px cursor-default border-b-2 border-blue-500 px-4 py-3 text-2xl font-semibold text-blue-500"> Projects </span>
+      <a href="/business/{{ business_user.id }}/jobs" class="-mb-px border-b-2 border-transparent px-4 py-3 text-2xl font-semibold text-gray-400 hover:border-gray-300 hover:text-gray-600 dark:text-gray-500 dark:hover:border-gray-600 dark:hover:text-gray-300"> Jobs </a>
     </div>
 
     <div class="mx-auto">
       {% if projects %}
-        <div class="card overflow-hidden rounded-lg shadow-md">
+        <div class="overflow-hidden rounded-lg border border-neutral-200 bg-white shadow-sm dark:border-neutral-700 dark:bg-neutral-800">
           <table class="w-full text-left text-sm">
-            <thead class="bg-gray-50 text-xs text-gray-700 uppercase dark:bg-gray-700 dark:text-gray-400">
+            <thead class="bg-gray-50 text-xs text-gray-700 uppercase dark:bg-neutral-700 dark:text-neutral-400">
               <tr>
                 <th scope="col" class="px-6 py-3">Status</th>
                 <th scope="col" class="px-6 py-3">Project Name</th>
@@ -79,7 +79,7 @@
                 <th scope="col" class="px-6 py-3">Created By</th>
               </tr>
             </thead>
-            <tbody class="text divide-y divide-gray-200 dark:divide-gray-700">
+            <tbody class="divide-y divide-gray-200 dark:divide-gray-700">
               {% for project in projects %}
                 {% include "partials/project_card.html" %}
               {% endfor %}
@@ -87,7 +87,7 @@
           </table>
         </div>
       {% else %}
-        <div class="card p-6 text-center">
+        <div class="rounded-lg border border-neutral-200 bg-white p-6 text-center shadow-sm dark:border-neutral-700 dark:bg-neutral-800">
           <p class="text-gray-500 dark:text-gray-400">This business has not published any projects yet.</p>
         </div>
       {% endif %}

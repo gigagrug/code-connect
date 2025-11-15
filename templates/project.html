@@ -11,10 +11,10 @@
   <div class="container mx-auto px-4 py-12">
     <div class="grid grid-cols-1 gap-8 lg:grid-cols-3">
       <div class="lg:col-span-2">
-        <div class="card mx-auto w-full overflow-hidden">
+        <div class="mx-auto w-full overflow-hidden rounded-lg border border-neutral-200 bg-white shadow-sm dark:border-neutral-700 dark:bg-neutral-800">
           <div class="p-8 md:p-12">
             <div id="project-details">
-              <h1 class="text mb-4 text-4xl font-extrabold md:text-5xl">{{ project.name }}</h1>
+              <h1 class="mb-4 text-4xl font-extrabold md:text-5xl">{{ project.name }}</h1>
               <div class="mb-6 border-b border-gray-200 pb-4 dark:border-gray-700">
                 <p class="text-md text-gray-500 dark:text-gray-300">
                   <span class="me-5">
@@ -38,10 +38,10 @@
                   {% endif %}
                 </p>
               </div>
-              <div class="text max-w-none text-lg">
+              <div class="max-w-none text-lg">
                 <p class="whitespace-pre-line">{{ project.description }}</p>
               </div>
-              <div class="text mt-6 space-y-2">
+              <div class="mt-6 space-y-2">
                 {% if project.project_link %}<p><strong>Project Link:</strong> <a href="{{ project.project_link }}" target="_blank" class="text-blue-500 hover:underline">{{ project.project_link }}</a></p>{% endif %}
                 {% if project.github_link %}<p><strong>GitHub Link:</strong> <a href="{{ project.github_link }}" target="_blank" class="text-blue-500 hover:underline">{{ project.github_link }}</a></p>{% endif %}
 
@@ -77,17 +77,17 @@
             </div>
 
             <div class="mt-8 border-t border-gray-200 pt-6 dark:border-gray-700">
-              <h3 class="text mb-4 text-2xl font-semibold">Comments</h3>
+              <h3 class="mb-4 text-2xl font-semibold">Comments</h3>
 
               {% if can_comment %}
                 <form action="/project/{{ project.id }}/comment" method="POST" enctype="multipart/form-data" class="mb-6">
-                  <label for="comment" class="text mb-2 block text-sm font-medium">Add a comment</label>
-                  <textarea name="comment" id="comment" class="input text field-sizing-content min-h-[80px]" placeholder="Write your comment..."></textarea>
+                  <label for="comment" class="mb-2 block text-sm font-medium">Add a comment</label>
+                  <textarea name="comment" id="comment" class="field-sizing-content min-h-[80px] w-full rounded-lg border border-neutral-300 p-2 placeholder:text-neutral-500 dark:border-neutral-700" placeholder="Write your comment..."></textarea>
 
-                  <label for="attachment" class="text mt-2 mb-2 block text-sm font-medium">Attach File(s) (Optional)</label>
-                  <input type="file" name="attachment" id="attachment" multiple class="input text w-full file:mr-4 file:rounded-md file:border-0 file:bg-gray-200 file:px-4 file:py-2 file:text-sm file:font-semibold hover:file:bg-gray-300 dark:file:bg-gray-700 dark:file:text-gray-200 dark:hover:file:bg-gray-600" />
+                  <label for="attachment" class="mt-2 mb-2 block text-sm font-medium">Attach File(s) (Optional)</label>
+                  <input type="file" name="attachment" id="attachment" multiple class="w-full rounded-lg border border-neutral-300 p-2 file:mr-4 file:rounded-md file:border-0 file:bg-gray-200 file:px-4 file:py-2 file:text-sm file:font-semibold placeholder:text-neutral-500 hover:file:bg-gray-300 dark:border-neutral-700 dark:file:bg-gray-700 dark:file:text-gray-200 dark:hover:file:bg-gray-600" />
 
-                  <button type="submit" class="btn-primary text mt-4">Submit Comment</button>
+                  <button type="submit" class="btn-primary mt-4">Submit Comment</button>
                 </form>
               {% endif %}
 
@@ -96,7 +96,7 @@
                   {% for comment in comments %}
                     <div class="rounded-lg bg-gray-100 p-4 dark:bg-gray-800">
                       <div class="mb-2 flex items-center justify-between">
-                        <span class="text font-semibold">
+                        <span class="font-semibold">
                           {{ comment.name }}
                           {% if comment.role == 0 %}
                             <span class="text-xs font-normal text-red-500">(Instructor)</span>
@@ -117,7 +117,7 @@
                           {% endif %}
                         </div>
                       </div>
-                      <p class="text whitespace-pre-line">{{ comment.comment }}</p>
+                      <p class="whitespace-pre-line">{{ comment.comment }}</p>
 
                       {% if comment.attachment_path %}
                         <div class="mt-2 flex flex-wrap gap-4">
@@ -145,19 +145,19 @@
                     </div>
                   {% endfor %}
                 {% else %}
-                  <p class="text text-gray-500">No comments yet.</p>
+                  <p class="text-gray-500">No comments yet.</p>
                 {% endif %}
               </div>
             </div>
 
             {% if teams %}
               <div class="mt-8 border-t border-gray-200 pt-6 dark:border-gray-700">
-                <h3 class="text mb-4 text-2xl font-semibold">Assigned Teams</h3>
+                <h3 class="mb-4 text-2xl font-semibold">Assigned Teams</h3>
                 <div class="space-y-4">
                   {% for team in teams %}
                     <div class="rounded-lg bg-gray-100 p-4 dark:bg-gray-800">
-                      <h4 class="text font-bold">{{ team.name }}</h4>
-                      <ul class="text mt-2 list-inside list-disc">
+                      <h4 class="font-bold">{{ team.name }}</h4>
+                      <ul class="mt-2 list-inside list-disc">
                         {% for member in team.members %}<li>{{ member.email }}</li>{% endfor %}
                       </ul>
                     </div>
@@ -168,25 +168,25 @@
 
             {% if can_edit_links %}
               <div class="mt-8 border-t border-gray-200 pt-6 dark:border-gray-700">
-                <h3 class="text mb-4 text-lg font-semibold">Project Links</h3>
+                <h3 class="mb-4 text-lg font-semibold">Project Links</h3>
                 <form action="/project/{{ project.id }}/links" method="POST" id="links-form" class="hidden space-y-4">
-                  <div><label for="project_link" class="text mb-2 block text-sm font-medium">Project URL</label><input type="url" name="project_link" id="project_link" value="{{ project.project_link or '' }}" class="input text" placeholder="https://example.com/my-project" /></div>
-                  <div><label for="github_link" class="text mb-2 block text-sm font-medium">GitHub URL</label><input type="url" name="github_link" id="github_link" value="{{ project.github_link or '' }}" class="input text" placeholder="https://github.com/user/repo" /></div>
+                  <div><label for="project_link" class="mb-2 block text-sm font-medium">Project URL</label><input type="url" name="project_link" id="project_link" value="{{ project.project_link or '' }}" class="text w-full rounded-lg border border-neutral-300 p-2 placeholder:text-neutral-500 dark:border-neutral-700" placeholder="https://example.com/my-project" /></div>
+                  <div><label for="github_link" class="mb-2 block text-sm font-medium">GitHub URL</label><input type="url" name="github_link" id="github_link" value="{{ project.github_link or '' }}" class="text w-full rounded-lg border border-neutral-300 p-2 placeholder:text-neutral-500 dark:border-neutral-700" placeholder="https://github.com/user/repo" /></div>
                   <div class="flex items-center gap-4"><button type="submit" class="btn-primary text">Save Links</button><button type="button" onclick="toggleLinksForm()" class="btn-secondary text">Cancel</button></div>
                 </form>
-                <div class="text flex items-center gap-4" id="links-control-buttons"><button onclick="toggleLinksForm()" class="btn-secondary">Edit Links</button></div>
+                <div class="flex items-center gap-4" id="links-control-buttons"><button onclick="toggleLinksForm()" class="btn-secondary">Edit Links</button></div>
               </div>
             {% endif %}
 
             {% if session.user_id == project.user_id %}
               <div class="mt-8 border-t border-gray-200 pt-6 dark:border-gray-700">
-                <h3 class="text mb-4 text-lg font-semibold">Owner Controls</h3>
+                <h3 class="mb-4 text-lg font-semibold">Owner Controls</h3>
                 <form action="/project/{{ project.id }}/update" method="POST" id="edit-form" class="mb-6 hidden space-y-4" enctype="multipart/form-data">
-                  <div><label for="name" class="text mb-2 block text-sm font-medium">Project Name</label><input type="text" name="name" id="name" value="{{ project.name }}" class="input text" required /></div>
-                  <div><label for="description" class="text mb-2 block text-sm font-medium">Description</label><textarea name="description" id="description" class="input text field-sizing-content min-h-[100px]" required>{{ project.description }}</textarea></div>
+                  <div><label for="name" class="mb-2 block text-sm font-medium">Project Name</label><input type="text" name="name" id="name" value="{{ project.name }}" class="text w-full rounded-lg border border-neutral-300 p-2 placeholder:text-neutral-500 dark:border-neutral-700" required /></div>
+                  <div><label for="description" class="mb-2 block text-sm font-medium">Description</label><textarea name="description" id="description" class="field-sizing-content min-h-[100px] w-full rounded-lg border border-neutral-300 p-2 placeholder:text-neutral-500 dark:border-neutral-700" required>{{ project.description }}</textarea></div>
 
                   <div>
-                    <label class="text mb-2 block text-sm font-medium">Manage Attachments</label>
+                    <label class="mb-2 block text-sm font-medium">Manage Attachments</label>
                     {% if project.attachment_path %}
                       <div class="mb-2 text-sm">
                         <p>Current Files:</p>
@@ -223,13 +223,13 @@
                       </div>
                     {% endif %}
 
-                    <label for="attachment" class="text mt-4 mb-2 block text-sm font-medium">Add New Attachment(s)</label>
-                    <input type="file" name="attachment" id="attachment" multiple class="input text w-full file:mr-4 file:rounded-md file:border-0 file:bg-gray-200 file:px-4 file:py-2 file:text-sm file:font-semibold hover:file:bg-gray-300 dark:file:bg-gray-700 dark:file:text-gray-200 dark:hover:file:bg-gray-600" />
+                    <label for="attachment" class="mt-4 mb-2 block text-sm font-medium">Add New Attachment(s)</label>
+                    <input type="file" name="attachment" id="attachment" multiple class="w-full rounded-lg border border-neutral-300 p-2 file:mr-4 file:rounded-md file:border-0 file:bg-gray-200 file:px-4 file:py-2 file:text-sm file:font-semibold placeholder:text-neutral-500 hover:file:bg-gray-300 dark:border-neutral-700 dark:file:bg-gray-700 dark:file:text-gray-200 dark:hover:file:bg-gray-600" />
                     <p class="mt-1 text-xs text-gray-500">Uploading new files will add them to the project. Use the checkboxes to delete old ones.</p>
                   </div>
                   <div class="flex items-center gap-4"><button type="submit" class="btn-primary text">Save Changes</button><button type="button" onclick="toggleEditForm()" class="btn-secondary text">Cancel</button></div>
                 </form>
-                <div class="text flex items-center gap-4" id="control-buttons">
+                <div class="flex items-center gap-4" id="control-buttons">
                   <button onclick="toggleEditForm()" class="btn-secondary">Edit Details</button>
                   <form action="/project/{{ project.id }}/delete" method="POST" onsubmit="return confirm('Are you sure?');"><button type="submit" class="btn-danger text">Delete Project</button></form>
                 </div>
@@ -248,10 +248,10 @@
 
               {% if project.status in [2, 3] and session.user_id != project.user_id %}
                 <div class="mt-8 border-t border-gray-200 pt-6 dark:border-gray-700">
-                  <h3 class="text mb-4 text-lg font-semibold">Instructor File Management</h3>
+                  <h3 class="mb-4 text-lg font-semibold">Instructor File Management</h3>
                   <form action="/project/{{ project.id }}/instructor-manage-files" method="POST" id="instructor-file-form" class="mb-6 hidden space-y-4" enctype="multipart/form-data">
                     <div>
-                      <label class="text mb-2 block text-sm font-medium">Manage Attachments</label>
+                      <label class="mb-2 block text-sm font-medium">Manage Attachments</label>
                       {% if project.attachment_path %}
                         <div class="mb-2 text-sm">
                           <p>Current Files:</p>
@@ -287,8 +287,8 @@
                           </div>
                         </div>
                       {% endif %}
-                      <label for="inst-attachment" class="text mt-4 mb-2 block text-sm font-medium">Add New Attachment(s)</label>
-                      <input type="file" name="attachment" id="inst-attachment" multiple class="input text w-full file:mr-4 file:rounded-md file:border-0 file:bg-gray-200 file:px-4 file:py-2 file:text-sm file:font-semibold hover:file:bg-gray-300 dark:file:bg-gray-700 dark:file:text-gray-200 dark:hover:file:bg-gray-600" />
+                      <label for="inst-attachment" class="mt-4 mb-2 block text-sm font-medium">Add New Attachment(s)</label>
+                      <input type="file" name="attachment" id="inst-attachment" multiple class="w-full rounded-lg border border-neutral-300 p-2 file:mr-4 file:rounded-md file:border-0 file:bg-gray-200 file:px-4 file:py-2 file:text-sm file:font-semibold placeholder:text-neutral-500 hover:file:bg-gray-300 dark:border-neutral-700 dark:file:bg-gray-700 dark:file:text-gray-200 dark:hover:file:bg-gray-600" />
                       <p class="mt-1 text-xs text-gray-500">Uploading new files will add them to the project. Use the checkboxes to delete old ones.</p>
                     </div>
                     <div class="flex items-center gap-4">
@@ -296,7 +296,7 @@
                       <button type="button" onclick="toggleInstructorFileForm()" class="btn-secondary text">Cancel</button>
                     </div>
                   </form>
-                  <div class="text flex items-center gap-4" id="instructor-file-controls">
+                  <div class="flex items-center gap-4" id="instructor-file-controls">
                     <button onclick="toggleInstructorFileForm()" class="btn-secondary">Manage Project Files</button>
                   </div>
                 </div>
@@ -308,8 +308,8 @@
 
       <div class="lg:col-span-1">
         {% if can_chat %}
-          <div class="card flex h-[70vh] flex-col p-4">
-            <h3 class="text mb-4 border-b pb-2 text-center text-xl font-semibold dark:border-gray-600">Project Chat</h3>
+          <div class="flex h-[70vh] flex-col rounded-lg border border-neutral-200 bg-white p-4 shadow-sm dark:border-neutral-700 dark:bg-neutral-800">
+            <h3 class="mb-4 border-b pb-2 text-center text-xl font-semibold dark:border-gray-600">Project Chat</h3>
             <div id="chat-messages" class="flex-grow space-y-4 overflow-y-auto pr-2">
               {% for msg in chat_history %}
                 <div id="message-{{ msg.message_id }}" class="{% if msg.email == session.email %}items-end{% else %}items-start{% endif %} flex flex-col">
@@ -319,7 +319,7 @@
                     {% endif %}
                     <div class="text-xs text-gray-500 dark:text-gray-400">{{ msg.email }} <span class="ml-2 text-gray-400">{{ msg.timestamp.strftime("%b %d, %I:%M %p") }}</span></div>
                   </div>
-                  <div class="message-body text {% if msg.email == session.email %}bg-blue-600 text-white{% else %}bg-gray-100 dark:bg-gray-700{% endif %} max-w-xs rounded-lg p-2 break-words">
+                  <div class="message-body {% if msg.email == session.email %}bg-blue-600 text-white{% else %}bg-gray-100 dark:bg-gray-700{% endif %} max-w-xs rounded-lg p-2 break-words">
                     {{ msg.message_text }}
 
                     {% if msg.attachment_path %}
@@ -356,8 +356,8 @@
             </div>
             <div class="mt-4 border-t pt-4 dark:border-gray-600">
               <form id="chat-form" class="flex flex-col items-center gap-2">
-                <input type="text" id="message-input" placeholder="Type a message..." class="input text w-full" autocomplete="off" />
-                <input type="file" id="chat-file-input" class="input text w-full file:mr-4 file:rounded-md file:border-0 file:bg-gray-200 file:px-4 file:py-2 file:text-sm file:font-semibold hover:file:bg-gray-300 dark:file:bg-gray-700 dark:file:text-gray-200 dark:hover:file:bg-gray-600" />
+                <input type="text" id="message-input" placeholder="Type a message..." class="w-full rounded-lg border border-neutral-300 p-2 placeholder:text-neutral-500 dark:border-neutral-700" autocomplete="off" />
+                <input type="file" id="chat-file-input" class="w-full rounded-lg border border-neutral-300 p-2 file:mr-4 file:rounded-md file:border-0 file:bg-gray-200 file:px-4 file:py-2 file:text-sm file:font-semibold placeholder:text-neutral-500 hover:file:bg-gray-300 dark:border-neutral-700 dark:file:bg-gray-700 dark:file:text-gray-200 dark:hover:file:bg-gray-600" />
                 <button type="submit" class="btn-primary mt-2 w-full flex-shrink-0 rounded-lg bg-blue-600 p-2 text-white">Send</button>
               </form>
             </div>
@@ -367,9 +367,9 @@
     </div>
   </div>
 
-  <div id="file-viewer-popover" popover class="card max-w-4xl p-0 backdrop:bg-black/50">
+  <div id="file-viewer-popover" popover class="max-w-4xl rounded-lg border border-neutral-200 bg-white p-0 shadow-sm backdrop:bg-black/50 dark:border-neutral-700 dark:bg-neutral-800">
     <div class="flex flex-wrap items-center justify-between gap-4 border-b p-4 dark:border-gray-700">
-      <h3 id="file-viewer-title" class="text text-2xl font-semibold">File Viewer</h3>
+      <h3 id="file-viewer-title" class="text-2xl font-semibold">File Viewer</h3>
       <div class="flex items-center gap-4">
         <a id="file-viewer-download" href="#" download="file" class="btn-secondary text-sm">Download</a>
         <button popovertarget="file-viewer-popover" popovertargetaction="hide" class="text-2xl text-gray-400 hover:text-gray-600 dark:hover:text-gray-200">&times;</button>
@@ -378,16 +378,16 @@
     <div id="file-viewer-content" class="overflow-auto p-6" style="max-height: 80vh;"></div>
   </div>
 
-  <div id="rename-popover" popover class="card max-w-lg p-0 backdrop:bg-black/50">
+  <div id="rename-popover" popover class="max-w-lg rounded-lg border border-neutral-200 bg-white p-0 shadow-sm backdrop:bg-black/50 dark:border-neutral-700 dark:bg-neutral-800">
     <div class="flex items-center justify-between border-b p-4 dark:border-gray-700">
-      <h3 class="text text-2xl font-semibold">Rename File</h3>
+      <h3 class="text-2xl font-semibold">Rename File</h3>
       <button popovertarget="rename-popover" popovertargetaction="hide" class="text-2xl text-gray-400 hover:text-gray-600 dark:hover:text-gray-200">&times;</button>
     </div>
     <form id="rename-form" action="" method="POST" class="space-y-4 p-6">
       <input type="hidden" name="old_path" id="rename-old-path" />
       <div>
-        <label for="rename-new-name" class="text mb-2 block text-sm font-medium">New Filename</label>
-        <input type="text" name="new_filename" id="rename-new-name" class="input text" required />
+        <label for="rename-new-name" class="mb-2 block text-sm font-medium">New Filename</label>
+        <input type="text" name="new_filename" id="rename-new-name" class="text w-full rounded-lg border border-neutral-300 p-2 placeholder:text-neutral-500 dark:border-neutral-700" required />
         <p class="mt-1 text-xs text-gray-500">The file extension will be preserved.</p>
       </div>
       <button type="submit" class="btn-primary w-full">Rename</button>
@@ -519,7 +519,7 @@
           infoDiv.innerHTML = `${deleteBtnHtml}<div class="text-xs text-gray-500 dark:text-gray-400">${data.email} <span class="ml-2 text-gray-400">${data.timestamp}</span></div>`;
 
           const messageBody = document.createElement("div");
-          messageBody.className = `message-body text rounded-lg p-2 max-w-xs break-words ${isCurrentUser ? "bg-blue-600 text-white" : "bg-gray-100 dark:bg-gray-700"}`;
+          messageBody.className = `message-body rounded-lg p-2 max-w-xs break-words ${isCurrentUser ? "bg-blue-600 text-white" : "bg-gray-100 dark:bg-gray-700"}`;
           messageBody.textContent = data.message;
 
           if (data.attachment_path) {

@@ -1,12 +1,12 @@
 {% extends "./layouts/shell.html" %}
 
 {% block content %}
-  <form action="/login" method="POST" class="card text mx-auto mt-6 max-w-[500px] space-y-4 p-5">
+  <form action="/login" method="POST" class="mx-auto mt-6 max-w-[500px] space-y-4 rounded-lg border border-neutral-200 bg-white p-5 shadow-sm dark:border-neutral-700 dark:bg-neutral-800">
     <h1 class="mb-2 text-center text-2xl font-bold">Login</h1>
     <label class="mb-2 block text-sm font-bold" for="reg_email"> Email </label>
-    <input name="email" class="input" id="reg_email" type="email" placeholder="your@email.com" />
+    <input name="email" class="w-full rounded-lg border border-neutral-300 p-2 placeholder:text-neutral-500 dark:border-neutral-700" id="reg_email" type="email" placeholder="your@email.com" />
     <label class="mb-2 block text-sm font-bold" for="reg_pwd">Password</label>
-    <input name="password" class="input" id="reg_pwd" type="password" placeholder="*****" />
+    <input name="password" class="w-full rounded-lg border border-neutral-300 p-2 placeholder:text-neutral-500 dark:border-neutral-700" id="reg_pwd" type="password" placeholder="*****" />
     <button type="submit" class="inline-flex w-full items-center justify-center rounded-lg bg-blue-600 px-5 py-2.5 text-white hover:bg-blue-800 focus:ring-blue-300 disabled:bg-neutral-700">Login</button>
     <p class="text-neutral-500">
       Dont have an account?

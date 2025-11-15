@@ -8,31 +8,26 @@
     {% block head %}{% endblock %}
     <title>Code Connect</title>
   </head>
-  <body>
+  <body class="bg-white text-black dark:bg-black dark:text-white">
     <nav class="border-b border-b-neutral-200 px-12 dark:border-b-neutral-800">
       <div class="mx-auto flex flex-wrap items-center justify-between p-4">
-        <button id="doc-toggle-button" popovertarget="sidebar" popovertargetaction="show" class="text hidden lg:hidden">
-          <svg class="text h-8 w-8" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24">
-            <path stroke="currentColor" stroke-linecap="round" stroke-width="2" d="M5 7h14M5 12h14M5 17h14" />
-          </svg>
-        </button>
         <a href="/" class="flex items-center space-x-3 rtl:space-x-reverse">
-          <span class="text text-2xl font-bold"> Code<span class="text-blue-600">Connect</span> </span>
+          <span class="text-2xl font-bold">Code<span class="text-blue-600">Connect</span> </span>
         </a>
         <ul class="flex flex-row space-x-4 font-medium">
           {% if 'email' in session %}
             {% if session['email'] and session.get('role') in [3] %}
-              <a href="/jobs" class="text">Jobs</a>
+              <a href="/jobs">Jobs</a>
             {% endif %}
-            <a href="/profile" class="text">Profile</a>
+            <a href="/profile">Profile</a>
             {% if session['email'] and session.get('role') in [0] %}
-              <a href="/userMgt" class="text">UserMgt</a>
+              <a href="/userMgt">UserMgt</a>
             {% endif %}
           {% else %}
-            <a href="/register" class="text">Register</a>
-            <a href="/login" class="text">Login</a>
+            <a href="/register">Register</a>
+            <a href="/login">Login</a>
           {% endif %}
-          <button onclick="theme()" class="text">Theme</button>
+          <button onclick="theme()" class="cursor-pointer">Theme</button>
         </ul>
       </div>
     </nav>

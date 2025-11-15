@@ -8,12 +8,12 @@
   <div class="container mx-auto px-4 py-12">
     <div class="grid grid-cols-1 gap-8 lg:grid-cols-3">
       <div class="lg:col-span-2">
-        <div class="card mx-auto w-full overflow-hidden">
+        <div class="mx-auto w-full overflow-hidden rounded-lg border border-neutral-200 bg-white shadow-sm dark:border-neutral-700 dark:bg-neutral-800">
           <div class="p-8 md:p-12">
-            <h1 class="text mb-2 text-4xl font-extrabold md:text-5xl">Application for: {{ application.job_title }}</h1>
+            <h1 class="mb-2 text-4xl font-extrabold md:text-5xl">Application for: {{ application.job_title }}</h1>
             <p class="text-lg text-gray-500 dark:text-gray-400">From: <strong class="text-gray-700 dark:text-gray-300">{{ application.applicant_name or application.applicant_email }}</strong></p>
 
-            <div class="text mt-6 space-y-4 border-t pt-6 dark:border-gray-700">
+            <div class="mt-6 space-y-4 border-t pt-6 dark:border-gray-700">
               {% if application.resume_path %}
                 <a href="{{ application.resume_path }}" target="_blank" class="btn-primary">View Resume</a>
               {% else %}
@@ -31,8 +31,8 @@
       </div>
 
       <div class="lg:col-span-1">
-        <div class="card flex h-[70vh] flex-col p-4">
-          <h3 class="text mb-4 border-b pb-2 text-center text-xl font-semibold dark:border-gray-600">Application Chat</h3>
+        <div class="flex h-[70vh] flex-col rounded-lg border border-neutral-200 bg-white p-4 shadow-sm dark:border-neutral-700 dark:bg-neutral-800">
+          <h3 class="mb-4 border-b pb-2 text-center text-xl font-semibold dark:border-gray-600">Application Chat</h3>
           <div id="chat-messages" class="flex-grow space-y-4 overflow-y-auto pr-2">
             {% for msg in chat_history %}
               <div id="message-{{ msg.message_id }}" class="{% if msg.email == session.email %}items-end{% else %}items-start{% endif %} flex flex-col">
@@ -42,13 +42,13 @@
                   {% endif %}
                   <div class="text-xs text-gray-500 dark:text-gray-400">{{ msg.email }} <span class="ml-2 text-gray-400">{{ msg.timestamp.strftime("%b %d, %I:%M %p") }}</span></div>
                 </div>
-                <div class="message-body text {% if msg.email == session.email %}bg-blue-600 text-white{% else %}bg-gray-100 dark:bg-gray-700{% endif %} max-w-xs rounded-lg p-2 break-words">{{ msg.message_text }}</div>
+                <div class="message-body {% if msg.email == session.email %}bg-blue-600 text-white{% else %}bg-gray-100 dark:bg-gray-700{% endif %} max-w-xs rounded-lg p-2 break-words">{{ msg.message_ }}</div>
               </div>
             {% endfor %}
           </div>
           <div class="mt-4 border-t pt-4 dark:border-gray-600">
             <form id="chat-form" class="flex items-center gap-2">
-              <input type="text" id="message-input" placeholder="Type a message..." class="input text w-full" autocomplete="off" required />
+              <input type="text" id="message-input" placeholder="Type a message..." class="w-full rounded-lg border border-neutral-300 p-2 placeholder:text-neutral-500 dark:border-neutral-700" autocomplete="off" required />
               <button type="submit" class="flex-shrink-0 rounded-lg bg-blue-600 p-2 text-white">Send</button>
             </form>
           </div>
@@ -87,7 +87,7 @@
         infoDiv.innerHTML = `${deleteBtnHtml}<div class="text-xs text-gray-500 dark:text-gray-400">${data.email} <span class="ml-2 text-gray-400">${data.timestamp}</span></div>`;
 
         const messageBody = document.createElement("div");
-        messageBody.className = `message-body text rounded-lg p-2 max-w-xs break-words ${isCurrentUser ? "bg-blue-600 text-white" : "bg-gray-100 dark:bg-gray-700"}`;
+        messageBody.className = `message-body rounded-lg p-2 max-w-xs break-words ${isCurrentUser ? "bg-blue-600 text-white" : "bg-gray-100 dark:bg-gray-700"}`;
         messageBody.textContent = data.message;
         // (Add attachment logic here if needed)
 
