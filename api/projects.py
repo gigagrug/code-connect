@@ -113,7 +113,7 @@ def approve_project(project_id, engine):
         return redirect(url_for('project_page', project_id=project_id))
 
     new_status = int(new_status_str)
-    if new_status not in [0, 1, 2]:
+    if new_status not in [0, 1, 2, 4]:
         flash("Invalid status value. Please select a valid option.", "danger")
         return redirect(url_for('project_page', project_id=project_id))
 
@@ -151,6 +151,15 @@ def approve_project(project_id, engine):
                     "project_id": project_id,
                     "status": new_status
                 })
+            elif new_status == 4:
+                update_students_query = text("""
+                UPDATE users u
+                JOIN team_members tm ON u.id = tm.user_id
+                JOIN teams t ON tm.team_id = t.id
+                SET u.role = 2
+                WHERE t.project_id = :project_id AND u.role = 3
+                """)
+                connection.execute(update_students_query, {"project_id": project_id})
 
             else:  
                 delete_query = text("""
@@ -170,7 +179,8 @@ def approve_project(project_id, engine):
             status_messages = {
                 2: ("Project approved. You are now the sole approver.", "success"),
                 1: ("Project status set to 'Pending'. You are now linked to it.", "info"),
-                0: ("Project has been unlisted.", "warning")
+                0: ("Project has been unlisted.", "warning"),
+                4: ("Project marked as 'Finished'.", "success")
             }
             message, category = status_messages.get(new_status)
             flash(message, category)
@@ -328,7 +338,7 @@ def get_projects_for_student(engine):
                 FROM team_members tm
                 JOIN teams t ON tm.team_id = t.id
                 JOIN projects p ON t.project_id = p.id
-                WHERE tm.user_id = :user_id AND p.status IN (1, 2, 3)
+                WHERE tm.user_id = :user_id AND p.status IN (1, 2, 3, 4)
             """)
             student_project_info = conn.execute(student_teams_query, {"user_id": user_id}).mappings().all()
             assignments = []
@@ -514,7 +524,7 @@ def check_if_user_can_comment(user_id, project, engine):
     if user_id == project.user_id:
         return True
 
-    if session.get('role') == 0 and project.status in [1, 2, 3]:
+    if session.get('role') == 0 and project.status in [1, 2, 3, 4]:
         return True
 
     with engine.connect() as conn:
@@ -531,8 +541,6 @@ def check_if_user_can_comment(user_id, project, engine):
     return False
 
 def get_comments_for_project(project_id, engine, session):
-    """Fetches comments for a given project based on complex visibility rules."""
-    
     user_id = session.get('user_id')
     user_role = session.get('role')
 
@@ -681,7 +689,6 @@ def add_comment_to_project(project_id, request, engine):
     return redirect(url_for('project_page', project_id=project_id))
 
 def delete_comment_on_project(project_id, comment_id, engine):
-    """Handles deleting a comment and its associated attachment."""
     user_id = session.get('user_id')
     if not user_id:
         flash("You must be logged in to delete a comment.", "warning")
@@ -744,7 +751,6 @@ def delete_comment_on_project(project_id, comment_id, engine):
     return redirect(url_for('project_page', project_id=project_id))
 
 def instructor_manage_files(project_id, request, engine):
-    """Allows an instructor to add/remove files from a project."""
     if 'user_id' not in session or session.get('role') != 0:
         flash("You do not have permission to perform this action.", "danger")
         return redirect(url_for('project_page', project_id=project_id))
@@ -754,7 +760,7 @@ def instructor_manage_files(project_id, request, engine):
         flash("Project not found.", "danger")
         return redirect(url_for('index'))
 
-    if not (session.get('role') == 0 and project.status in [2, 3]):
+    if not (session.get('role') == 0 and project.status in [2, 3, 4]):
         flash("You can only manage files for approved or taken projects.", "danger")
         return redirect(url_for('project_page', project_id=project_id))
 
@@ -812,9 +818,7 @@ def instructor_manage_files(project_id, request, engine):
         
     return redirect(url_for('project_page', project_id=project_id))
 
-# --- NEW FUNCTION ---
 def rename_project_attachment(project_id, request, engine):
-    """Renames a single project attachment."""
     if 'user_id' not in session:
         flash("You must be logged in.", "danger")
         return redirect(url_for('project_page', project_id=project_id))
@@ -822,11 +826,10 @@ def rename_project_attachment(project_id, request, engine):
     user_id = session.get('user_id')
     project = get_project_by_id(project_id, engine)
 
-    # Permission check: Must be project owner or instructor
     is_owner = (project.user_id == user_id)
     is_instructor = (session.get('role') == 0)
     
-    if not (is_owner or (is_instructor and project.status in [2, 3])):
+    if not (is_owner or (is_instructor and project.status in [2, 3, 4])):
         flash("You do not have permission to rename files for this project.", "danger")
         return redirect(url_for('project_page', project_id=project_id))
 
@@ -838,7 +841,6 @@ def rename_project_attachment(project_id, request, engine):
         return redirect(url_for('project_page', project_id=project_id))
 
     try:
-        # 1. Sanitize and get file extension
         original_extension = os.path.splitext(old_path)[1]
         new_filename_base = os.path.splitext(new_filename)[0]
         safe_new_filename = secure_filename(f"{new_filename_base}{original_extension}")
@@ -847,27 +849,22 @@ def rename_project_attachment(project_id, request, engine):
             flash("Invalid new filename.", "danger")
             return redirect(url_for('project_page', project_id=project_id))
 
-        # 2. Get file paths
         sanitized_project_name = secure_filename(str(project.name))[:50]
         upload_dir = os.path.join('.', 'uploads', sanitized_project_name)
         old_fs_path = os.path.join('.', old_path.lstrip('/'))
         
-        # 3. Check for uniqueness
         new_fs_path_base = os.path.join(upload_dir, safe_new_filename)
         final_fs_path, final_filename = _check_and_get_unique_path(new_fs_path_base)
         new_url_path = f"/uploads/{sanitized_project_name}/{final_filename}"
         
-        # 4. Rename the file
         if os.path.exists(old_fs_path):
             os.rename(old_fs_path, final_fs_path)
         else:
             flash("File not found. Cannot rename.", "danger")
             return redirect(url_for('project_page', project_id=project_id))
             
-        # 5. Update the database
         with engine.connect() as conn:
             current_paths = project.attachment_path.split(';')
-            # Rebuild the list, replacing the old path
             new_paths_list = [new_url_path if p == old_path else p for p in current_paths]
             new_paths_string = ";".join(new_paths_list)
             

@@ -5,7 +5,6 @@ from .projects import get_projects_for_user, get_projects_for_student
 from .job import get_my_applications # --- NEW IMPORT ---
 
 def register_user(request, engine, is_debug=False):
-    # ... (function unchanged) ...
     email = request.form.get('email')
     password = request.form.get('password')
     password2 = request.form.get('password2')
@@ -67,7 +66,6 @@ def register_user(request, engine, is_debug=False):
 
 
 def login_user(request, engine, is_debug=False):
-    # ... (function unchanged) ...
     email = request.form.get('email')
     password = request.form.get('password')
 
@@ -111,7 +109,6 @@ def login_user(request, engine, is_debug=False):
     return redirect(url_for('login'))
 
 def get_business_profile_data(user_id, engine):
-    # ... (function unchanged) ...
     try:
         with engine.connect() as conn:
             user_query = text("""
@@ -145,7 +142,6 @@ def get_business_profile_data(user_id, engine):
         return None
 
 def update_profile(engine):
-    # ... (function unchanged) ...
     if 'user_id' not in session:
         flash("You must be logged in to update your profile.", "danger")
         return redirect('/login')
@@ -210,7 +206,6 @@ def get_profile_data(engine):
                     inst_query = text("SELECT id, email FROM users WHERE role = 0 ORDER BY email")
                     instructors = conn.execute(inst_query).all()
         
-        # --- UPDATED: Fetch applications for students ---
         assignments = get_projects_for_student(engine)
         applications = get_my_applications(user_id, engine)
         return render_template('profile.html', 
@@ -243,17 +238,14 @@ def get_profile_data(engine):
             user_data=user_data
         )
 
-    # --- UPDATED: Fetch applications for alumni (role 2) ---
     elif user_role == 2:
         applications = get_my_applications(user_id, engine)
         return render_template('profile.html', user_data=user_data, applications=applications)
         
-    else: # Business (role 1)
-        # Business users see their projects on their public profile
+    else:
         return render_template('profile.html', user_data=user_data)
 
 def create_admin_message(request, engine):
-    # ... (function unchanged) ...
     if 'user_id' not in session:
         flash("You must be logged in to send a message.", "warning")
         return redirect(url_for('login'))

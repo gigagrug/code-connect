@@ -250,7 +250,6 @@ def jobs_page():
 def job_create_route():
     return create_job(request, engine)
 
-# --- UPDATED: This route now fetches the user's specific application ID ---
 @app.route('/job/<int:job_id>', methods=['GET'])
 def job_page(job_id):
     if 'user_id' not in session:
@@ -277,7 +276,6 @@ def job_page(job_id):
     else:
         flash("Job not found.", "danger")
         return redirect(url_for('index'))
-# --- END UPDATE ---
 
 @app.route('/job/<int:job_id>/update', methods=['POST'])
 def job_update_route(job_id):
