@@ -1,6 +1,7 @@
 import os
 import sys
 import sqlalchemy
+import time
 from sqlalchemy import text
 from flask import Flask, render_template, request, redirect, url_for, flash, session, send_from_directory, jsonify
 from flask_socketio import SocketIO
@@ -20,41 +21,18 @@ app.config['UPLOAD_DIR'] = UPLOAD_DIR
 db_url = os.getenv("DB_URL")
 if not db_url:
     raise ValueError("Error: DB_URL environment variable is not set.")
-try:
-    engine = sqlalchemy.create_engine(db_url)
-    with engine.connect() as connection:
-        print("Successfully connected to the database! 👍")
-except Exception as e:
-    print(f"An error occurred while connecting to the database: {e}")
-    engine = None
 
-def drop_all_tables(db_engine, file_path):
-    print(f"--- Dropping tables using rollback script from: {file_path} ---")
-    if not os.path.exists(file_path):
-        print(f"❌ Error: SQL file not found at '{file_path}'")
-        raise FileNotFoundError
-    with open(file_path, 'r', encoding='utf-8') as file:
-        full_script = file.read()
-    rollback_marker = "-- schema rollback"
-    if rollback_marker not in full_script:
-        print(f"❌ Error: Rollback marker '{rollback_marker}' not found in {file_path}.")
-        raise ValueError("Rollback marker not found")
-    rollback_script = full_script.split(rollback_marker, 1)[1]
-    statements = [stmt.strip() for stmt in rollback_script.split(';') if stmt.strip()]
-    if not statements:
-        print("🤔 No rollback statements found to execute.")
-        return
+engine = None
+while engine is None:
     try:
-        with db_engine.connect() as connection:
-            with connection.begin() as transaction:
-                connection.execute(text("SET FOREIGN_KEY_CHECKS = 0;"))
-                for statement in statements:
-                    connection.execute(text(statement))
-                connection.execute(text("SET FOREIGN_KEY_CHECKS = 1;"))
-                print("✅ All tables dropped successfully based on rollback script.")
+        engine = sqlalchemy.create_engine(db_url)
+        with engine.connect() as connection:
+            print("Successfully connected to the database! 👍")
     except Exception as e:
-        print(f"❌ Could not complete dropping tables. Error: {e}")
-        raise
+        print(f"An error occurred while connecting to the database: {e}")
+        print("Retrying connection in 5 seconds...")
+        engine = None
+        time.sleep(5)
 
 def execute_sql_from_file(db_engine, file_path):
     print(f"--- Executing SQL from: {file_path} ---")
@@ -63,16 +41,17 @@ def execute_sql_from_file(db_engine, file_path):
         raise FileNotFoundError
     with open(file_path, 'r', encoding='utf-8') as file:
         sql_script = file.read()
-    rollback_marker = "-- schema rollback"
-    if rollback_marker in sql_script:
-        print("  -> Rollback marker found. Executing creation part only.")
-        sql_script = sql_script.split(rollback_marker, 1)[0]
     statements = [stmt.strip() for stmt in sql_script.split(';') if stmt.strip()]
+    if not statements:
+        print(f"🤔 No statements found in {file_path}. Skipping.")
+        return
     try:
         with db_engine.connect() as connection:
             with connection.begin() as transaction:
+                connection.execute(text("SET FOREIGN_KEY_CHECKS = 0;"))
                 for statement in statements:
                     connection.execute(text(statement))
+                connection.execute(text("SET FOREIGN_KEY_CHECKS = 1;"))
                 print(f"✅ Successfully executed SQL from {os.path.basename(file_path)}.")
     except Exception as e:
         print(f"❌ Could not execute SQL file. Error: {e}")
@@ -85,17 +64,16 @@ def reset_database_on_startup():
     if os.environ.get("WERKZEUG_RUN_MAIN") == "true":
         print("🚀 Starting database reset process on server startup...")
         try:
-            schema_file = './schema/migrations/1_schema.sql'
+            drop_file = './schema/migrations/dropschema.sql'
+            schema_file = './schema/migrations/schema.sql'
             data_file = './schema/data/0_data.sql'
-            drop_all_tables(engine, schema_file)
+            execute_sql_from_file(engine, drop_file)
             execute_sql_from_file(engine, schema_file)
             execute_sql_from_file(engine, data_file)
             print("\n🎉 Database has been successfully reset and seeded! 🎉\n")
         except Exception as e:
             print(f"\n🔥 Database reset failed: {e} 🔥")
             sys.exit(1)
-
-
 if app.debug:
     reset_database_on_startup()
 
@@ -109,7 +87,6 @@ def serve_upload(project_name, filename):
     return send_from_directory(project_dir, filename)
 
 # Admin 
-# ... (admin routes are unchanged) ...
 @app.route('/admin', endpoint='admin')
 def admin_index():
     page = request.args.get('page', default=1, type=int) or 1
