@@ -3,6 +3,10 @@ import shutil
 from sqlalchemy import text
 from flask import flash, redirect, url_for, session, request, render_template, current_app
 from werkzeug.utils import secure_filename
+import resend
+
+RESEND_KEY = os.environ.get('RESEND_KEY')
+RESET_EMAIL_FROM = os.environ.get('RESET_EMAIL_FROM')
 
 def _check_and_get_unique_path(fs_save_path):
     if not os.path.exists(fs_save_path):
@@ -27,6 +31,62 @@ def _get_upload_paths(project_name, original_filename):
     final_fs_save_path, final_filename = _check_and_get_unique_path(fs_save_path)
     url_path = f"/uploads/{sanitized_project_name}/{final_filename}"
     return (final_fs_save_path, url_path)
+
+# --- NEW HELPER FUNCTION ---
+def _get_project_participants_emails(project_id, engine):
+    """
+    Gets a unique set of emails for everyone involved in a project.
+    - Project Owner
+    - All students on all teams
+    - All instructors linked via instructor_projects
+    - All instructors of the students on the teams
+    """
+    emails = set()
+    try:
+        with engine.connect() as conn:
+            query = text("""
+                -- 1. Project Owner
+                SELECT u.email
+                FROM users u
+                JOIN projects p ON u.id = p.user_id
+                WHERE p.id = :project_id
+
+                UNION
+
+                -- 2. Students on Teams
+                SELECT u.email
+                FROM users u
+                JOIN team_members tm ON u.id = tm.user_id
+                JOIN teams t ON tm.team_id = t.id
+                WHERE t.project_id = :project_id
+
+                UNION
+
+                -- 3. Instructors directly linked to the project
+                SELECT u.email
+                FROM users u
+                JOIN instructor_projects ip ON u.id = ip.instructor_id
+                WHERE ip.project_id = :project_id
+
+                UNION
+
+                -- 4. Instructors of the students on the teams
+                SELECT i.email
+                FROM users i
+                JOIN users s ON i.id = s.instructor_id
+                JOIN team_members tm ON s.id = tm.user_id
+                JOIN teams t ON tm.team_id = t.id
+                WHERE t.project_id = :project_id
+            """)
+            result = conn.execute(query, {"project_id": project_id}).mappings().all()
+            for row in result:
+                emails.add(row.email)
+    except Exception as e:
+        print(f"Error getting project participant emails: {e}")
+    
+    return emails
+# --- END NEW HELPER FUNCTION ---
+
 
 def get_project_by_id(project_id, engine):
     try:
@@ -119,63 +179,63 @@ def approve_project(project_id, engine):
 
     try:
         with engine.connect() as connection:
-            if new_status == 2:
-                clear_other_instructors_query = text("""
-                    DELETE FROM instructor_projects
-                    WHERE project_id = :project_id AND instructor_id != :instructor_id
-                """)
-                connection.execute(clear_other_instructors_query, {
-                    "project_id": project_id,
-                    "instructor_id": instructor_id
-                })
+            with connection.begin(): # Start transaction
+                if new_status == 2:
+                    clear_other_instructors_query = text("""
+                        DELETE FROM instructor_projects
+                        WHERE project_id = :project_id AND instructor_id != :instructor_id
+                    """)
+                    connection.execute(clear_other_instructors_query, {
+                        "project_id": project_id,
+                        "instructor_id": instructor_id
+                    })
 
-                upsert_query = text("""
-                    INSERT INTO instructor_projects (instructor_id, project_id, status)
-                    VALUES (:instructor_id, :project_id, :status)
-                    ON DUPLICATE KEY UPDATE status = :status
-                """)
-                connection.execute(upsert_query, {
-                    "instructor_id": instructor_id,
-                    "project_id": project_id,
-                    "status": new_status
-                })
+                    upsert_query = text("""
+                        INSERT INTO instructor_projects (instructor_id, project_id, status)
+                        VALUES (:instructor_id, :project_id, :status)
+                        ON DUPLICATE KEY UPDATE status = :status
+                    """)
+                    connection.execute(upsert_query, {
+                        "instructor_id": instructor_id,
+                        "project_id": project_id,
+                        "status": new_status
+                    })
 
-            elif new_status == 1:
-                upsert_query = text("""
-                    INSERT INTO instructor_projects (instructor_id, project_id, status)
-                    VALUES (:instructor_id, :project_id, :status)
-                    ON DUPLICATE KEY UPDATE status = :status
-                """)
-                connection.execute(upsert_query, {
-                    "instructor_id": instructor_id,
-                    "project_id": project_id,
-                    "status": new_status
-                })
-            elif new_status == 4:
-                update_students_query = text("""
-                UPDATE users u
-                JOIN team_members tm ON u.id = tm.user_id
-                JOIN teams t ON tm.team_id = t.id
-                SET u.role = 2
-                WHERE t.project_id = :project_id AND u.role = 3
-                """)
-                connection.execute(update_students_query, {"project_id": project_id})
+                elif new_status == 1:
+                    upsert_query = text("""
+                        INSERT INTO instructor_projects (instructor_id, project_id, status)
+                        VALUES (:instructor_id, :project_id, :status)
+                        ON DUPLICATE KEY UPDATE status = :status
+                    """)
+                    connection.execute(upsert_query, {
+                        "instructor_id": instructor_id,
+                        "project_id": project_id,
+                        "status": new_status
+                    })
+                elif new_status == 4:
+                    update_students_query = text("""
+                    UPDATE users u
+                    JOIN team_members tm ON u.id = tm.user_id
+                    JOIN teams t ON tm.team_id = t.id
+                    SET u.role = 2
+                    WHERE t.project_id = :project_id AND u.role = 3
+                    """)
+                    connection.execute(update_students_query, {"project_id": project_id})
 
-            else:  
-                delete_query = text("""
-                    DELETE FROM instructor_projects
-                    WHERE instructor_id = :instructor_id AND project_id = :project_id
-                """)
-                connection.execute(delete_query, {
-                    "instructor_id": instructor_id,
-                    "project_id": project_id
-                })
+                else:  
+                    delete_query = text("""
+                        DELETE FROM instructor_projects
+                        WHERE instructor_id = :instructor_id AND project_id = :project_id
+                    """)
+                    connection.execute(delete_query, {
+                        "instructor_id": instructor_id,
+                        "project_id": project_id
+                    })
 
-            update_project_query = text("UPDATE projects SET status = :status WHERE id = :project_id")
-            connection.execute(update_project_query, {"status": new_status, "project_id": project_id})
+                update_project_query = text("UPDATE projects SET status = :status WHERE id = :project_id")
+                connection.execute(update_project_query, {"status": new_status, "project_id": project_id})
 
-            connection.commit()
-
+            # Transaction commits here if all succeeded
             status_messages = {
                 2: ("Project approved. You are now the sole approver.", "success"),
                 1: ("Project status set to 'Pending'. You are now linked to it.", "info"),
@@ -685,8 +745,70 @@ def add_comment_to_project(project_id, request, engine):
             flash("Comment added successfully.", "success")
     except Exception as e:
         flash(f"An error occurred while posting your comment: {e}", "danger")
+        return redirect(url_for('project_page', project_id=project_id))
+
+    # --- NEW EMAIL NOTIFICATION LOGIC ---
+    # This is in a separate try/except so that if emails fail,
+    # the user's comment is still successfully posted.
+    try:
+        if not RESEND_KEY:
+            print("Warning: RESEND_KEY not set. Skipping comment notification email.")
+            return redirect(url_for('project_page', project_id=project_id))
+        
+        # 1. Get commenter's details
+        commenter_name = ""
+        commenter_email = ""
+        with engine.connect() as conn:
+            commenter_query = text("SELECT name, email FROM users WHERE id = :user_id")
+            commenter = conn.execute(commenter_query, {"user_id": user_id}).mappings().first()
+            if commenter:
+                commenter_name = commenter.name if commenter.name else commenter.email
+                commenter_email = commenter.email
+
+        # 2. Get all participant emails
+        recipients = _get_project_participants_emails(project_id, engine)
+        
+        # 3. Remove the person who just commented
+        recipients.discard(commenter_email)
+
+        if recipients:
+            project_url = url_for('project_page', project_id=project_id, _external=True)
+            project_name = project.name
+            subject = f"New comment on project: {project_name}"
+            
+            # Create a nice HTML email
+            html_content = f"""
+            <p>Hello,</p>
+            <p><strong>{commenter_name}</strong> just posted a new comment on the project: <strong>{project_name}</strong>.</p>
+            <p><strong>Comment:</strong></p>
+            <blockquote style="border-left: 2px solid #ccc; padding-left: 10px; margin-left: 5px; font-style: italic;">
+                {comment_text}
+            </blockquote>
+            <p>You can view the comment and reply here:</p>
+            <p><a href="{project_url}">{project_url}</a></p>
+            <p>Thank you,</p>
+            <p>The Project Portal</p>
+            """
+            
+            # Send the email
+            resend.api_key = RESEND_KEY
+            r = resend.Emails.send({
+                "from": RESET_EMAIL_FROM,
+                "to": RESET_EMAIL_FROM, # Send to self (or a no-reply address)
+                "bcc": list(recipients), # Use BCC to protect recipient privacy
+                "subject": subject,
+                "html": html_content
+            })
+            print(f"Comment notification email sent to {len(recipients)} recipients for project {project_id}.")
+        
+    except Exception as e:
+        print(f"CRITICAL: Comment saved but email notification failed: {e}")
+        # We don't flash an error to the user, as their comment *was* successful.
+        # We just log the error.
 
     return redirect(url_for('project_page', project_id=project_id))
+    # --- END NEW LOGIC ---
+
 
 def delete_comment_on_project(project_id, comment_id, engine):
     user_id = session.get('user_id')

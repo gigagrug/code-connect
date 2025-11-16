@@ -22,4 +22,6 @@ DROP TABLE IF EXISTS projects;
 
 DROP TABLE IF EXISTS instructor_requests;
 
+DROP TABLE IF EXISTS password_reset_tokens;
+
 DROP TABLE IF EXISTS users;

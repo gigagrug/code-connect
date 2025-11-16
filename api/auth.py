@@ -2,7 +2,14 @@ import bcrypt
 from sqlalchemy import text
 from flask import request, flash, redirect, url_for, session, render_template
 from .projects import get_projects_for_user, get_projects_for_student
-from .job import get_my_applications # --- NEW IMPORT ---
+from .job import get_my_applications
+import os
+import resend
+import secrets
+from datetime import datetime, timedelta
+
+RESEND_KEY = os.environ.get('RESEND_KEY')
+RESET_EMAIL_FROM = os.environ.get('RESET_EMAIL_FROM') 
 
 def register_user(request, engine, is_debug=False):
     email = request.form.get('email')
@@ -99,7 +106,7 @@ def login_user(request, engine, is_debug=False):
                     session['permission'] = result.permission
                     flash(f"Welcome back, {email}!", "success")
                     return redirect(url_for('index'))
-            
+                
             flash("Invalid email or password. Please try again.", "danger")
 
     except Exception as e:
@@ -107,6 +114,178 @@ def login_user(request, engine, is_debug=False):
         flash("An error occurred during login. Please try again later.", "danger")
 
     return redirect(url_for('login'))
+
+# --- PASSWORD RESET FUNCTIONS (UPDATED) ---
+
+def handle_forgot_password(request, engine):
+    """
+    Handles GET and POST for the /forgot_password route.
+    GET: Renders the forgot password form.
+    POST: Validates email, generates token, sends reset email, and commits
+          all changes *only* if email send is successful.
+    """
+    if request.method == 'POST':
+        email = request.form.get('email')
+        if not email:
+            flash("Email address is required.", "danger")
+            return redirect(url_for('forgot_password'))
+
+        if not RESEND_KEY:
+            print("RESEND_KEY environment variable not set. Cannot send password reset email.")
+            flash("Email service is not configured. Please contact support.", "danger")
+            return redirect(url_for('forgot_password'))
+
+        try:
+            with engine.connect() as conn:
+                with conn.begin(): # Start an explicit transaction
+                    # Find user by email
+                    user_query = text("SELECT id FROM users WHERE email = :email")
+                    user = conn.execute(user_query, {"email": email}).mappings().first()
+
+                    if user:
+                        # 1. Generate a secure token
+                        token = secrets.token_urlsafe(32)
+                        expires_at = datetime.utcnow() + timedelta(hours=1) # Token valid for 1 hour
+                        user_id = user.id
+
+                        # 2. Store the token in the database (still inside transaction)
+                        # Invalidate any old tokens for this user
+                        delete_old_tokens = text("DELETE FROM password_reset_tokens WHERE user_id = :user_id")
+                        conn.execute(delete_old_tokens, {"user_id": user_id})
+                        
+                        # Insert the new token
+                        insert_token = text("""
+                            INSERT INTO password_reset_tokens (user_id, token, expires_at)
+                            VALUES (:user_id, :token, :expires_at)
+                        """)
+                        conn.execute(insert_token, {"user_id": user_id, "token": token, "expires_at": expires_at})
+
+                        # 3. Create the reset link
+                        reset_url = url_for('reset_password', token=token, _external=True)
+
+                        # 4. Send the email (STILL inside transaction)
+                        html_content = f"""
+                        <p>Hello,</p>
+                        <p>You requested a password reset for your account. Click the link below to set a new password:</p>
+                        <p><a href="{reset_url}">{reset_url}</a></p>
+                        <p>This link will expire in 1 hour.</p>
+                        <p>If you did not request this, please ignore this email.</p>
+                        """
+                        
+                        try:
+                            resend.api_key = RESEND_KEY
+                            r = resend.Emails.send({
+                                "from": RESET_EMAIL_FROM,
+                                "to": email,
+                                "subject": "Your Password Reset Request",
+                                "html": html_content
+                            })
+                            # If email succeeds, the 'with conn.begin()' block
+                            # will commit all changes (delete old tokens, add new token).
+                        
+                        except Exception as e:
+                            # If email fails, the transaction will be rolled back.
+                            print(f"Error sending email via Resend: {e}")
+                            flash("Could not send password reset email. Please try again later.", "danger")
+                            # The 'with' block will auto-rollback due to the exception
+                            # or we can explicitly return, which also triggers rollback.
+                            return redirect(url_for('forgot_password'))
+
+                    # If user doesn't exist, we do nothing, and the transaction
+                    # just closes without changes.
+
+            # Show this message whether user exists or not to prevent email enumeration
+            flash("If an account with that email exists, a password reset link has been sent.", "info")
+            return redirect(url_for('login'))
+
+        except Exception as e:
+            # This catches database errors
+            print(f"Database error during password reset request: {e}")
+            flash("An error occurred. Please try again later.", "danger")
+            return redirect(url_for('forgot_password'))
+
+    # For GET request
+    return render_template('forgot_password.html')
+
+
+def handle_reset_password(request, engine, token):
+    """
+    Handles GET and POST for the /reset_password/<token> route.
+    (FIXED) Uses manual commit/rollback to avoid nested transaction errors.
+    """
+    
+    try:
+        with engine.connect() as conn:
+            
+            # This first execute() starts the 'autobegin' transaction
+            query = text("""
+                SELECT user_id, expires_at FROM password_reset_tokens
+                WHERE token = :token
+            """)
+            token_data = conn.execute(query, {"token": token}).mappings().first()
+
+            if not token_data:
+                flash("Invalid password reset link.", "danger")
+                conn.rollback() # Rollback the autobegin transaction
+                return redirect(url_for('login'))
+
+            if datetime.utcnow() > token_data.expires_at:
+                flash("Your password reset link has expired. Please request a new one.", "danger")
+                
+                # We are already in a transaction. Just execute and commit.
+                delete_query = text("DELETE FROM password_reset_tokens WHERE token = :token")
+                conn.execute(delete_query, {"token": token})
+                conn.commit() # Commit the token deletion
+                
+                return redirect(url_for('login'))
+            
+            user_id = token_data.user_id
+
+            # If it's a POST request, handle the form submission
+            if request.method == 'POST':
+                password = request.form.get('password')
+                password2 = request.form.get('password2')
+
+                if not password or not password2:
+                    flash("Both password fields are required.", "danger")
+                    conn.rollback() # Rollback the autobegin transaction
+                    return render_template('reset_password.html', token=token) # Re-render form
+
+                if password != password2:
+                    flash("Passwords do not match.", "danger")
+                    conn.rollback() # Rollback the autobegin transaction
+                    return render_template('reset_password.html', token=token)
+
+                # Hash the new password
+                password_bytes = password.encode('utf-8')
+                salt = bcrypt.gensalt()
+                db_password = bcrypt.hashpw(password_bytes, salt).decode('utf-8')
+
+                # We are still in the original transaction.
+                # Execute update and delete, then commit.
+                update_pass_query = text("UPDATE users SET password = :password WHERE id = :user_id")
+                conn.execute(update_pass_query, {"password": db_password, "user_id": user_id})
+
+                delete_token_query = text("DELETE FROM password_reset_tokens WHERE token = :token")
+                conn.execute(delete_token_query, {"token": token})
+                
+                conn.commit() # Commit password update and token deletion
+                
+                flash("Your password has been updated successfully! You can now log in.", "success")
+                return redirect(url_for('login'))
+
+            # If it's a GET request, just render the form.
+            # Rollback the 'autobegin' transaction as we made no changes.
+            conn.rollback()
+            return render_template('reset_password.html', token=token)
+
+    except Exception as e:
+        print(f"Error during password reset: {e}")
+        flash("An error occurred while resetting your password. Please try again.", "danger")
+        return redirect(url_for('login'))
+
+# --- END NEW FUNCTIONS ---
+
 
 def get_business_profile_data(user_id, engine):
     try:
@@ -209,12 +388,12 @@ def get_profile_data(engine):
         assignments = get_projects_for_student(engine)
         applications = get_my_applications(user_id, engine)
         return render_template('profile.html', 
-                               assignments=assignments, 
-                               student_info=student_info,
-                               instructors=instructors,
-                               pending_request=pending_request,
-                               user_data=user_data,
-                               applications=applications) # Pass applications
+                                assignments=assignments, 
+                                student_info=student_info,
+                                instructors=instructors,
+                                pending_request=pending_request,
+                                user_data=user_data,
+                                applications=applications) # Pass applications
 
     elif user_role == 0:
         with engine.connect() as conn:
@@ -262,7 +441,7 @@ def create_admin_message(request, engine):
             query = text("INSERT INTO admin_messages (user_id, message) VALUES (:user_id, :message)")
             conn.execute(query, {"user_id": user_id, "message": message.strip()})
             conn.commit()
-        flash("Your message has been sent to the administrators.", "success")
+            flash("Your message has been sent to the administrators.", "success")
     except Exception as e:
         print(f"Error saving admin message: {e}")
         flash("An error occurred while sending your message.", "danger")

@@ -375,6 +375,16 @@ def login():
         return login_user(request, engine, app.debug)
     return render_template('login.html')
 
+@app.route('/forgot_password', methods=['GET', 'POST'])
+def forgot_password():
+    # Make sure to pass your 'engine' object
+    return handle_forgot_password(request, engine) 
+
+@app.route('/reset_password/<token>', methods=['GET', 'POST'])
+def reset_password(token):
+    # Make sure to pass your 'engine' object
+    return handle_reset_password(request, engine, token)
+
 @app.route('/logout')
 def logout():
     session.clear()
