@@ -13,17 +13,17 @@ from api.chat import *
 from api.admin import *
 from api.adminjobs import *
 from api.job import *
-
-from dummydata import seed_data
+from schema.dummydata import seed_data
+from schema.schema import DROP_SCHEMA_SQL, CREATE_SCHEMA_SQL
 
 app = Flask(__name__)
-app.secret_key = os.getenv("FLASK_SECRET_KEY", 'a_default_dev_secret_key')
+app.secret_key = os.getenv("FLASK_SECRET_KEY")
 UPLOAD_DIR = os.path.join(os.path.abspath(os.path.dirname(__file__)), 'uploads')
 app.config['UPLOAD_DIR'] = UPLOAD_DIR
 db_url = os.getenv("DB_URL")
+
 if not db_url:
     raise ValueError("Error: DB_URL environment variable is not set.")
-
 engine = None
 while engine is None:
     try:
@@ -36,16 +36,10 @@ while engine is None:
         engine = None
         time.sleep(5)
 
-def execute_sql_from_file(db_engine, file_path):
-    print(f"--- Executing SQL from: {file_path} ---")
-    if not os.path.exists(file_path):
-        print(f"❌ Error: SQL file not found at '{file_path}'")
-        raise FileNotFoundError
-    with open(file_path, 'r', encoding='utf-8') as file:
-        sql_script = file.read()
+def execute_raw_sql(db_engine, sql_script):
     statements = [stmt.strip() for stmt in sql_script.split(';') if stmt.strip()]
     if not statements:
-        print(f"🤔 No statements found in {file_path}. Skipping.")
+        print("🤔 No statements found. Skipping.")
         return
     try:
         with db_engine.connect() as connection:
@@ -54,29 +48,37 @@ def execute_sql_from_file(db_engine, file_path):
                 for statement in statements:
                     connection.execute(text(statement))
                 connection.execute(text("SET FOREIGN_KEY_CHECKS = 1;"))
-                print(f"✅ Successfully executed SQL from {os.path.basename(file_path)}.")
+                print("✅ Successfully executed SQL batch.")
     except Exception as e:
-        print(f"❌ Could not execute SQL file. Error: {e}")
+        print(f"❌ Could not execute SQL batch. Error: {e}")
         raise
 
-def reset_database_on_startup():
+def manage_database_on_startup():
     if not engine:
-        print("❌ Database engine not initialized. Skipping reset.")
+        print("❌ Database engine not initialized. Skipping schema management.")
         return
     if os.environ.get("WERKZEUG_RUN_MAIN") == "true":
-        print("🚀 Starting database reset process on server startup...")
-        try:
-            drop_file = './schema/migrations/dropschema.sql'
-            schema_file = './schema/migrations/schema.sql'
-            execute_sql_from_file(engine, drop_file)
-            execute_sql_from_file(engine, schema_file)
-            seed_data(engine) 
-            print("\n🎉 Database has been successfully reset and seeded! 🎉\n")
-        except Exception as e:
-            print(f"\n🔥 Database reset failed: {e} 🔥")
-            sys.exit(1)
-if app.debug:
-    reset_database_on_startup()
+        if app.debug:
+            print("🚀 Starting **DEBUG** database reset (Drop/Create/Seed)...")
+            try:
+                execute_raw_sql(engine, DROP_SCHEMA_SQL)
+                execute_raw_sql(engine, CREATE_SCHEMA_SQL)
+                seed_data(engine) 
+                print("\n🎉 Database has been successfully **RESET and SEEDED**! 🎉\n")
+            except Exception as e:
+                print(f"\n🔥 Database reset failed: {e} 🔥")
+                sys.exit(1)
+        else:
+            print("Production mode detected. Starting **CREATE ONLY** schema run.")
+            try:
+                execute_raw_sql(engine, CREATE_SCHEMA_SQL)
+                print("✅ CREATE_SCHEMA_SQL executed. Existing data preserved. (No seeding in Prod mode.)")
+            except Exception as e:
+                print(f"⚠️ Could not execute CREATE_SCHEMA_SQL. Check database logs for details: {e}")
+if os.getenv("FLASK_DEBUG", "0") == "1":
+    app.debug = True
+
+manage_database_on_startup() 
 
 socketio = SocketIO(app)
 init_chat(socketio, engine)
@@ -87,7 +89,6 @@ def serve_upload(project_name, filename):
     project_dir = os.path.join(app.config['UPLOAD_DIR'], project_name)
     return send_from_directory(project_dir, filename)
 
-# Admin 
 @app.route('/admin', endpoint='admin')
 def admin_index():
     page = request.args.get('page', default=1, type=int) or 1
@@ -111,8 +112,6 @@ def admin_jobs_index():
 
 @app.route('/admin/jobs/<int:job_id>/update', methods=['POST'])
 def admin_job_update(job_id):
-    # Minimal auth: any logged-in user can perform admin UI actions (dev mode)
-    # Adjust this check to your exact admin logic if needed.
     if 'user_id' not in session:
         return jsonify({"error": "Unauthorized"}), 403
     status = request.form.get('status', type=int)
@@ -125,16 +124,13 @@ def admin_job_update(job_id):
 
 @app.route('/admin/jobs/<int:job_id>/delete', methods=['POST'])
 def admin_job_delete(job_id):
-    # Minimal auth: any logged-in user can perform admin UI actions (dev mode)
     if 'user_id' not in session:
         return jsonify({"error": "Unauthorized"}), 403
     ok = admin_delete_job(engine, job_id)
     if not ok:
         return jsonify({"error": "Delete failed"}), 500
     return jsonify({"ok": True, "job_id": job_id})
-# Admin
 
-# Users
 @app.route('/', methods=['GET'])
 def index():
     if 'user_id' in session:
@@ -161,21 +157,19 @@ def project_page(project_id):
     if 'user_id' not in session:
         flash("You need to be logged in to view this page.", "warning")
         return redirect(url_for('login'))
-    
+     
     project = get_project_by_id(project_id, engine)
     if project:
         user_id = session.get('user_id')
-        
-        # Permissions
+         
         can_chat = check_if_user_can_chat(user_id, project_id, engine)
         can_edit_links = check_if_user_can_edit_links(user_id, project, engine)
         can_comment = check_if_user_can_comment(user_id, project, engine)
 
-        # Data
         teams = get_teams_for_project(project_id, engine)
         comments = get_comments_for_project(project_id, engine, session)
         chat_history = []
-        
+         
         if can_chat:
             with engine.connect() as conn:
                 history_query = text("""
@@ -200,7 +194,7 @@ def project_page(project_id):
                 }).first()
                 if result:
                     is_pending_by_current_instructor = True
-        
+         
         return render_template(
             'project.html', 
             project=project, 
@@ -241,11 +235,11 @@ def jobs_page():
     if 'user_id' not in session:
         flash("You must be logged in to view this page.", "warning")
         return redirect(url_for('login'))
-    
+     
     if session.get('role') not in [2, 3]:
         flash("You do not have permission to view this page.", "danger")
         return redirect(url_for('index'))
-        
+         
     open_jobs = get_open_jobs(engine)
     return render_template('jobs.html', jobs=open_jobs)
 
@@ -258,23 +252,20 @@ def job_page(job_id):
     if 'user_id' not in session:
         flash("You need to be logged in to view this page.", "warning")
         return redirect(url_for('login'))
-        
+         
     job = get_job_by_id(job_id, engine)
     if job:
         applications = []
-        my_application = None # Changed from has_applied
-        
-        # If user is the job owner, get all applications
+        my_application = None 
+         
         if session.get('user_id') == job.user_id:
             applications = get_job_applications(job_id, engine)
-        
-        # If user is student/alumni, check if they've already applied
+         
         elif session.get('role') in [2, 3]:
             with engine.connect() as conn:
-                # Fetch the *entire* application row (so we can get the ID)
                 query = text("SELECT * FROM job_applications WHERE job_id = :job_id AND user_id = :user_id")
                 my_application = conn.execute(query, {"job_id": job_id, "user_id": session.get('user_id')}).mappings().first()
-                
+                 
         return render_template('job.html', job=job, applications=applications, my_application=my_application)
     else:
         flash("Job not found.", "danger")
@@ -313,15 +304,15 @@ def view_application(application_id):
     if 'user_id' not in session:
         flash("You must be logged in to view this page.", "warning")
         return redirect(url_for('login'))
-        
+         
     app_data = get_application_by_id(application_id, engine)
-    
+     
     if not app_data:
         flash("Application not found or you do not have permission to view it.", "danger")
         return redirect(url_for('index'))
-        
+         
     chat_history = get_application_chat_history(application_id, engine)
-    
+     
     return render_template(
         'application.html',
         application=app_data,
@@ -397,7 +388,7 @@ def create_user_route():
 @app.route('/group/create', methods=['POST'])
 def create_group_route():
     return create_group(engine)
-    
+     
 @app.route('/group/assign', methods=['POST'])
 def assign_user_route():
     return assign_user_to_team(engine)
@@ -435,4 +426,5 @@ def dismiss_request_route(request_id):
     return dismiss_denied_request(request_id, engine)
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=5000, debug=True)
+    debug_mode = os.getenv("FLASK_DEBUG", "0") == "1"
+    app.run(host='0.0.0.0', port=5000, debug=debug_mode)

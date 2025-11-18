@@ -6,7 +6,7 @@ from werkzeug.utils import secure_filename
 import resend
 
 RESEND_KEY = os.environ.get('RESEND_KEY')
-RESET_EMAIL_FROM = os.environ.get('RESET_EMAIL_FROM')
+RESEND_EMAIL = os.environ.get('RESEND_EMAIL')
 
 def _check_and_get_unique_path(fs_save_path):
     if not os.path.exists(fs_save_path):
@@ -793,8 +793,8 @@ def add_comment_to_project(project_id, request, engine):
             # Send the email
             resend.api_key = RESEND_KEY
             r = resend.Emails.send({
-                "from": RESET_EMAIL_FROM,
-                "to": RESET_EMAIL_FROM, # Send to self (or a no-reply address)
+                "from": RESEND_EMAIL,
+                "to": RESEND_EMAIL, # Send to self (or a no-reply address)
                 "bcc": list(recipients), # Use BCC to protect recipient privacy
                 "subject": subject,
                 "html": html_content

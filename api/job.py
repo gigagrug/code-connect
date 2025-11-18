@@ -3,22 +3,12 @@ from sqlalchemy import text
 from flask import flash, redirect, url_for, session, render_template, current_app
 from werkzeug.utils import secure_filename
 
-# --- NEW HELPER FUNCTION FOR APPLICATION FILES ---
 def _get_application_upload_path(job_id, user_id, original_filename):
-    """
-    Creates a unique, secure path for an application file.
-    Saves to: ./uploads/applications/job_1/user_5/file.pdf
-    """
     safe_filename = secure_filename(original_filename)
-    # Use IDs for folder names
     path_segment = f"job_{job_id}/user_{user_id}"
-    
     base_upload_dir = current_app.config['UPLOAD_DIR']
     fs_upload_dir = os.path.join(base_upload_dir, 'applications', path_segment)
-    
     os.makedirs(fs_upload_dir, exist_ok=True)
-    
-    # Check for uniqueness
     fs_save_path = os.path.join(fs_upload_dir, safe_filename)
     if os.path.exists(fs_save_path):
         filename_base, extension = os.path.splitext(safe_filename)
@@ -31,9 +21,7 @@ def _get_application_upload_path(job_id, user_id, original_filename):
                 safe_filename = new_filename
                 break
             counter += 1
-
     url_path = f"/uploads/applications/{path_segment}/{safe_filename}"
-    
     return (fs_save_path, url_path)
 
 def create_job(request, engine):
@@ -210,10 +198,8 @@ def get_business_jobs_data(user_id, engine):
         flash("An error occurred while trying to load the profile.", "danger")
         return None
 
-# --- NEW: FUNCTIONS FOR APPLICATIONS & CHAT ---
 
 def apply_to_job(job_id, request, engine):
-    """Handles a student/alumni application to a job."""
     user_id = session.get('user_id')
     if not user_id:
         flash("You must be logged in.", "warning")

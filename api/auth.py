@@ -9,7 +9,7 @@ import secrets
 from datetime import datetime, timedelta
 
 RESEND_KEY = os.environ.get('RESEND_KEY')
-RESET_EMAIL_FROM = os.environ.get('RESET_EMAIL_FROM') 
+RESEND_EMAIL = os.environ.get('RESEND_EMAIL') 
 
 def register_user(request, engine):
     email = request.form.get('email')
@@ -162,7 +162,7 @@ def handle_forgot_password(request, engine):
                         try:
                             resend.api_key = RESEND_KEY
                             r = resend.Emails.send({
-                                "from": RESET_EMAIL_FROM,
+                                "from": RESEND_EMAIL,
                                 "to": email,
                                 "subject": "Your Password Reset Request",
                                 "html": html_content
