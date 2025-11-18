@@ -11,7 +11,7 @@ from datetime import datetime, timedelta
 RESEND_KEY = os.environ.get('RESEND_KEY')
 RESET_EMAIL_FROM = os.environ.get('RESET_EMAIL_FROM') 
 
-def register_user(request, engine, is_debug=False):
+def register_user(request, engine):
     email = request.form.get('email')
     password = request.form.get('password')
     password2 = request.form.get('password2')
@@ -36,12 +36,10 @@ def register_user(request, engine, is_debug=False):
 
     try:
         db_password = ""
-        if is_debug:
-            db_password = password
-        else:
-            password_bytes = password.encode('utf-8')
-            salt = bcrypt.gensalt()
-            db_password = bcrypt.hashpw(password_bytes, salt).decode('utf-8')
+        db_password = password
+        password_bytes = password.encode('utf-8')
+        salt = bcrypt.gensalt()
+        db_password = bcrypt.hashpw(password_bytes, salt).decode('utf-8')
 
         with engine.connect() as connection:
             query = text("SELECT email FROM users WHERE email = :email")
@@ -72,7 +70,7 @@ def register_user(request, engine, is_debug=False):
     return redirect(url_for('register'))
 
 
-def login_user(request, engine, is_debug=False):
+def login_user(request, engine):
     email = request.form.get('email')
     password = request.form.get('password')
 
@@ -91,12 +89,9 @@ def login_user(request, engine, is_debug=False):
 
             if result:
                 password_matches = False
-                if is_debug:
-                    password_matches = (result.password == password)
-                else:
-                    hashed_password_from_db = result.password.encode('utf-8')
-                    submitted_password_bytes = password.encode('utf-8')
-                    password_matches = bcrypt.checkpw(submitted_password_bytes, hashed_password_from_db)
+                hashed_password_from_db = result.password.encode('utf-8')
+                submitted_password_bytes = password.encode('utf-8')
+                password_matches = bcrypt.checkpw(submitted_password_bytes, hashed_password_from_db)
 
                 if password_matches:
                     session.clear()
@@ -115,15 +110,7 @@ def login_user(request, engine, is_debug=False):
 
     return redirect(url_for('login'))
 
-# --- PASSWORD RESET FUNCTIONS (UPDATED) ---
-
 def handle_forgot_password(request, engine):
-    """
-    Handles GET and POST for the /forgot_password route.
-    GET: Renders the forgot password form.
-    POST: Validates email, generates token, sends reset email, and commits
-          all changes *only* if email send is successful.
-    """
     if request.method == 'POST':
         email = request.form.get('email')
         if not email:
@@ -137,7 +124,7 @@ def handle_forgot_password(request, engine):
 
         try:
             with engine.connect() as conn:
-                with conn.begin(): # Start an explicit transaction
+                with conn.begin():
                     # Find user by email
                     user_query = text("SELECT id FROM users WHERE email = :email")
                     user = conn.execute(user_query, {"email": email}).mappings().first()
@@ -180,44 +167,26 @@ def handle_forgot_password(request, engine):
                                 "subject": "Your Password Reset Request",
                                 "html": html_content
                             })
-                            # If email succeeds, the 'with conn.begin()' block
-                            # will commit all changes (delete old tokens, add new token).
                         
                         except Exception as e:
-                            # If email fails, the transaction will be rolled back.
                             print(f"Error sending email via Resend: {e}")
                             flash("Could not send password reset email. Please try again later.", "danger")
-                            # The 'with' block will auto-rollback due to the exception
-                            # or we can explicitly return, which also triggers rollback.
                             return redirect(url_for('forgot_password'))
 
-                    # If user doesn't exist, we do nothing, and the transaction
-                    # just closes without changes.
-
-            # Show this message whether user exists or not to prevent email enumeration
             flash("If an account with that email exists, a password reset link has been sent.", "info")
             return redirect(url_for('login'))
 
         except Exception as e:
-            # This catches database errors
             print(f"Database error during password reset request: {e}")
             flash("An error occurred. Please try again later.", "danger")
             return redirect(url_for('forgot_password'))
-
-    # For GET request
     return render_template('forgot_password.html')
 
 
 def handle_reset_password(request, engine, token):
-    """
-    Handles GET and POST for the /reset_password/<token> route.
-    (FIXED) Uses manual commit/rollback to avoid nested transaction errors.
-    """
-    
     try:
         with engine.connect() as conn:
             
-            # This first execute() starts the 'autobegin' transaction
             query = text("""
                 SELECT user_id, expires_at FROM password_reset_tokens
                 WHERE token = :token
@@ -274,8 +243,6 @@ def handle_reset_password(request, engine, token):
                 flash("Your password has been updated successfully! You can now log in.", "success")
                 return redirect(url_for('login'))
 
-            # If it's a GET request, just render the form.
-            # Rollback the 'autobegin' transaction as we made no changes.
             conn.rollback()
             return render_template('reset_password.html', token=token)
 
@@ -283,9 +250,6 @@ def handle_reset_password(request, engine, token):
         print(f"Error during password reset: {e}")
         flash("An error occurred while resetting your password. Please try again.", "danger")
         return redirect(url_for('login'))
-
-# --- END NEW FUNCTIONS ---
-
 
 def get_business_profile_data(user_id, engine):
     try:

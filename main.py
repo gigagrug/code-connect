@@ -14,6 +14,8 @@ from api.admin import *
 from api.adminjobs import *
 from api.job import *
 
+from dummydata import seed_data
+
 app = Flask(__name__)
 app.secret_key = os.getenv("FLASK_SECRET_KEY", 'a_default_dev_secret_key')
 UPLOAD_DIR = os.path.join(os.path.abspath(os.path.dirname(__file__)), 'uploads')
@@ -66,10 +68,9 @@ def reset_database_on_startup():
         try:
             drop_file = './schema/migrations/dropschema.sql'
             schema_file = './schema/migrations/schema.sql'
-            data_file = './schema/data/0_data.sql'
             execute_sql_from_file(engine, drop_file)
             execute_sql_from_file(engine, schema_file)
-            execute_sql_from_file(engine, data_file)
+            seed_data(engine) 
             print("\n🎉 Database has been successfully reset and seeded! 🎉\n")
         except Exception as e:
             print(f"\n🔥 Database reset failed: {e} 🔥")
@@ -273,7 +274,7 @@ def job_page(job_id):
                 # Fetch the *entire* application row (so we can get the ID)
                 query = text("SELECT * FROM job_applications WHERE job_id = :job_id AND user_id = :user_id")
                 my_application = conn.execute(query, {"job_id": job_id, "user_id": session.get('user_id')}).mappings().first()
-                    
+                
         return render_template('job.html', job=job, applications=applications, my_application=my_application)
     else:
         flash("Job not found.", "danger")
@@ -366,23 +367,21 @@ def user_mgt():
 @app.route('/register', methods=['POST', 'GET'])
 def register():
     if request.method == 'POST':
-        return register_user(request, engine, app.debug)
+        return register_user(request, engine)
     return render_template('register.html')
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     if request.method == 'POST':
-        return login_user(request, engine, app.debug)
+        return login_user(request, engine)
     return render_template('login.html')
 
 @app.route('/forgot_password', methods=['GET', 'POST'])
 def forgot_password():
-    # Make sure to pass your 'engine' object
     return handle_forgot_password(request, engine) 
 
 @app.route('/reset_password/<token>', methods=['GET', 'POST'])
 def reset_password(token):
-    # Make sure to pass your 'engine' object
     return handle_reset_password(request, engine, token)
 
 @app.route('/logout')
