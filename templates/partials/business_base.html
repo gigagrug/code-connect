@@ -1,0 +1,109 @@
+{% extends "./layouts/shell.html" %}
+
+{% block content %}
+  <div class="container mx-auto max-w-5xl px-4 py-8">
+    <!-- SHARED: Profile Header Card -->
+    <div class="mb-12 overflow-hidden rounded-2xl border border-neutral-200 bg-white shadow-sm dark:border-neutral-800 dark:bg-neutral-900">
+      <div class="h-32 w-full bg-gradient-to-r from-blue-600 to-emerald-500"></div>
+      <div class="px-8 pb-8">
+        <div class="relative mb-4 flex justify-between">
+          <div class="-mt-12 flex h-24 w-24 items-center justify-center rounded-2xl border-4 border-white bg-neutral-900 text-3xl font-bold text-white shadow-md dark:border-neutral-900">{{ business_user.name[0] | upper if business_user.name else 'B' }}</div>
+          {% if session.user_id == business_user.id %}
+            <div class="mt-4 flex gap-3">
+              <button popovertarget="project-form" class="inline-flex items-center gap-2 rounded-lg border border-neutral-200 bg-white px-4 py-2 text-sm font-semibold text-neutral-700 hover:bg-neutral-50 hover:text-neutral-900 dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-300 dark:hover:bg-neutral-700 dark:hover:text-white">
+                <i data-lucide="folder-plus" class="h-4 w-4"></i>
+                New Project
+              </button>
+              <button popovertarget="job-form" class="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white shadow-md shadow-blue-600/20 hover:bg-blue-700">
+                <i data-lucide="briefcase" class="h-4 w-4"></i>
+                Post Job
+              </button>
+            </div>
+          {% endif %}
+        </div>
+
+        <div>
+          <h1 class="text-3xl font-bold text-neutral-900 dark:text-white">{{ business_user.name or 'Business Profile' }}</h1>
+          <div class="mt-4 max-w-2xl">
+            {% if business_user.bio %}
+              <p class="leading-relaxed text-neutral-600 dark:text-neutral-400">{{ business_user.bio }}</p>
+            {% else %}
+              <p class="text-neutral-400 italic dark:text-neutral-600">No bio provided yet.</p>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- SHARED: Popover Forms -->
+    <!-- Create Project Form -->
+    <div id="project-form" popover class="m-auto w-full max-w-2xl rounded-2xl border border-neutral-200 bg-white shadow-2xl backdrop:bg-neutral-900/50 backdrop:backdrop-blur-sm dark:border-neutral-800 dark:bg-neutral-900">
+      <div class="flex items-center justify-between border-b border-neutral-100 p-6 dark:border-neutral-800">
+        <h3 class="text-xl font-bold text-neutral-900 dark:text-white">Create a New Project</h3>
+        <button popovertarget="project-form" popovertargetaction="hide" class="rounded-full p-2 text-neutral-400 hover:bg-neutral-100 hover:text-neutral-600 dark:hover:bg-neutral-800 dark:hover:text-neutral-200">
+          <i data-lucide="x" class="h-5 w-5"></i>
+        </button>
+      </div>
+      <form action="/project/create" method="POST" enctype="multipart/form-data" class="space-y-5 p-6">
+        <div>
+          <label for="name" class="mb-1.5 block text-sm font-bold text-neutral-700 dark:text-neutral-300">Project Name</label>
+          <input type="text" name="name" id="name" class="w-full rounded-xl border border-neutral-300 bg-transparent p-3 placeholder:text-neutral-400 focus:border-blue-600 focus:ring-1 focus:ring-blue-600 focus:outline-none dark:border-neutral-700 dark:bg-neutral-800" placeholder="e.g. AI Marketing Dashboard" required />
+        </div>
+        <div>
+          <label for="description" class="mb-1.5 block text-sm font-bold text-neutral-700 dark:text-neutral-300">Description</label>
+          <textarea name="description" id="description" class="min-h-[120px] w-full rounded-xl border border-neutral-300 bg-transparent p-3 placeholder:text-neutral-400 focus:border-blue-600 focus:ring-1 focus:ring-blue-600 focus:outline-none dark:border-neutral-700 dark:bg-neutral-800" placeholder="Describe the goals and requirements..." required></textarea>
+        </div>
+        <div>
+          <label for="attachment" class="mb-1.5 block text-sm font-bold text-neutral-700 dark:text-neutral-300">Attachments</label>
+          <input type="file" name="attachment" id="attachment" multiple class="w-full rounded-xl border border-neutral-300 p-2 text-sm text-neutral-500 file:mr-4 file:rounded-lg file:border-0 file:bg-neutral-100 file:px-4 file:py-2 file:text-sm file:font-semibold file:text-neutral-700 hover:file:bg-neutral-200 dark:border-neutral-700 dark:file:bg-neutral-800 dark:file:text-neutral-300" />
+        </div>
+        <div class="pt-2">
+          <button type="submit" class="w-full rounded-xl bg-blue-600 px-5 py-3 font-bold text-white shadow-lg shadow-blue-600/20 hover:bg-blue-700">Launch Project</button>
+        </div>
+      </form>
+    </div>
+
+    <!-- Create Job Form -->
+    <div id="job-form" popover class="m-auto w-full max-w-2xl rounded-2xl border border-neutral-200 bg-white shadow-2xl backdrop:bg-neutral-900/50 backdrop:backdrop-blur-sm dark:border-neutral-800 dark:bg-neutral-900">
+      <div class="flex items-center justify-between border-b border-neutral-100 p-6 dark:border-neutral-800">
+        <h3 class="text-xl font-bold text-neutral-900 dark:text-white">Post a New Job</h3>
+        <button popovertarget="job-form" popovertargetaction="hide" class="rounded-full p-2 text-neutral-400 hover:bg-neutral-100 hover:text-neutral-600 dark:hover:bg-neutral-800 dark:hover:text-neutral-200">
+          <i data-lucide="x" class="h-5 w-5"></i>
+        </button>
+      </div>
+      <form action="/job/create" method="POST" class="space-y-5 p-6">
+        <div>
+          <label for="title" class="mb-1.5 block text-sm font-bold text-neutral-700 dark:text-neutral-300">Job Title</label>
+          <input type="text" name="title" id="title" class="w-full rounded-xl border border-neutral-300 bg-transparent p-3 placeholder:text-neutral-400 focus:border-blue-600 focus:ring-1 focus:ring-blue-600 focus:outline-none dark:border-neutral-700 dark:bg-neutral-800" placeholder="e.g. Senior React Developer" required />
+        </div>
+        <div>
+          <label for="job-description" class="mb-1.5 block text-sm font-bold text-neutral-700 dark:text-neutral-300">Job Description</label>
+          <textarea name="description" id="job-description" class="min-h-[120px] w-full rounded-xl border border-neutral-300 bg-transparent p-3 placeholder:text-neutral-400 focus:border-blue-600 focus:ring-1 focus:ring-blue-600 focus:outline-none dark:border-neutral-700 dark:bg-neutral-800" placeholder="Responsibilities, qualifications, perks..." required></textarea>
+        </div>
+        <div>
+          <label for="link" class="mb-1.5 block text-sm font-bold text-neutral-700 dark:text-neutral-300">External Job Link (Optional)</label>
+          <input type="url" name="link" id="link" class="w-full rounded-xl border border-neutral-300 bg-transparent p-3 placeholder:text-neutral-400 focus:border-blue-600 focus:ring-1 focus:ring-blue-600 focus:outline-none dark:border-neutral-700 dark:bg-neutral-800" placeholder="https://linkedin.com/..." />
+        </div>
+        <div class="pt-2">
+          <button type="submit" class="w-full rounded-xl bg-blue-600 px-5 py-3 font-bold text-white shadow-lg shadow-blue-600/20 hover:bg-blue-700">Publish Job</button>
+        </div>
+      </form>
+    </div>
+
+    <!-- SHARED: Tab Logic -->
+    <div class="mb-8 border-b border-neutral-200 dark:border-neutral-800">
+      <div class="flex justify-center gap-8">
+        {% if active_tab == 'projects' %}
+          <span class="cursor-default border-b-2 border-blue-600 py-4 text-sm font-bold text-blue-600">Active Projects</span>
+          <a href="/business/{{ business_user.id }}/jobs" class="border-b-2 border-transparent py-4 text-sm font-medium text-neutral-500 hover:border-neutral-300 hover:text-neutral-700 dark:text-neutral-400 dark:hover:border-neutral-600 dark:hover:text-neutral-200">Job Listings</a>
+        {% else %}
+          <a href="/business/{{ business_user.id }}" class="border-b-2 border-transparent py-4 text-sm font-medium text-neutral-500 hover:border-neutral-300 hover:text-neutral-700 dark:text-neutral-400 dark:hover:border-neutral-600 dark:hover:text-neutral-200">Active Projects</a>
+          <span class="cursor-default border-b-2 border-blue-600 py-4 text-sm font-bold text-blue-600">Job Listings</span>
+        {% endif %}
+      </div>
+    </div>
+
+    <!-- UNIQUE: Content Block -->
+    <div class="mx-auto">{% block business_content %}{% endblock %}</div>
+  </div>
+{% endblock %}

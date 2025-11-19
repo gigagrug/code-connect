@@ -4,7 +4,7 @@ from flask import session, current_app
 from flask_socketio import emit, join_room
 from sqlalchemy import text
 from .projects import check_if_user_can_chat, get_project_by_id, _get_upload_paths
-from .job import check_if_user_can_chat_application
+from .job import check_if_user_can_chat_application, _get_application_upload_path
 
 def init_chat(socketio, engine):
     @socketio.on('join')
@@ -29,6 +29,7 @@ def init_chat(socketio, engine):
 
         if not all([project_id, user_id, email]):
             return
+        # Allow message if either text OR file exists
         if not message_text and not file_data:
             return 
         if not check_if_user_can_chat(user_id, project_id, engine):
@@ -40,13 +41,16 @@ def init_chat(socketio, engine):
             try:
                 project = get_project_by_id(project_id, engine)
                 if not project:
-                    print(f"Chat Error: Project not found for ID {project_id}")
                     return
                 
                 with current_app.app_context(): 
                     fs_save_path, url_path = _get_upload_paths(project.name, original_filename)
                 
-                file_content = base64.b64decode(file_data.split(',')[1])
+                # Remove header if present (e.g., "data:image/png;base64,")
+                if ',' in file_data:
+                    file_content = base64.b64decode(file_data.split(',')[1])
+                else:
+                    file_content = base64.b64decode(file_data)
                 
                 with open(fs_save_path, 'wb') as f:
                     f.write(file_content)
@@ -98,19 +102,17 @@ def init_chat(socketio, engine):
                     message = conn.execute(msg_query, {"id": message_id}).first()
 
                     if message and message.user_id == user_id:
-                        
                         if message.attachment_path:
                             try:
                                 base_upload_dir = current_app.config['UPLOAD_DIR']
-                                relative_path = message.attachment_path.split('/uploads/', 1)[-1]
-                                file_path = os.path.join(base_upload_dir, relative_path)
-
-                                if os.path.exists(file_path):
-                                    os.remove(file_path)
-                                else:
-                                    print(f"Warning: File not found, cannot delete: {file_path}")
+                                # Extract relative path from URL
+                                if '/uploads/' in message.attachment_path:
+                                    relative_path = message.attachment_path.split('/uploads/', 1)[-1]
+                                    file_path = os.path.join(base_upload_dir, relative_path)
+                                    if os.path.exists(file_path):
+                                        os.remove(file_path)
                             except Exception as e:
-                                print(f"Error deleting file {message.attachment_path}: {e}")
+                                print(f"Error deleting file: {e}")
                                 
                         delete_query = text("DELETE FROM chat_messages WHERE id = :id")
                         conn.execute(delete_query, {"id": message_id})
@@ -139,12 +141,49 @@ def init_application_chat(socketio, engine):
         user_id = session.get('user_id')
         email = session.get('email')
         
-        if not all([application_id, message_text, user_id, email]):
+        file_data = data.get('file')
+        original_filename = data.get('filename')
+        
+        if not all([application_id, user_id, email]):
             return
+        
+        # Allow if text OR file exists
+        if not message_text and not file_data:
+            return
+
         if not check_if_user_can_chat_application(user_id, application_id, engine):
             return
 
         attachment_path = None 
+        
+        # Handle File Upload
+        if file_data and original_filename:
+            try:
+                with current_app.app_context():
+                    # Get Job ID from application to verify path structure or just store by application/user
+                    # Ideally, _get_application_upload_path needs job_id. 
+                    # We can fetch job_id from application_id if needed, but let's try a simpler path if that function isn't imported fully or requires args we don't have handy in `data`.
+                    # Assuming _get_application_upload_path is imported from .job
+                    
+                    # Fetch job_id for the path structure
+                    with engine.connect() as conn:
+                        res = conn.execute(text("SELECT job_id FROM job_applications WHERE id = :id"), {"id": application_id}).first()
+                        job_id = res.job_id if res else 0
+
+                    fs_save_path, url_path = _get_application_upload_path(job_id, user_id, original_filename)
+                    
+                    if ',' in file_data:
+                        file_content = base64.b64decode(file_data.split(',')[1])
+                    else:
+                        file_content = base64.b64decode(file_data)
+                        
+                    with open(fs_save_path, 'wb') as f:
+                        f.write(file_content)
+                    
+                    attachment_path = url_path
+            except Exception as e:
+                print(f"Error saving application chat file: {e}")
+
         try:
             with engine.connect() as conn:
                 with conn.begin():
@@ -188,8 +227,17 @@ def init_application_chat(socketio, engine):
                     message = conn.execute(msg_query, {"id": message_id}).first()
 
                     if message and message.user_id == user_id:
-                        # (File deletion logic would go here if implemented)
-                                
+                        if message.attachment_path:
+                            try:
+                                base_upload_dir = current_app.config['UPLOAD_DIR']
+                                if '/uploads/' in message.attachment_path:
+                                    relative_path = message.attachment_path.split('/uploads/', 1)[-1]
+                                    file_path = os.path.join(base_upload_dir, relative_path)
+                                    if os.path.exists(file_path):
+                                        os.remove(file_path)
+                            except Exception as e:
+                                print(f"Error deleting file: {e}")
+
                         delete_query = text("DELETE FROM application_messages WHERE id = :id")
                         conn.execute(delete_query, {"id": message_id})
 

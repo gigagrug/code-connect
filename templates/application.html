@@ -5,123 +5,325 @@
 {% endblock %}
 
 {% block content %}
-  <div class="container mx-auto px-4 py-12">
+  <div class="container mx-auto max-w-7xl px-4 py-8">
+    
+    <!-- Header -->
+    <div class="mb-8">
+      <h1 class="text-3xl font-bold text-neutral-900 dark:text-white">Application Review</h1>
+      <p class="text-neutral-500 dark:text-neutral-400">
+        Applying for <a href="/job/{{ application.job_id }}" class="font-medium text-blue-600 hover:underline">{{ application.job_title }}</a>
+      </p>
+    </div>
+
     <div class="grid grid-cols-1 gap-8 lg:grid-cols-3">
-      <div class="lg:col-span-2">
-        <div class="mx-auto w-full overflow-hidden rounded-lg border border-neutral-200 bg-white shadow-sm dark:border-neutral-700 dark:bg-neutral-800">
-          <div class="p-8 md:p-12">
-            <h1 class="mb-2 text-4xl font-extrabold md:text-5xl">Application for: {{ application.job_title }}</h1>
-            <p class="text-lg text-gray-500 dark:text-gray-400">From: <strong class="text-gray-700 dark:text-gray-300">{{ application.applicant_name or application.applicant_email }}</strong></p>
+      
+      <!-- Left Column: Application Details -->
+      <div class="lg:col-span-2 space-y-6">
+        <div class="overflow-hidden rounded-2xl border border-neutral-200 bg-white shadow-sm dark:border-neutral-800 dark:bg-neutral-900">
+          <div class="p-8">
+            <div class="flex items-start justify-between mb-6">
+                <div>
+                    <h2 class="text-2xl font-bold text-neutral-900 dark:text-white">{{ application.applicant_name or 'Unknown Applicant' }}</h2>
+                    <p class="text-sm text-neutral-500 dark:text-neutral-400">{{ application.applicant_email }}</p>
+                </div>
+                <div class="rounded-full bg-blue-100 p-3 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400">
+                    <i data-lucide="user" class="h-6 w-6"></i>
+                </div>
+            </div>
 
-            <div class="mt-6 space-y-4 border-t pt-6 dark:border-gray-700">
-              {% if application.resume_path %}
-                <a href="{{ application.resume_path }}" target="_blank" class="btn-primary">View Resume</a>
-              {% else %}
-                <p class="text-gray-500 italic">No resume provided.</p>
-              {% endif %}
+            <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                <!-- Resume Card -->
+                <div class="rounded-xl border border-neutral-200 bg-neutral-50 p-4 dark:border-neutral-700 dark:bg-neutral-800/50">
+                    <div class="flex items-center gap-3 mb-3">
+                        <div class="rounded-lg bg-white p-2 shadow-sm dark:bg-neutral-700">
+                            <i data-lucide="file-text" class="h-5 w-5 text-red-500"></i>
+                        </div>
+                        <span class="font-semibold text-neutral-900 dark:text-white">Resume</span>
+                    </div>
+                    {% if application.resume_path %}
+                        <a href="{{ application.resume_path }}" target="_blank" class="flex items-center justify-center gap-2 w-full rounded-lg bg-white border border-neutral-200 py-2 text-sm font-bold text-neutral-700 hover:bg-neutral-50 dark:bg-neutral-700 dark:border-neutral-600 dark:text-white dark:hover:bg-neutral-600">
+                            View Document <i data-lucide="external-link" class="h-3 w-3"></i>
+                        </a>
+                    {% else %}
+                        <button disabled class="w-full rounded-lg border border-dashed border-neutral-300 py-2 text-sm text-neutral-400 cursor-not-allowed dark:border-neutral-600">Not Provided</button>
+                    {% endif %}
+                </div>
 
-              {% if application.cover_letter_path %}
-                <a href="{{ application.cover_letter_path }}" target="_blank" class="btn-secondary">View Cover Letter</a>
-              {% else %}
-                <p class="text-gray-500 italic">No cover letter provided.</p>
-              {% endif %}
+                <!-- Cover Letter Card -->
+                <div class="rounded-xl border border-neutral-200 bg-neutral-50 p-4 dark:border-neutral-700 dark:bg-neutral-800/50">
+                    <div class="flex items-center gap-3 mb-3">
+                        <div class="rounded-lg bg-white p-2 shadow-sm dark:bg-neutral-700">
+                            <i data-lucide="align-left" class="h-5 w-5 text-blue-500"></i>
+                        </div>
+                        <span class="font-semibold text-neutral-900 dark:text-white">Cover Letter</span>
+                    </div>
+                    {% if application.cover_letter_path %}
+                        <a href="{{ application.cover_letter_path }}" target="_blank" class="flex items-center justify-center gap-2 w-full rounded-lg bg-white border border-neutral-200 py-2 text-sm font-bold text-neutral-700 hover:bg-neutral-50 dark:bg-neutral-700 dark:border-neutral-600 dark:text-white dark:hover:bg-neutral-600">
+                            View Document <i data-lucide="external-link" class="h-3 w-3"></i>
+                        </a>
+                    {% else %}
+                        <button disabled class="w-full rounded-lg border border-dashed border-neutral-300 py-2 text-sm text-neutral-400 cursor-not-allowed dark:border-neutral-600">Not Provided</button>
+                    {% endif %}
+                </div>
             </div>
           </div>
         </div>
       </div>
 
+      <!-- Right Column: Chat -->
       <div class="lg:col-span-1">
-        <div class="flex h-[70vh] flex-col rounded-lg border border-neutral-200 bg-white p-4 shadow-sm dark:border-neutral-700 dark:bg-neutral-800">
-          <h3 class="mb-4 border-b pb-2 text-center text-xl font-semibold dark:border-gray-600">Application Chat</h3>
-          <div id="chat-messages" class="flex-grow space-y-4 overflow-y-auto pr-2">
+        <div class="flex h-[600px] flex-col overflow-hidden rounded-2xl border border-neutral-200 bg-white shadow-sm dark:border-neutral-800 dark:bg-neutral-900">
+          <div class="border-b border-neutral-100 bg-neutral-50 p-4 dark:border-neutral-800 dark:bg-neutral-800/50">
+            <h3 class="font-bold text-neutral-900 dark:text-white flex items-center gap-2">
+                <i data-lucide="message-square" class="h-4 w-4 text-blue-500"></i> Discussion
+            </h3>
+          </div>
+          
+          <div id="chat-messages" class="flex-grow space-y-4 overflow-y-auto p-4 bg-white dark:bg-neutral-900">
             {% for msg in chat_history %}
-              <div id="message-{{ msg.message_id }}" class="{% if msg.email == session.email %}items-end{% else %}items-start{% endif %} flex flex-col">
-                <div class="flex items-center gap-2">
-                  {% if msg.email == session.email %}
-                    <button class="delete-btn text-xs text-gray-400 hover:text-red-500" data-message-id="{{ msg.message_id }}">&times;</button>
+              <div id="message-{{ msg.message_id }}" class="flex flex-col {% if msg.email == session.email %}items-end{% else %}items-start{% endif %}">
+                <div class="flex items-center gap-2 mb-1">
+                  <span class="text-xs font-medium text-neutral-500 dark:text-neutral-400">{{ msg.email.split('@')[0] }}</span>
+                  <span class="text-[10px] text-neutral-400">{{ msg.timestamp.strftime("%I:%M %p") }}</span>
+                   {% if msg.email == session.email %}
+                    <button class="delete-btn opacity-0 hover:opacity-100 transition-opacity text-neutral-400 hover:text-red-500" data-message-id="{{ msg.message_id }}">
+                        <i data-lucide="trash-2" class="h-3 w-3"></i>
+                    </button>
                   {% endif %}
-                  <div class="text-xs text-gray-500 dark:text-gray-400">{{ msg.email }} <span class="ml-2 text-gray-400">{{ msg.timestamp.strftime("%b %d, %I:%M %p") }}</span></div>
                 </div>
-                <div class="message-body {% if msg.email == session.email %}bg-blue-600 text-white{% else %}bg-gray-100 dark:bg-gray-700{% endif %} max-w-xs rounded-lg p-2 break-words">{{ msg.message_ }}</div>
+                <div class="max-w-[85%] rounded-2xl px-4 py-2 text-sm {% if msg.email == session.email %}bg-blue-600 text-white rounded-br-none{% else %}bg-neutral-100 text-neutral-800 dark:bg-neutral-800 dark:text-neutral-200 rounded-bl-none{% endif %}">
+                  {{ msg.message_text }}
+
+                  <!-- HISTORICAL ATTACHMENTS LOGIC -->
+                  {% if msg.attachment_path %}
+                    {% set original_filename = msg.attachment_path.split('/')[-1] %}
+                    {% set extension = original_filename.split('.')[-1].lower() %}
+                    <div class="mt-2 pt-2 border-t border-white/20">
+                        {% if extension in ['jpg', 'jpeg', 'png', 'gif', 'webp'] %}
+                            <a href="{{ msg.attachment_path }}" target="_blank">
+                                <img src="{{ msg.attachment_path }}" alt="Chat Attachment" class="max-w-[150px] rounded-lg h-auto" />
+                            </a>
+                        {% elif extension == 'docx' %}
+                             <button type="button" class="flex items-center gap-1 text-xs underline hover:no-underline font-bold" popovertarget="file-viewer-popover" onclick="viewDocx('{{ msg.attachment_path }}', '{{ original_filename }}')">
+                                <i data-lucide="file-type-2" class="h-3 w-3"></i> View {{ original_filename }}
+                             </button>
+                        {% elif extension in ['xlsx', 'xls'] %}
+                             <button type="button" class="flex items-center gap-1 text-xs underline hover:no-underline font-bold" popovertarget="file-viewer-popover" onclick="viewExcel('{{ msg.attachment_path }}', '{{ original_filename }}')">
+                                <i data-lucide="sheet" class="h-3 w-3"></i> View {{ original_filename }}
+                             </button>
+                        {% else %}
+                            <a href="{{ msg.attachment_path }}" target="_blank" class="flex items-center gap-1 text-xs underline hover:no-underline font-bold">
+                                <i data-lucide="paperclip" class="h-3 w-3"></i> View {{ original_filename }}
+                            </a>
+                        {% endif %}
+                    </div>
+                  {% endif %}
+                  <!-- END ATTACHMENTS LOGIC -->
+
+                </div>
               </div>
             {% endfor %}
           </div>
-          <div class="mt-4 border-t pt-4 dark:border-gray-600">
-            <form id="chat-form" class="flex items-center gap-2">
-              <input type="text" id="message-input" placeholder="Type a message..." class="w-full rounded-lg border border-neutral-300 p-2 placeholder:text-neutral-500 dark:border-neutral-700" autocomplete="off" required />
-              <button type="submit" class="flex-shrink-0 rounded-lg bg-blue-600 p-2 text-white">Send</button>
+          
+          <div class="border-t border-neutral-100 p-4 dark:border-neutral-800 bg-neutral-50 dark:bg-neutral-800/30">
+            <form id="chat-form" class="flex flex-col gap-2">
+              <div class="relative">
+                <input type="text" id="message-input" placeholder="Type a message..." class="w-full rounded-xl border border-neutral-300 bg-white p-3 pr-12 text-sm focus:border-blue-600 focus:outline-none focus:ring-1 focus:ring-blue-600 dark:border-neutral-700 dark:bg-neutral-900 dark:text-white" autocomplete="off" />
+                <button type="submit" class="absolute right-2 top-2 rounded-lg bg-blue-600 p-1.5 text-white hover:bg-blue-700 transition">
+                  <i data-lucide="send" class="h-4 w-4"></i>
+                </button>
+              </div>
+              <input type="file" id="chat-file-input" class="text-xs text-neutral-500 file:mr-2 file:rounded-lg file:border-0 file:bg-white file:px-2 file:py-1 file:text-xs file:font-bold hover:file:bg-neutral-200 dark:file:bg-neutral-900 dark:file:text-neutral-300" />
             </form>
           </div>
         </div>
       </div>
+
     </div>
   </div>
 
+  <!-- POPOVERS (File Viewer) -->
+  <div id="file-viewer-popover" popover class="m-auto w-full max-w-4xl rounded-2xl border border-neutral-200 bg-white shadow-2xl backdrop:bg-neutral-900/50 backdrop:backdrop-blur-sm dark:border-neutral-800 dark:bg-neutral-900">
+    <div class="flex flex-wrap items-center justify-between gap-4 border-b border-neutral-100 p-6 dark:border-neutral-800">
+      <h3 id="file-viewer-title" class="text-xl font-bold text-neutral-900 dark:text-white">File Viewer</h3>
+      <div class="flex items-center gap-4">
+        <a id="file-viewer-download" href="#" download="file" class="rounded-lg bg-neutral-100 px-3 py-1.5 text-xs font-bold text-neutral-700 hover:bg-neutral-200 dark:bg-neutral-800 dark:text-neutral-300">Download</a>
+        <button popovertarget="file-viewer-popover" popovertargetaction="hide" class="rounded-full p-1 text-neutral-400 hover:bg-neutral-100 hover:text-neutral-600 dark:hover:bg-neutral-800">
+            <i data-lucide="x" class="h-5 w-5"></i>
+        </button>
+      </div>
+    </div>
+    <div id="file-viewer-content" class="overflow-auto p-6 h-[60vh]"></div>
+  </div>
+
   <script>
+    // File Viewer Logic
+    const rootUrl = "{{ request.url_root.rstrip('/') }}";
+    const titleEl = document.getElementById("file-viewer-title");
+    const contentEl = document.getElementById("file-viewer-content");
+    const downloadBtn = document.getElementById("file-viewer-download");
+
+    async function viewDocx(url, filename) {
+      const fullUrl = rootUrl + url;
+      titleEl.textContent = filename;
+      contentEl.innerHTML = '<p class="text-center text-neutral-500">Loading document...</p>';
+      downloadBtn.href = fullUrl;
+      downloadBtn.setAttribute("download", filename);
+      try {
+        const response = await fetch(fullUrl);
+        const blob = await response.blob();
+        contentEl.innerHTML = "";
+        window.docx.renderAsync(blob, contentEl);
+      } catch (error) {
+        contentEl.innerHTML = '<p class="text-center text-red-500">Could not load document.</p>';
+      }
+    }
+
+    async function viewExcel(url, filename) {
+      const fullUrl = rootUrl + url;
+      titleEl.textContent = filename;
+      contentEl.innerHTML = '<p class="text-center text-neutral-500">Loading workbook...</p>';
+      downloadBtn.href = fullUrl;
+      downloadBtn.setAttribute("download", filename);
+      try {
+        const response = await fetch(fullUrl);
+        const arrayBuffer = await response.arrayBuffer();
+        const data = new Uint8Array(arrayBuffer);
+        const workbook = XLSX.read(data, { type: "array" });
+        const sheetName = workbook.SheetNames[0];
+        const worksheet = workbook.Sheets[sheetName];
+        const htmlTable = XLSX.utils.sheet_to_html(worksheet);
+        contentEl.innerHTML = htmlTable;
+        const table = contentEl.querySelector("table");
+        if (table) {
+          table.className = "w-full text-sm text-left text-neutral-600 dark:text-neutral-400 border-collapse";
+          table.querySelectorAll("td, th").forEach(c => c.className = "border border-neutral-200 p-2 dark:border-neutral-700");
+        }
+      } catch (error) {
+        contentEl.innerHTML = '<p class="text-center text-red-500">Could not load workbook.</p>';
+      }
+    }
+
     document.addEventListener("DOMContentLoaded", () => {
       const applicationId = "{{ application.id }}";
       const currentUserEmail = "{{ session.email }}";
       const messagesContainer = document.getElementById("chat-messages");
       const chatForm = document.getElementById("chat-form");
       const messageInput = document.getElementById("message-input");
+      const fileInput = document.getElementById("chat-file-input");
       const socket = io();
 
+      // Scroll to bottom on load
       if (messagesContainer) {
         messagesContainer.scrollTop = messagesContainer.scrollHeight;
       }
 
-      // 1. Join the correct room
+      // Socket events
       socket.on("connect", () => socket.emit("join_application_room", { application_id: applicationId }));
 
-      // 2. Listen for new messages
       socket.on("application_message_broadcast", (data) => {
         const isCurrentUser = data.email === currentUserEmail;
-        const msgContainer = document.createElement("div");
-        msgContainer.id = `message-${data.message_id}`;
-        msgContainer.className = `flex flex-col ${isCurrentUser ? "items-end" : "items-start"}`;
+        const msgDiv = document.createElement("div");
+        msgDiv.id = `message-${data.message_id}`;
+        msgDiv.className = `flex flex-col ${isCurrentUser ? "items-end" : "items-start"}`;
 
-        let deleteBtnHtml = isCurrentUser ? `<button class="delete-btn text-xs text-gray-400 hover:text-red-500" data-message-id="${data.message_id}">&times;</button>` : "";
+        // Use the string directly, do not use new Date()
+        const timeString = data.timestamp;
+        const name = data.email.split('@')[0];
 
-        const infoDiv = document.createElement("div");
-        infoDiv.className = "flex items-center gap-2";
-        infoDiv.innerHTML = `${deleteBtnHtml}<div class="text-xs text-gray-500 dark:text-gray-400">${data.email} <span class="ml-2 text-gray-400">${data.timestamp}</span></div>`;
+        const trashIcon = `<svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-trash-2 h-3 w-3"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/><line x1="10" x2="10" y1="11" y2="17"/><line x1="14" x2="14" y1="11" y2="17"/></svg>`;
 
-        const messageBody = document.createElement("div");
-        messageBody.className = `message-body rounded-lg p-2 max-w-xs break-words ${isCurrentUser ? "bg-blue-600 text-white" : "bg-gray-100 dark:bg-gray-700"}`;
-        messageBody.textContent = data.message;
-        // (Add attachment logic here if needed)
+        let metaHtml = `
+            <div class="flex items-center gap-2 mb-1">
+                <span class="text-xs font-medium text-neutral-500 dark:text-neutral-400">${name}</span>
+                <span class="text-[10px] text-neutral-400">${timeString}</span>
+                ${isCurrentUser ? `<button class="delete-btn opacity-0 hover:opacity-100 transition-opacity text-neutral-400 hover:text-red-500" data-message-id="${data.message_id}">${trashIcon}</button>` : ''}
+            </div>
+        `;
 
-        msgContainer.appendChild(infoDiv);
-        msgContainer.appendChild(messageBody);
-        messagesContainer.appendChild(msgContainer);
-        messagesContainer.scrollTop = messagesContainer.scrollHeight;
-      });
+        let bubbleClass = isCurrentUser 
+            ? "bg-blue-600 text-white rounded-br-none" 
+            : "bg-neutral-100 text-neutral-800 dark:bg-neutral-800 dark:text-neutral-200 rounded-bl-none";
 
-      // 3. Listen for deleted messages
-      socket.on("application_message_deleted", (data) => {
-        const msgElement = document.getElementById(`message-${data.message_id}`);
-        if (msgElement) {
-          msgElement.remove();
+        let bodyHtml = `
+            <div class="max-w-[85%] rounded-2xl px-4 py-2 text-sm ${bubbleClass}">
+                ${data.message}
+            </div>
+        `;
+
+        // JS Logic for new socket messages (Attachments)
+        if (data.attachment_path) {
+             const original_filename = data.attachment_path.split("/").pop();
+             const extension = original_filename.split(".").pop().toLowerCase();
+             
+             // Note: We construct this as a DOM element to append to bodyHtml logic more cleanly or just inject HTML string
+             // For simplicity in this hybrid block, let's create a container div in the string
+             let attachHtml = '<div class="mt-2 pt-2 border-t border-white/20">';
+             
+             if (["jpg", "jpeg", "png", "gif", "webp"].includes(extension)) {
+                attachHtml += `<a href="${data.attachment_path}" target="_blank"><img src="${data.attachment_path}" alt="Chat Attachment" class="max-w-[150px] rounded-lg h-auto" /></a>`;
+             } else if (extension === 'docx') {
+                attachHtml += `<button type="button" class="flex items-center gap-1 text-xs underline hover:no-underline font-bold" popovertarget="file-viewer-popover" onclick="viewDocx('${data.attachment_path}', '${original_filename}')"><i data-lucide="file-type-2" class="h-3 w-3"></i> View ${original_filename}</button>`;
+             } else if (['xlsx', 'xls'].includes(extension)) {
+                attachHtml += `<button type="button" class="flex items-center gap-1 text-xs underline hover:no-underline font-bold" popovertarget="file-viewer-popover" onclick="viewExcel('${data.attachment_path}', '${original_filename}')"><i data-lucide="sheet" class="h-3 w-3"></i> View ${original_filename}</button>`;
+             } else {
+                attachHtml += `<a href="${data.attachment_path}" target="_blank" class="flex items-center gap-1 text-xs underline hover:no-underline font-bold"><i data-lucide="paperclip" class="h-3 w-3"></i> View ${original_filename}</a>`;
+             }
+             attachHtml += '</div>';
+             
+             // Inject into body
+             // Using regex replace to insert before closing div is brittle, better to reconstruct
+             bodyHtml = `
+                <div class="max-w-[85%] rounded-2xl px-4 py-2 text-sm ${bubbleClass}">
+                    ${data.message}
+                    ${attachHtml}
+                </div>
+             `;
         }
+
+        msgDiv.innerHTML = metaHtml + bodyHtml;
+        messagesContainer.appendChild(msgDiv);
+        messagesContainer.scrollTop = messagesContainer.scrollHeight;
+        if (window.lucide) window.lucide.createIcons();
       });
 
-      // 4. Add delete click listener
+      socket.on("application_message_deleted", (data) => {
+        const el = document.getElementById(`message-${data.message_id}`);
+        if (el) el.remove();
+      });
+
+      // Event delegation for delete
       messagesContainer.addEventListener("click", (e) => {
-        if (e.target.classList.contains("delete-btn")) {
-          const messageId = e.target.dataset.messageId;
-          if (confirm("Are you sure you want to delete this message?")) {
-            socket.emit("delete_application_message", { message_id: messageId });
+        const btn = e.target.closest('.delete-btn');
+        if (btn) {
+          if (confirm("Delete this message?")) {
+            socket.emit("delete_application_message", { message_id: btn.dataset.messageId });
           }
         }
       });
 
-      // 5. Send a new message
       chatForm.addEventListener("submit", (e) => {
         e.preventDefault();
-        const message = messageInput.value.trim();
-        if (message) {
-          socket.emit("new_application_message", { application_id: applicationId, message: message });
-          messageInput.value = "";
+        const val = messageInput.value.trim();
+        const file = fileInput.files[0];
+
+        if (!val && !file) return;
+
+        const payload = { application_id: applicationId, message: val };
+
+        if (file) {
+            const reader = new FileReader();
+            reader.onload = (event) => {
+              payload.file = event.target.result;
+              payload.filename = file.name;
+              socket.emit("new_application_message", payload);
+              messageInput.value = "";
+              fileInput.value = null;
+            };
+            reader.readAsDataURL(file);
+        } else {
+            socket.emit("new_application_message", payload);
+            messageInput.value = "";
         }
       });
     });

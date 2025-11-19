@@ -4,37 +4,56 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <link href="/static/output.css" rel="stylesheet" />
+    <script src="https://unpkg.com/lucide@latest"></script>
     <script src="/static/theme.js"></script>
     {% block head %}{% endblock %}
     <title>Code Connect</title>
+    <style>
+        .blob {
+            position: absolute;
+            filter: blur(40px);
+            z-index: -1;
+            opacity: 0.4;
+        }
+    </style>
   </head>
-  <body class="bg-white text-black dark:bg-black dark:text-white">
-    <nav class="border-b border-b-neutral-200 px-12 dark:border-b-neutral-800">
-      <div class="mx-auto flex flex-wrap items-center justify-between p-4">
-        <a href="/" class="flex items-center space-x-3 rtl:space-x-reverse">
-          <span class="text-2xl font-bold">Code<span class="text-blue-600">Connect</span> </span>
+  <body class="bg-white text-black dark:bg-neutral-950 dark:text-white flex flex-col min-h-screen">
+    <nav class="border-b border-b-neutral-200 dark:border-b-neutral-800 bg-white/80 dark:bg-neutral-900/80 backdrop-blur-md sticky top-0 z-50">
+      <div class="container mx-auto px-6 py-4 flex flex-wrap items-center justify-between">
+        <a href="/" class="flex items-center gap-2">
+           <div class="w-8 h-8 bg-gradient-to-br from-blue-600 to-emerald-500 rounded-lg flex items-center justify-center text-white font-bold">C</div>
+          <span class="text-2xl font-bold text-neutral-900 dark:text-white">Code<span class="text-blue-600">Connect</span></span>
         </a>
-        <ul class="flex flex-row space-x-4 font-medium">
-          {% if 'email' in session %}
-            {% if session['email'] and session.get('role') in [3] %}
-              <a href="/jobs">Jobs</a>
+        <div class="flex items-center gap-6 font-medium text-sm">
+          <ul class="flex flex-row space-x-6 items-center text-neutral-600 dark:text-neutral-300">
+            {% if 'email' in session %}
+              {% if session['email'] and session.get('role') in [3] %}
+                <a href="/jobs" class="hover:text-blue-600 dark:hover:text-blue-400">Jobs</a>
+              {% endif %}
+              <a href="/profile" class="hover:text-blue-600 dark:hover:text-blue-400">Profile</a>
+              {% if session['email'] and session.get('role') in [0] %}
+                <a href="/userMgt" class="hover:text-blue-600 dark:hover:text-blue-400">UserMgt</a>
+              {% endif %}
+            {% else %}
+              <a href="/register" class="hover:text-blue-600 dark:hover:text-blue-400">Register</a>
+              <a href="/login" class="hover:text-blue-600 dark:hover:text-blue-400">Login</a>
             {% endif %}
-            <a href="/profile">Profile</a>
-            {% if session['email'] and session.get('role') in [0] %}
-              <a href="/userMgt">UserMgt</a>
-            {% endif %}
-          {% else %}
-            <a href="/register">Register</a>
-            <a href="/login">Login</a>
-          {% endif %}
-          <button onclick="theme()" class="cursor-pointer">Theme</button>
-        </ul>
+          </ul>
+          <div class="h-6 w-px bg-neutral-200 dark:bg-neutral-800 hidden sm:block"></div>
+          <button onclick="theme()" class="p-2 text-neutral-500 dark:text-neutral-400 hover:bg-neutral-100 dark:hover:bg-neutral-800 rounded-full cursor-pointer outline-none" aria-label="Toggle Dark Mode">
+            <i data-lucide="moon" class="w-5 h-5 block dark:hidden"></i>
+            <i data-lucide="sun" class="w-5 h-5 hidden dark:block"></i>
+          </button>
+        </div>
       </div>
     </nav>
-    <div>
+    <div class="flex-grow">
       {% block content %}
         <p>This is the default content from the shell. It will be replaced by other templates.</p>
       {% endblock %}
     </div>
+    <script>
+        lucide.createIcons();
+    </script>
   </body>
 </html>

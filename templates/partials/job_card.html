@@ -1,10 +1,8 @@
-<div class="rounded-lg border border-neutral-200 bg-white p-6 shadow-sm dark:border-neutral-700 dark:bg-neutral-800">
-  <a href="/job/{{ job.id }}" class="hover:underline">
-    <h3 class="mb-2 text-2xl font-semibold">{{ job.title }}</h3>
-  </a>
-  <p class="mb-4 text-sm text-gray-500 dark:text-gray-400">
-    Posted by:
-    <a href="/business/{{ job.user_id }}" class="font-medium text-blue-600 hover:underline dark:text-blue-400"> {{ job.user_name }} </a>
-  </p>
-  <p class="mb-4 line-clamp-3">{{ job.description }}</p>
-</div>
+<tr class="group cursor-pointer hover:bg-neutral-50 dark:hover:bg-neutral-800/50" onclick="window.location.href='/job/{{ job.id }}'">
+  <td class="px-6 py-4">
+    <div class="font-semibold text-neutral-900 dark:text-white">{{ job.title }}</div>
+  </td>
+  <td class="px-6 py-4">
+    <div class="max-w-md truncate text-sm text-neutral-600 dark:text-neutral-400">{{ job.description }}</div>
+  </td>
+</tr>

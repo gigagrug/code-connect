@@ -1,137 +1,243 @@
 {% extends "./layouts/shell.html" %}
 
 {% block content %}
-  <form action="/profile/update" method="POST">
-    <div class="mx-auto mt-10 max-w-xl rounded-lg border border-neutral-200 bg-white p-5 shadow-sm dark:border-neutral-700 dark:bg-neutral-800">
-      <h2 class="text-3xl font-bold">Welcome, <span class="text-blue-600">{{ session.email }}</span>!</h2>
-      <div class="p-4">
-        <h3 class="text-xl font-semibold">Account Details</h3>
-        <p class="text"><strong>Email:</strong> {{ session.email }}</p>
-        <p class="text">
-          <strong>Role:</strong>
-          {% if session.role == 0 %}
-            Instructor
-          {% elif session.role == 1 %}
-            Business
-          {% elif session.role == 2 %}
-            Alumni
-          {% elif session.role == 3 %}
-            Student
-          {% endif %}
-        </p>
-
-        <div class="mt-4">
-          <label for="name" class="mb-1 block text-sm font-medium">Display Name</label>
-          <input type="text" name="name" id="name" class="w-full rounded-lg border border-neutral-300 bg-white p-2 text-sm placeholder:text-neutral-500 dark:border-neutral-700 dark:bg-neutral-800" value="{{ user_data.name or '' }}" placeholder="Your Name or Company" />
+<!-- Max width constrained to 3xl for a focused, vertical layout that doesn't stretch too wide -->
+<div class="container mx-auto max-w-3xl px-4 py-10">
+  
+  <div class="space-y-8">
+    
+    <!-- Main Profile Card -->
+    <div class="overflow-hidden rounded-2xl border border-neutral-200 bg-white shadow-sm dark:border-neutral-800 dark:bg-neutral-900">
+      <!-- Gradient Header -->
+      <div class="h-32 bg-gradient-to-r from-blue-600 to-blue-400"></div>
+      
+      <div class="px-8 pb-8">
+        <!-- Avatar -->
+        <div class="relative -mt-12 mb-6 flex justify-center">
+          <div class="flex h-24 w-24 items-center justify-center rounded-full border-4 border-white bg-neutral-100 text-3xl font-bold text-neutral-500 shadow-md dark:border-neutral-900 dark:bg-neutral-800 dark:text-neutral-400">
+            {{ session.email[0] | upper }}
+          </div>
+        </div>
+        
+        <!-- User Details Header -->
+        <div class="text-center mb-8">
+          <h1 class="text-3xl font-bold text-neutral-900 dark:text-white">{{ user_data.name or session.email.split('@')[0] }}</h1>
+          <div class="mt-2 inline-flex items-center rounded-full bg-neutral-100 px-3 py-1 text-sm font-medium text-neutral-600 dark:bg-neutral-800 dark:text-neutral-300">
+            {% if session.role == 0 %} Instructor
+            {% elif session.role == 1 %} Business
+            {% elif session.role == 2 %} Alumni
+            {% elif session.role == 3 %} Student
+            {% endif %}
+          </div>
+          <p class="mt-2 text-sm text-neutral-500 dark:text-neutral-400">{{ session.email }}</p>
         </div>
 
-        {% if session.role == 1 %}
-          <p class="mt-4">
-            <strong>Public Profile:</strong>
-            <a href="/business/{{ session.user_id }}" class="underline"> Public Profile </a>
-          </p>
-          <div class="mt-2">
-            <label for="bio" class="mb-1 block text-sm font-medium">Bio</label>
-            <textarea name="bio" id="bio" class="min-h-[80px] w-full rounded-lg border border-neutral-300 bg-white p-2 text-sm placeholder:text-neutral-500 dark:border-neutral-700 dark:bg-neutral-800" placeholder="Tell us about your company or yourself.">{{ user_data.bio or '' }}</textarea>
+        <!-- Edit Profile Form -->
+        <form action="/profile/update" method="POST" class="space-y-6">
+          <div>
+            <label for="name" class="mb-1.5 block text-sm font-bold text-neutral-700 dark:text-neutral-300">Display Name</label>
+            <div class="relative">
+              <input type="text" name="name" id="name" value="{{ user_data.name or '' }}" class="w-full rounded-xl border border-neutral-200 bg-transparent p-3 pl-10 text-sm placeholder:text-neutral-400 focus:border-blue-600 focus:outline-none focus:ring-1 focus:ring-blue-600 dark:border-neutral-700 dark:bg-neutral-800 dark:text-white" placeholder="Your Name" />
+              <i data-lucide="user" class="absolute left-3 top-3.5 h-4 w-4 text-neutral-400"></i>
+            </div>
           </div>
-        {% endif %}
-        {% if session.role == 3 %}
-          {% if student_info.instructor_id %}
-            <p class="mt-4"><strong>Assigned Instructor:</strong> {{ student_info.instructor_email }}</p>
+
+          {% if session.role == 1 %}
+            <div>
+              <label for="bio" class="mb-1.5 block text-sm font-bold text-neutral-700 dark:text-neutral-300">Bio</label>
+              <textarea name="bio" id="bio" class="min-h-[100px] w-full rounded-xl border border-neutral-200 bg-transparent p-3 text-sm placeholder:text-neutral-400 focus:border-blue-600 focus:outline-none focus:ring-1 focus:ring-blue-600 dark:border-neutral-700 dark:bg-neutral-800 dark:text-white" placeholder="Company description...">{{ user_data.bio or '' }}</textarea>
+            </div>
+            <div class="pt-1 text-right">
+              <a href="/business/{{ session.user_id }}" class="text-sm font-medium text-blue-600 hover:underline dark:text-blue-400">View Public Profile &rarr;</a>
+            </div>
           {% endif %}
-          <div class="mt-2">
-            <label for="graduation" class="mb-1 block text-sm font-medium">Graduation Year</label>
-            <input type="text" name="graduation" id="graduation" class="w-full rounded-lg border border-neutral-300 bg-white p-2 text-sm placeholder:text-neutral-500 dark:border-neutral-700 dark:bg-neutral-800" value="{{ student_info.graduation or '' }}" placeholder="e.g., 2026" />
+
+          {% if session.role == 3 %}
+            {% if student_info.instructor_id %}
+              <div class="rounded-xl bg-blue-50 p-4 text-sm text-blue-800 border border-blue-100 dark:bg-blue-900/20 dark:border-blue-900/30 dark:text-blue-300">
+                <span class="font-bold block mb-1">Assigned Instructor</span> 
+                {{ student_info.instructor_email }}
+              </div>
+            {% endif %}
+            <div>
+              <label for="graduation" class="mb-1.5 block text-sm font-bold text-neutral-700 dark:text-neutral-300">Graduation Year</label>
+              <div class="relative">
+                <input type="text" name="graduation" id="graduation" value="{{ student_info.graduation or '' }}" class="w-full rounded-xl border border-neutral-200 bg-transparent p-3 pl-10 text-sm placeholder:text-neutral-400 focus:border-blue-600 focus:outline-none focus:ring-1 focus:ring-blue-600 dark:border-neutral-700 dark:bg-neutral-800 dark:text-white" placeholder="2026" />
+                <i data-lucide="graduation-cap" class="absolute left-3 top-3.5 h-4 w-4 text-neutral-400"></i>
+              </div>
+            </div>
+          {% endif %}
+
+          <div class="pt-4 flex flex-col-reverse sm:flex-row items-center justify-between gap-4 border-t border-neutral-100 dark:border-neutral-800 mt-6">
+              <button type="button" popovertarget="logout-modal" class="text-sm font-bold text-red-600 hover:text-red-700 transition flex items-center gap-2">
+                  <i data-lucide="log-out" class="h-4 w-4"></i> Log Out
+              </button>
+              <button type="submit" class="w-full sm:w-auto rounded-xl bg-neutral-900 px-8 py-2.5 text-sm font-bold text-white transition hover:bg-neutral-700 dark:bg-white dark:text-neutral-900 dark:hover:bg-neutral-200">
+                Save Changes
+              </button>
           </div>
-        {% endif %}
-      </div>
-
-      <div class="mt-4">
-        <button type="submit" class="w-full rounded-lg bg-green-600 px-4 py-2 text-center font-bold text-white transition duration-300 ease-in-out hover:bg-green-700">Update Profile</button>
-      </div>
-
-      <div class="mt-2">
-        <a href="/logout" class="block w-full rounded-lg bg-red-500 px-4 py-2 text-center font-bold text-white transition duration-300 ease-in-out hover:bg-red-600"> Log Out </a>
+        </form>
       </div>
     </div>
-  </form>
 
-  <div class="mx-auto mt-5 mb-12 max-w-xl rounded-lg border border-neutral-200 bg-white p-5 shadow-sm dark:border-neutral-700 dark:bg-neutral-800">
-    <h3 class="mb-4 text-2xl font-semibold">Contact Admin</h3>
-    <p class="mb-4 text-sm text-gray-500 dark:text-gray-400">Have an issue or a request? Send a message directly to the site administrators.</p>
-    <form action="/message/admin" method="POST">
-      <div class="mb-4">
-        <label for="admin_message" class="mb-2 block text-sm font-medium">Your Message</label>
-        <textarea name="message" id="admin_message" class="field-sizing-content min-h-[100px] w-full rounded-lg border border-neutral-300 p-2 placeholder:text-neutral-500 dark:border-neutral-700" placeholder="Please describe your issue or request..." required></textarea>
-      </div>
-      <button type="submit" class="w-full rounded-lg bg-blue-700 px-5 py-2.5 text-center text-sm font-medium text-white hover:bg-blue-800">Send Message</button>
-    </form>
-  </div>
-
-  {% if session.role == 3 %}
-    {% if not student_info.instructor_id %}
-      <div class="mx-auto mt-5 mb-12 max-w-xl rounded-lg border border-neutral-200 bg-white p-5 shadow-sm dark:border-neutral-700 dark:bg-neutral-800">
-        <h3 class="mb-4 text-center text-2xl font-semibold">Join an Instructor</h3>
-        {% if pending_request %}
-          <p class="text-center">Your request to join D<strong>{{ pending_request.instructor_email }}</strong> is pending.</p>
-          <form action="/request/cancel" method="POST" class="mt-4">
-            <button type="submit" class="w-full rounded-lg bg-yellow-500 px-5 py-2.5 text-center text-sm font-medium text-white hover:bg-yellow-600">Cancel Request</button>
-          </form>
-        {% elif instructors %}
-          <p class="mb-4 text-center">You are not currently assigned to an instructor. Send a request to join one.</p>
-          <form action="/request/instructor" method="POST">
-            <div class="mb-4">
-              <label for="instructor_id" class="mb-2 block text-sm font-medium">Select Instructor</label>
-              <select name="instructor_id" id="instructor_id" class="w-full rounded-lg border border-neutral-300 bg-white p-2 shadow-none placeholder:text-neutral-500 dark:border-neutral-700 dark:bg-neutral-800" required>
-                <option value="" disabled selected>Choose an instructor...</option>
-                {% for instructor in instructors %}
-                  <option value="{{ instructor.id }}">{{ instructor.email }}</option>
-                {% endfor %}
-              </select>
-            </div>
-            <button type="submit" class="w-full rounded-lg bg-blue-700 px-5 py-2.5 text-center text-sm font-medium text-white hover:bg-blue-800">Send Request</button>
-          </form>
-        {% endif %}
+    <!-- Role Specific Actions -->
+    {% if session.role == 3 and not student_info.instructor_id %}
+      <div class="rounded-2xl border border-yellow-200 bg-yellow-50 p-6 dark:border-yellow-900/50 dark:bg-yellow-900/10">
+        <div class="flex flex-col sm:flex-row items-start gap-4">
+          <div class="rounded-full bg-yellow-100 p-3 text-yellow-600 dark:bg-yellow-900/30 dark:text-yellow-500">
+            <i data-lucide="user-plus" class="h-6 w-6"></i>
+          </div>
+          <div class="flex-grow w-full">
+            <h3 class="text-lg font-bold text-neutral-900 dark:text-white">Join a Class</h3>
+            {% if pending_request %}
+              <div class="mt-4 flex items-center justify-between rounded-xl bg-white p-4 shadow-sm border border-neutral-100 dark:bg-neutral-800 dark:border-neutral-700">
+                <p class="text-sm text-neutral-600 dark:text-neutral-300">
+                  Request pending for <strong>{{ pending_request.instructor_email }}</strong>
+                </p>
+                <form action="/request/cancel" method="POST">
+                  <button type="submit" class="text-xs font-bold text-red-600 hover:underline">Cancel</button>
+                </form>
+              </div>
+            {% elif instructors %}
+              <p class="mb-4 text-sm text-neutral-600 dark:text-neutral-400">Select an instructor to join their cohort.</p>
+              <form action="/request/instructor" method="POST" class="flex flex-col sm:flex-row gap-3">
+                <div class="relative flex-grow">
+                  <select name="instructor_id" class="w-full appearance-none rounded-xl border border-neutral-300 bg-white p-3 pl-4 pr-10 text-sm focus:border-yellow-500 focus:outline-none focus:ring-1 focus:ring-yellow-500 dark:border-neutral-700 dark:bg-neutral-800" required>
+                    <option value="" disabled selected>Choose instructor...</option>
+                    {% for instructor in instructors %}
+                      <option value="{{ instructor.id }}">{{ instructor.email }}</option>
+                    {% endfor %}
+                  </select>
+                  <i data-lucide="chevron-down" class="absolute right-3 top-3.5 h-4 w-4 text-neutral-400 pointer-events-none"></i>
+                </div>
+                <button type="submit" class="rounded-xl bg-yellow-500 px-6 py-3 text-sm font-bold text-white hover:bg-yellow-600">Send Request</button>
+              </form>
+            {% endif %}
+          </div>
+        </div>
       </div>
     {% endif %}
-  {% endif %}
 
-  <div class="container mx-auto p-4">
     {% if session.role == 0 %}
-      <h2 class="mb-6 text-center text-3xl font-bold">Managed Projects</h2>
-      <div class="grid grid-cols-1 gap-8 md:grid-cols-2 lg:grid-cols-3">
-        {% for project in approved_projects %}
-          {% include "partials/project_card.html" %}
-        {% else %}
-          <p class="col-span-full text-center text-gray-500 dark:text-gray-400">You have not approved or managed any projects yet.</p>
-        {% endfor %}
-      </div>
-
-      <h2 class="my-8 text-center text-3xl font-bold">My Created Projects</h2>
-      <div class="grid grid-cols-1 gap-8 md:grid-cols-2 lg:grid-cols-3">
-        {% for project in created_projects %}
-          {% include "partials/project_card.html" %}
-        {% else %}
-          <p class="col-sspan-full text-center text-gray-500 dark:text-gray-400">You have not created any projects.</p>
-        {% endfor %}
-      </div>
-    {% elif session.role == 2 or session.role == 3 %}
-      <h2 class="mb-6 text-center text-3xl font-bold">My Job Applications</h2>
-      <div class="mx-auto max-w-2xl rounded-lg border border-neutral-200 bg-white p-6 shadow-sm dark:border-neutral-700 dark:bg-neutral-800">
-        <div class="space-y-4">
-          {% for app in applications %}
-            <div class="flex items-center justify-between rounded-lg bg-gray-100 p-4 dark:bg-gray-800">
-              <div>
-                <a href="/job/{{ app.job_id }}" class="font-semibold hover:underline">{{ app.title }}</a>
-                <p class="text-sm text-gray-500 dark:text-gray-400">at {{ app.business_name }}</p>
-              </div>
-              <a href="/application/{{ app.id }}" class="btn-secondary text-sm">View & Chat</a>
+      <div class="space-y-8">
+        
+        <!-- Managed Projects -->
+        <div class="rounded-2xl border border-neutral-200 bg-white p-6 shadow-sm dark:border-neutral-800 dark:bg-neutral-900">
+          <h3 class="mb-6 text-xl font-bold text-neutral-900 dark:text-white flex items-center gap-2">
+            <i data-lucide="clipboard-check" class="h-5 w-5 text-emerald-500"></i> Managed Projects
+          </h3>
+          
+          {% if approved_projects %}
+            <div class="overflow-hidden rounded-xl border border-neutral-200 shadow-sm dark:border-neutral-800">
+                <table class="w-full text-left">
+                    <thead class="bg-neutral-50 border-b border-neutral-200 dark:bg-neutral-800/50 dark:border-neutral-800">
+                        <tr>
+                            <th scope="col" class="px-6 py-4 text-xs font-bold uppercase tracking-wider text-neutral-500 dark:text-neutral-400">Status</th>
+                            <th scope="col" class="px-6 py-4 text-xs font-bold uppercase tracking-wider text-neutral-500 dark:text-neutral-400">Project Name</th>
+                            <th scope="col" class="px-6 py-4 text-xs font-bold uppercase tracking-wider text-neutral-500 dark:text-neutral-400">Description</th>
+                            <th scope="col" class="px-6 py-4 text-xs font-bold uppercase tracking-wider text-neutral-500 dark:text-neutral-400">Created By</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-neutral-200 dark:divide-neutral-800">
+                        {% for project in approved_projects %}
+                            {% include "partials/project_card.html" %}
+                        {% endfor %}
+                    </tbody>
+                </table>
             </div>
           {% else %}
-            <p class="text-gray-500 dark:text-gray-400">You have not applied to any jobs yet.</p>
+            <div class="col-span-full rounded-xl border border-dashed border-neutral-300 p-8 text-center text-sm text-neutral-500 dark:border-neutral-700">
+              No managed projects yet.
+            </div>
+          {% endif %}
+        </div>
+
+        <!-- Created Projects -->
+        <div class="rounded-2xl border border-neutral-200 bg-white p-6 shadow-sm dark:border-neutral-800 dark:bg-neutral-900">
+          <h3 class="mb-6 text-xl font-bold text-neutral-900 dark:text-white flex items-center gap-2">
+            <i data-lucide="folder-plus" class="h-5 w-5 text-blue-500"></i> Created Projects
+          </h3>
+          
+          {% if created_projects %}
+            <div class="overflow-hidden rounded-xl border border-neutral-200 shadow-sm dark:border-neutral-800">
+                <table class="w-full text-left">
+                    <thead class="bg-neutral-50 border-b border-neutral-200 dark:bg-neutral-800/50 dark:border-neutral-800">
+                        <tr>
+                            <th scope="col" class="px-6 py-4 text-xs font-bold uppercase tracking-wider text-neutral-500 dark:text-neutral-400">Status</th>
+                            <th scope="col" class="px-6 py-4 text-xs font-bold uppercase tracking-wider text-neutral-500 dark:text-neutral-400">Project Name</th>
+                            <th scope="col" class="px-6 py-4 text-xs font-bold uppercase tracking-wider text-neutral-500 dark:text-neutral-400">Description</th>
+                            <th scope="col" class="px-6 py-4 text-xs font-bold uppercase tracking-wider text-neutral-500 dark:text-neutral-400">Created By</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-neutral-200 dark:divide-neutral-800">
+                        {% for project in created_projects %}
+                            {% include "partials/project_card.html" %}
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+          {% else %}
+            <div class="col-span-full rounded-xl border border-dashed border-neutral-300 p-8 text-center text-sm text-neutral-500 dark:border-neutral-700">
+              You haven't created any projects.
+            </div>
+          {% endif %}
+        </div>
+      </div>
+    {% endif %}
+
+    {% if session.role == 2 or session.role == 3 %}
+      <div class="rounded-2xl border border-neutral-200 bg-white p-8 shadow-sm dark:border-neutral-800 dark:bg-neutral-900">
+        <h3 class="mb-6 text-xl font-bold text-neutral-900 dark:text-white flex items-center gap-2">
+          <i data-lucide="briefcase" class="h-5 w-5 text-blue-500"></i> Job Applications
+        </h3>
+        <div class="space-y-4">
+          {% for app in applications %}
+            <div class="group flex items-center justify-between rounded-xl border border-neutral-100 bg-neutral-50 p-5 transition hover:border-blue-200 hover:bg-blue-50 dark:border-neutral-800 dark:bg-neutral-800 dark:hover:border-blue-900 dark:hover:bg-blue-900/20">
+              <div>
+                <a href="/job/{{ app.job_id }}" class="font-bold text-lg text-neutral-900 hover:underline dark:text-white">{{ app.title }}</a>
+                <p class="text-sm text-neutral-500 dark:text-neutral-400">at <span class="font-medium text-neutral-700 dark:text-neutral-300">{{ app.business_name }}</span></p>
+              </div>
+              <a href="/application/{{ app.id }}" class="rounded-lg bg-white border border-neutral-200 px-4 py-2 text-sm font-bold text-neutral-700 shadow-sm transition hover:bg-neutral-50 dark:bg-neutral-700 dark:border-neutral-600 dark:text-neutral-200 dark:hover:bg-neutral-600">
+                View Status
+              </a>
+            </div>
+          {% else %}
+            <div class="flex flex-col items-center justify-center py-12 text-center">
+              <div class="mb-4 rounded-full bg-neutral-100 p-4 text-neutral-400 dark:bg-neutral-800">
+                <i data-lucide="file-x" class="h-8 w-8"></i>
+              </div>
+              <p class="text-sm text-neutral-500 dark:text-neutral-400">You haven't applied to any jobs yet.</p>
+              <a href="/jobs" class="mt-2 text-sm font-bold text-blue-600 hover:underline">Browse Jobs</a>
+            </div>
           {% endfor %}
         </div>
       </div>
     {% endif %}
+
+      <div class="rounded-2xl border border-neutral-200 bg-white p-6 shadow-sm dark:border-neutral-800 dark:bg-neutral-900">
+        <h3 class="mb-2 flex items-center gap-2 font-bold text-neutral-900 dark:text-white">
+          <i data-lucide="life-buoy" class="h-4 w-4 text-blue-600"></i> Support
+        </h3>
+        <p class="mb-4 text-xs text-neutral-500 dark:text-neutral-400">Have an issue? Message the admins.</p>
+        <form action="/message/admin" method="POST" class="space-y-3">
+          <textarea name="message" class="min-h-[80px] w-full rounded-xl border border-neutral-200 bg-transparent p-3 text-sm placeholder:text-neutral-400 focus:border-blue-600 focus:outline-none focus:ring-1 focus:ring-blue-600 dark:border-neutral-700 dark:bg-neutral-800" placeholder="Describe your issue..." required></textarea>
+          <button type="submit" class="w-full rounded-lg bg-white border border-neutral-200 py-2 text-xs font-bold text-neutral-700 hover:bg-neutral-50 dark:bg-neutral-800 dark:border-neutral-700 dark:text-neutral-300 dark:hover:bg-neutral-700">
+            Send Message
+          </button>
+        </form>
+      </div>
+
   </div>
+
+  <!-- Logout Confirmation Modal -->
+  <div id="logout-modal" popover class="m-auto w-full max-w-sm rounded-2xl border border-neutral-200 bg-white p-6 shadow-2xl backdrop:bg-neutral-900/50 backdrop:backdrop-blur-sm dark:border-neutral-800 dark:bg-neutral-900">
+    <h3 class="mb-2 text-lg font-bold text-neutral-900 dark:text-white">Log Out</h3>
+    <p class="mb-6 text-sm text-neutral-500 dark:text-neutral-400">Are you sure you want to log out?</p>
+    <div class="flex justify-end gap-3">
+        <button popovertarget="logout-modal" popovertargetaction="hide" class="rounded-xl px-4 py-2 text-sm font-bold text-neutral-600 hover:bg-neutral-100 dark:text-neutral-400 dark:hover:bg-neutral-800">Cancel</button>
+        <a href="/logout" class="rounded-xl bg-red-600 px-4 py-2 text-sm font-bold text-white hover:bg-red-700">Log Out</a>
+    </div>
+  </div>
+
+</div>
 {% endblock %}

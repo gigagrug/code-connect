@@ -1,27 +1,33 @@
 {% extends "./layouts/shell.html" %}
 
 {% block content %}
-  <div class="container mx-auto px-4 py-8">
-    <h2 class="mb-6 text-center text-3xl font-bold">Explore All Projects</h2>
+  <div class="container mx-auto max-w-7xl px-4 py-8">
+    <h2 class="mb-8 text-center text-3xl font-bold text-neutral-900 dark:text-white">Explore All Projects</h2>
 
-    <div class="overflow-hidden rounded-lg border border-neutral-200 bg-white shadow-sm dark:border-neutral-700 dark:bg-neutral-800">
-      <table class="w-full text-left text-sm">
-        <thead class="bg-neutral-50 text-xs text-neutral-700 uppercase dark:bg-neutral-700 dark:text-neutral-400">
+    <div class="overflow-hidden rounded-xl border border-neutral-200 bg-white shadow-sm dark:border-neutral-800 dark:bg-neutral-900">
+      <table class="w-full text-left">
+        <thead class="bg-neutral-50 border-b border-neutral-200 dark:bg-neutral-800/50 dark:border-neutral-800">
           <tr>
-            <th scope="col" class="px-6 py-3">Status</th>
-            <th scope="col" class="px-6 py-3">Project Name</th>
-            <th scope="col" class="px-6 py-3">Description</th>
-            <th scope="col" class="px-6 py-3">Created By</th>
+            <th scope="col" class="px-6 py-4 text-xs font-bold uppercase tracking-wider text-neutral-500 dark:text-neutral-400">Status</th>
+            <th scope="col" class="px-6 py-4 text-xs font-bold uppercase tracking-wider text-neutral-500 dark:text-neutral-400">Project Name</th>
+            <th scope="col" class="px-6 py-4 text-xs font-bold uppercase tracking-wider text-neutral-500 dark:text-neutral-400">Description</th>
+            <th scope="col" class="px-6 py-4 text-xs font-bold uppercase tracking-wider text-neutral-500 dark:text-neutral-400">Created By</th>
           </tr>
         </thead>
-        <tbody id="projects-grid" class="divide-y divide-gray-200 dark:divide-gray-700">
+        <tbody id="projects-grid" class="divide-y divide-neutral-200 dark:divide-neutral-800">
           {% for project in projects %}
             {% include "partials/project_card.html" %}
           {% endfor %}
         </tbody>
       </table>
     </div>
-    <div id="loader" class="py-8 text-center text-2xl" style="display: none;">Loading...</div>
+    
+    <div id="loader" class="py-8 text-center text-neutral-500 dark:text-neutral-400" style="display: none;">
+        <div class="flex flex-col items-center justify-center gap-2">
+            <i data-lucide="loader-2" class="h-6 w-6 animate-spin"></i>
+            <span class="text-sm font-medium">Loading more projects...</span>
+        </div>
+    </div>
   </div>
 
   <script>
@@ -45,14 +51,16 @@
 
           if (newProjectsHtml.trim() === "") {
             noMoreProjects = true;
-            loader.innerHTML = "You've reached the end!";
+            loader.innerHTML = '<span class="text-sm font-medium">You\'ve reached the end!</span>';
             return;
           }
 
           projectsGrid.insertAdjacentHTML("beforeend", newProjectsHtml);
+          // Re-initialize icons for newly added content
+          if (window.lucide) window.lucide.createIcons();
         } catch (error) {
           console.error("Failed to load more projects:", error);
-          loader.innerHTML = "Failed to load projects.";
+          loader.innerHTML = '<span class="text-sm font-medium text-red-500">Failed to load projects.</span>';
         } finally {
           isLoading = false;
           if (!noMoreProjects) {
