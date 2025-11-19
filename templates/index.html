@@ -6,12 +6,12 @@
 
     <div class="overflow-hidden rounded-xl border border-neutral-200 bg-white shadow-sm dark:border-neutral-800 dark:bg-neutral-900">
       <table class="w-full text-left">
-        <thead class="bg-neutral-50 border-b border-neutral-200 dark:bg-neutral-800/50 dark:border-neutral-800">
+        <thead class="border-b border-neutral-200 bg-neutral-50 dark:border-neutral-800 dark:bg-neutral-800/50">
           <tr>
-            <th scope="col" class="px-6 py-4 text-xs font-bold uppercase tracking-wider text-neutral-500 dark:text-neutral-400">Status</th>
-            <th scope="col" class="px-6 py-4 text-xs font-bold uppercase tracking-wider text-neutral-500 dark:text-neutral-400">Project Name</th>
-            <th scope="col" class="px-6 py-4 text-xs font-bold uppercase tracking-wider text-neutral-500 dark:text-neutral-400">Description</th>
-            <th scope="col" class="px-6 py-4 text-xs font-bold uppercase tracking-wider text-neutral-500 dark:text-neutral-400">Created By</th>
+            <th scope="col" class="px-6 py-4 text-xs font-bold tracking-wider text-neutral-500 uppercase dark:text-neutral-400">Status</th>
+            <th scope="col" class="px-6 py-4 text-xs font-bold tracking-wider text-neutral-500 uppercase dark:text-neutral-400">Project Name</th>
+            <th scope="col" class="px-6 py-4 text-xs font-bold tracking-wider text-neutral-500 uppercase dark:text-neutral-400">Description</th>
+            <th scope="col" class="px-6 py-4 text-xs font-bold tracking-wider text-neutral-500 uppercase dark:text-neutral-400">Created By</th>
           </tr>
         </thead>
         <tbody id="projects-grid" class="divide-y divide-neutral-200 dark:divide-neutral-800">
@@ -21,12 +21,12 @@
         </tbody>
       </table>
     </div>
-    
+
     <div id="loader" class="py-8 text-center text-neutral-500 dark:text-neutral-400" style="display: none;">
-        <div class="flex flex-col items-center justify-center gap-2">
-            <i data-lucide="loader-2" class="h-6 w-6 animate-spin"></i>
-            <span class="text-sm font-medium">Loading more projects...</span>
-        </div>
+      <div class="flex flex-col items-center justify-center gap-2">
+        <i data-lucide="loader-2" class="h-6 w-6 animate-spin"></i>
+        <span class="text-sm font-medium">Loading more projects...</span>
+      </div>
     </div>
   </div>
 

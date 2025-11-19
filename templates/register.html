@@ -1,56 +1,54 @@
 {% extends "./layouts/shell.html" %}
 
 {% block content %}
-<div class="flex items-center justify-center p-4">
-  <form action="/register" method="POST" class="w-full max-w-[500px] space-y-6 rounded-2xl border border-neutral-200 bg-white p-8 shadow-xl dark:border-neutral-800 dark:bg-neutral-900">
-    <div class="text-center">
-      <h1 class="text-3xl font-bold text-neutral-900 dark:text-white">Register</h1>
-      <p class="mt-2 text-sm text-neutral-500 dark:text-neutral-400">Create your account to get started.</p>
-    </div>
-    <div class="space-y-5">
-      <div>
-        <label class="mb-1.5 block text-sm font-bold text-neutral-700 dark:text-neutral-300" for="role">Account Type</label>
-        <div class="relative">
-          <select id="role" name="role" class="w-full appearance-none rounded-xl border border-neutral-300 bg-transparent p-3 pl-10 pr-10 text-neutral-900 focus:border-blue-600 focus:outline-none focus:ring-1 focus:ring-blue-600 dark:border-neutral-700 dark:bg-neutral-800 dark:text-white dark:focus:border-blue-500" required>
-            <option value="" disabled selected>Select your role</option>
-            <option value="3">Student</option>
-            <option value="0">Instructor</option>
-            <option value="1">Business</option>
-            <option value="2">Alumni</option>
-          </select>
-          <i data-lucide="user" class="absolute left-3 top-3.5 h-5 w-5 text-neutral-400"></i>
-          <i data-lucide="chevron-down" class="absolute right-3 top-3.5 h-5 w-5 text-neutral-400 pointer-events-none"></i>
+  <div class="flex items-center justify-center p-4">
+    <form action="/register" method="POST" class="w-full max-w-[500px] space-y-6 rounded-2xl border border-neutral-200 bg-white p-8 shadow-xl dark:border-neutral-800 dark:bg-neutral-900">
+      <div class="text-center">
+        <h1 class="text-3xl font-bold text-neutral-900 dark:text-white">Register</h1>
+        <p class="mt-2 text-sm text-neutral-500 dark:text-neutral-400">Create your account to get started.</p>
+      </div>
+      <div class="space-y-5">
+        <div>
+          <label class="mb-1.5 block text-sm font-bold text-neutral-700 dark:text-neutral-300" for="role">Account Type</label>
+          <div class="relative">
+            <select id="role" name="role" class="w-full appearance-none rounded-xl border border-neutral-300 bg-transparent p-3 pr-10 pl-10 text-neutral-900 focus:border-blue-600 focus:ring-1 focus:ring-blue-600 focus:outline-none dark:border-neutral-700 dark:bg-neutral-800 dark:text-white dark:focus:border-blue-500" required>
+              <option value="" disabled selected>Select your role</option>
+              <option value="3">Student</option>
+              <option value="0">Instructor</option>
+              <option value="1">Business</option>
+              <option value="2">Alumni</option>
+            </select>
+            <i data-lucide="user" class="absolute top-3.5 left-3 h-5 w-5 text-neutral-400"></i>
+            <i data-lucide="chevron-down" class="pointer-events-none absolute top-3.5 right-3 h-5 w-5 text-neutral-400"></i>
+          </div>
+        </div>
+        <div>
+          <label class="mb-1.5 block text-sm font-bold text-neutral-700 dark:text-neutral-300" for="reg_email">Email Address</label>
+          <div class="relative">
+            <input name="email" class="w-full rounded-xl border border-neutral-300 bg-transparent p-3 pl-10 placeholder:text-neutral-400 focus:border-blue-600 focus:ring-1 focus:ring-blue-600 focus:outline-none dark:border-neutral-700 dark:bg-neutral-800 dark:placeholder:text-neutral-500 dark:focus:border-blue-500" id="reg_email" type="email" placeholder="name@example.com" required />
+            <i data-lucide="mail" class="absolute top-3.5 left-3 h-5 w-5 text-neutral-400"></i>
+          </div>
+        </div>
+        <div>
+          <label class="mb-1.5 block text-sm font-bold text-neutral-700 dark:text-neutral-300" for="reg_pwd">Password</label>
+          <div class="relative">
+            <input name="password" class="w-full rounded-xl border border-neutral-300 bg-transparent p-3 pl-10 placeholder:text-neutral-400 focus:border-blue-600 focus:ring-1 focus:ring-blue-600 focus:outline-none dark:border-neutral-700 dark:bg-neutral-800 dark:placeholder:text-neutral-500 dark:focus:border-blue-500" id="reg_pwd" type="password" placeholder="••••••••" required />
+            <i data-lucide="lock" class="absolute top-3.5 left-3 h-5 w-5 text-neutral-400"></i>
+          </div>
+        </div>
+        <div>
+          <label class="mb-1.5 block text-sm font-bold text-neutral-700 dark:text-neutral-300" for="reg_pwd2">Confirm Password</label>
+          <div class="relative">
+            <input name="password2" class="w-full rounded-xl border border-neutral-300 bg-transparent p-3 pl-10 placeholder:text-neutral-400 focus:border-blue-600 focus:ring-1 focus:ring-blue-600 focus:outline-none dark:border-neutral-700 dark:bg-neutral-800 dark:placeholder:text-neutral-500 dark:focus:border-blue-500" id="reg_pwd2" type="password" placeholder="••••••••" required />
+            <i data-lucide="check-circle" class="absolute top-3.5 left-3 h-5 w-5 text-neutral-400"></i>
+          </div>
         </div>
       </div>
-      <div>
-        <label class="mb-1.5 block text-sm font-bold text-neutral-700 dark:text-neutral-300" for="reg_email">Email Address</label>
-        <div class="relative">
-           <input name="email" class="w-full rounded-xl border border-neutral-300 bg-transparent p-3 pl-10 placeholder:text-neutral-400 focus:border-blue-600 focus:outline-none focus:ring-1 focus:ring-blue-600 dark:border-neutral-700 dark:bg-neutral-800 dark:placeholder:text-neutral-500 dark:focus:border-blue-500" id="reg_email" type="email" placeholder="name@example.com" required />
-           <i data-lucide="mail" class="absolute left-3 top-3.5 h-5 w-5 text-neutral-400"></i>
-        </div>
-      </div>
-      <div>
-        <label class="mb-1.5 block text-sm font-bold text-neutral-700 dark:text-neutral-300" for="reg_pwd">Password</label>
-        <div class="relative">
-           <input name="password" class="w-full rounded-xl border border-neutral-300 bg-transparent p-3 pl-10 placeholder:text-neutral-400 focus:border-blue-600 focus:outline-none focus:ring-1 focus:ring-blue-600 dark:border-neutral-700 dark:bg-neutral-800 dark:placeholder:text-neutral-500 dark:focus:border-blue-500" id="reg_pwd" type="password" placeholder="••••••••" required />
-           <i data-lucide="lock" class="absolute left-3 top-3.5 h-5 w-5 text-neutral-400"></i>
-        </div>
-      </div>
-      <div>
-        <label class="mb-1.5 block text-sm font-bold text-neutral-700 dark:text-neutral-300" for="reg_pwd2">Confirm Password</label>
-        <div class="relative">
-           <input name="password2" class="w-full rounded-xl border border-neutral-300 bg-transparent p-3 pl-10 placeholder:text-neutral-400 focus:border-blue-600 focus:outline-none focus:ring-1 focus:ring-blue-600 dark:border-neutral-700 dark:bg-neutral-800 dark:placeholder:text-neutral-500 dark:focus:border-blue-500" id="reg_pwd2" type="password" placeholder="••••••••" required />
-           <i data-lucide="check-circle" class="absolute left-3 top-3.5 h-5 w-5 text-neutral-400"></i>
-        </div>
-      </div>
-    </div>
-    <button type="submit" class="w-full rounded-xl bg-blue-600 px-5 py-3.5 text-sm font-bold text-white shadow-lg shadow-blue-600/20 transition-all hover:bg-blue-700 hover:shadow-blue-600/40 focus:ring-4 focus:ring-blue-600/20 disabled:bg-neutral-700">
-      Register
-    </button>
-    <p class="text-center text-sm text-neutral-500 dark:text-neutral-400">
-      Already have an account?
-      <a href="/login" class="font-bold text-blue-600 hover:underline dark:text-blue-400">Log in</a>
-    </p>
-  </form>
-</div>
+      <button type="submit" class="w-full rounded-xl bg-blue-600 px-5 py-3.5 text-sm font-bold text-white shadow-lg shadow-blue-600/20 transition-all hover:bg-blue-700 hover:shadow-blue-600/40 focus:ring-4 focus:ring-blue-600/20 disabled:bg-neutral-700">Register</button>
+      <p class="text-center text-sm text-neutral-500 dark:text-neutral-400">
+        Already have an account?
+        <a href="/login" class="font-bold text-blue-600 hover:underline dark:text-blue-400">Log in</a>
+      </p>
+    </form>
+  </div>
 {% endblock %}

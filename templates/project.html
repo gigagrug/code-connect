@@ -9,122 +9,115 @@
 
 {% block content %}
   <div class="container mx-auto max-w-7xl px-4 py-12">
-    
     <!-- Layout: Grid if Chat is enabled, otherwise Centered Single Column -->
     <div class="{% if can_chat %}grid grid-cols-1 gap-8 lg:grid-cols-3{% else %}max-w-5xl mx-auto{% endif %}">
-      
       <!-- Main Content Column -->
-      <div class="space-y-8 {% if can_chat %}lg:col-span-2{% else %}w-full{% endif %}">
-        
+      <div class="{% if can_chat %}lg:col-span-2{% else %}w-full{% endif %} space-y-8">
         <!-- Project Details Card -->
         <div class="overflow-hidden rounded-2xl border border-neutral-200 bg-white shadow-sm dark:border-neutral-800 dark:bg-neutral-900">
           <div class="p-8 md:p-10">
-            
             <!-- Header -->
             <div id="project-details">
               <div class="flex flex-col-reverse gap-4 md:flex-row md:items-start md:justify-between">
-                  <div>
-                      <h1 class="mb-2 text-3xl font-bold text-neutral-900 dark:text-white md:text-4xl">{{ project.name }}</h1>
-                      <div class="flex items-center gap-2 text-sm text-neutral-500 dark:text-neutral-400">
-                        <i data-lucide="user" class="h-4 w-4"></i>
-                        <span>Created by: 
-                            <span class="font-medium text-blue-600 dark:text-blue-400">
-                                {% if project.role == 1 %}
-                                    <a href="/business/{{ project.user_id }}" class="hover:underline">{{ project.business_name }}</a>
-                                {% else %}
-                                    {{ project.business_name }}
-                                {% endif %}
-                            </span>
-                        </span>
-                      </div>
+                <div>
+                  <h1 class="mb-2 text-3xl font-bold text-neutral-900 md:text-4xl dark:text-white">{{ project.name }}</h1>
+                  <div class="flex items-center gap-2 text-sm text-neutral-500 dark:text-neutral-400">
+                    <i data-lucide="user" class="h-4 w-4"></i>
+                    <span
+                      >Created by:
+                      <span class="font-medium text-blue-600 dark:text-blue-400">
+                        {% if project.role == 1 %}
+                          <a href="/business/{{ project.user_id }}" class="hover:underline">{{ project.business_name }}</a>
+                        {% else %}
+                          {{ project.business_name }}
+                        {% endif %}
+                      </span>
+                    </span>
                   </div>
-                  
-                  <!-- Status Badge -->
-                  <div>
-                    {% if project.status == 4 %}
-                        <span class="inline-flex items-center rounded-full bg-purple-100 px-3 py-1 text-xs font-medium text-purple-700 dark:bg-purple-900/30 dark:text-purple-400">Finished</span>
-                    {% elif project.status == 3 %}
-                        <span class="inline-flex items-center rounded-full bg-blue-100 px-3 py-1 text-xs font-medium text-blue-700 dark:bg-blue-900/30 dark:text-blue-400">Taken</span>
-                    {% elif project.status == 2 %}
-                        <span class="inline-flex items-center rounded-full bg-green-100 px-3 py-1 text-xs font-medium text-green-700 dark:bg-green-900/30 dark:text-green-400">Approved</span>
-                    {% elif project.status == 1 %}
-                        <span class="inline-flex items-center rounded-full bg-yellow-100 px-3 py-1 text-xs font-medium text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400">Pending Approval</span>
-                    {% else %}
-                        <span class="inline-flex items-center rounded-full bg-red-100 px-3 py-1 text-xs font-medium text-red-700 dark:bg-red-900/30 dark:text-red-400">Submitted</span>
-                    {% endif %}
-                  </div>
+                </div>
+
+                <!-- Status Badge -->
+                <div>
+                  {% if project.status == 4 %}
+                    <span class="inline-flex items-center rounded-full bg-purple-100 px-3 py-1 text-xs font-medium text-purple-700 dark:bg-purple-900/30 dark:text-purple-400">Finished</span>
+                  {% elif project.status == 3 %}
+                    <span class="inline-flex items-center rounded-full bg-blue-100 px-3 py-1 text-xs font-medium text-blue-700 dark:bg-blue-900/30 dark:text-blue-400">Taken</span>
+                  {% elif project.status == 2 %}
+                    <span class="inline-flex items-center rounded-full bg-green-100 px-3 py-1 text-xs font-medium text-green-700 dark:bg-green-900/30 dark:text-green-400">Approved</span>
+                  {% elif project.status == 1 %}
+                    <span class="inline-flex items-center rounded-full bg-yellow-100 px-3 py-1 text-xs font-medium text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400">Pending Approval</span>
+                  {% else %}
+                    <span class="inline-flex items-center rounded-full bg-red-100 px-3 py-1 text-xs font-medium text-red-700 dark:bg-red-900/30 dark:text-red-400">Submitted</span>
+                  {% endif %}
+                </div>
               </div>
 
               <hr class="my-6 border-neutral-100 dark:border-neutral-800" />
 
               <!-- Description -->
               <div class="prose prose-neutral dark:prose-invert max-w-none text-neutral-600 dark:text-neutral-300">
-                <p class="whitespace-pre-line leading-relaxed">{{ project.description }}</p>
+                <p class="leading-relaxed whitespace-pre-line">{{ project.description }}</p>
               </div>
 
               <!-- Links -->
               {% if project.project_link or project.github_link %}
                 <div class="mt-6 flex flex-wrap gap-4">
-                    {% if project.project_link %}
-                        <a href="{{ project.project_link }}" target="_blank" class="inline-flex items-center gap-2 text-sm font-medium text-blue-600 hover:underline dark:text-blue-400">
-                            <i data-lucide="link" class="h-4 w-4"></i> Project URL
-                        </a>
-                    {% endif %}
-                    {% if project.github_link %}
-                        <a href="{{ project.github_link }}" target="_blank" class="inline-flex items-center gap-2 text-sm font-medium text-neutral-600 hover:underline dark:text-neutral-400">
-                            <i data-lucide="github" class="h-4 w-4"></i> Repository
-                        </a>
-                    {% endif %}
+                  {% if project.project_link %}
+                    <a href="{{ project.project_link }}" target="_blank" class="inline-flex items-center gap-2 text-sm font-medium text-blue-600 hover:underline dark:text-blue-400"> <i data-lucide="link" class="h-4 w-4"></i> Project URL </a>
+                  {% endif %}
+                  {% if project.github_link %}
+                    <a href="{{ project.github_link }}" target="_blank" class="inline-flex items-center gap-2 text-sm font-medium text-neutral-600 hover:underline dark:text-neutral-400"> <i data-lucide="github" class="h-4 w-4"></i> Repository </a>
+                  {% endif %}
                 </div>
               {% endif %}
 
               <!-- Attachments Grid -->
               {% if project.attachment_path %}
                 <div class="mt-8">
-                  <h4 class="mb-3 text-sm font-bold uppercase tracking-wider text-neutral-500 dark:text-neutral-400">Attachments</h4>
+                  <h4 class="mb-3 text-sm font-bold tracking-wider text-neutral-500 uppercase dark:text-neutral-400">Attachments</h4>
                   <div class="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4">
                     {% set paths = project.attachment_path.split(';') %}
                     {% for path in paths %}
                       {% if path %}
                         {% set original_filename = path.split('/')[-1] %}
                         {% set extension = original_filename.split('.')[-1].lower() %}
-                        
-                        <div class="group relative flex flex-col items-center justify-center rounded-xl border border-neutral-200 bg-neutral-50 p-4 text-center transition hover:border-blue-300 hover:shadow-sm dark:border-neutral-700 dark:bg-neutral-800/50 dark:hover:border-blue-700">
-                            {% if extension in ['jpg', 'jpeg', 'png', 'gif', 'webp'] %}
-                                <a href="{{ path }}" target="_blank" class="block">
-                                    <img src="{{ path }}" alt="Attachment" class="mb-2 h-16 w-16 rounded-lg object-cover" />
-                                </a>
-                            {% else %}
-                                <div class="mb-2 flex h-16 w-16 items-center justify-center rounded-lg bg-white shadow-sm dark:bg-neutral-700">
-                                    {% if extension == 'pdf' %}
-                                        <i data-lucide="file-text" class="h-8 w-8 text-red-500"></i>
-                                    {% elif extension in ['doc', 'docx'] %}
-                                        <i data-lucide="file-type-2" class="h-8 w-8 text-blue-500"></i>
-                                    {% elif extension in ['xls', 'xlsx'] %}
-                                        <i data-lucide="sheet" class="h-8 w-8 text-green-500"></i>
-                                    {% else %}
-                                        <i data-lucide="file" class="h-8 w-8 text-neutral-400"></i>
-                                    {% endif %}
-                                </div>
-                            {% endif %}
-                            
-                            <!-- Filename / Action -->
-                            <div class="w-full truncate text-xs font-medium text-neutral-700 dark:text-neutral-300" title="{{ original_filename }}">
-                                {% if extension == 'docx' %}
-                                    <button type="button" class="hover:text-blue-600 hover:underline" popovertarget="file-viewer-popover" onclick="viewDocx('{{ path }}', '{{ original_filename }}')">{{ original_filename }}</button>
-                                {% elif extension in ['xlsx', 'xls'] %}
-                                    <button type="button" class="hover:text-blue-600 hover:underline" popovertarget="file-viewer-popover" onclick="viewExcel('{{ path }}', '{{ original_filename }}')">{{ original_filename }}</button>
-                                {% else %}
-                                    <a href="{{ path }}" target="_blank" class="hover:text-blue-600 hover:underline">{{ original_filename }}</a>
-                                {% endif %}
-                            </div>
 
-                            <!-- Rename Button (Instructor/Owner only) -->
-                            {% if session.user_id == project.user_id or (session.get('role') == 0 and project.status in [2, 3]) %}
-                                <button type="button" class="absolute top-2 right-2 opacity-0 group-hover:opacity-100 p-1 text-neutral-400 hover:text-blue-600 transition-opacity" popovertarget="rename-popover" onclick="openRenamePopover('{{ path }}', '{{ original_filename }}')">
-                                    <i data-lucide="edit-2" class="h-3 w-3"></i>
-                                </button>
+                        <div class="group relative flex flex-col items-center justify-center rounded-xl border border-neutral-200 bg-neutral-50 p-4 text-center transition hover:border-blue-300 hover:shadow-sm dark:border-neutral-700 dark:bg-neutral-800/50 dark:hover:border-blue-700">
+                          {% if extension in ['jpg', 'jpeg', 'png', 'gif', 'webp'] %}
+                            <a href="{{ path }}" target="_blank" class="block">
+                              <img src="{{ path }}" alt="Attachment" class="mb-2 h-16 w-16 rounded-lg object-cover" />
+                            </a>
+                          {% else %}
+                            <div class="mb-2 flex h-16 w-16 items-center justify-center rounded-lg bg-white shadow-sm dark:bg-neutral-700">
+                              {% if extension == 'pdf' %}
+                                <i data-lucide="file-text" class="h-8 w-8 text-red-500"></i>
+                              {% elif extension in ['doc', 'docx'] %}
+                                <i data-lucide="file-type-2" class="h-8 w-8 text-blue-500"></i>
+                              {% elif extension in ['xls', 'xlsx'] %}
+                                <i data-lucide="sheet" class="h-8 w-8 text-green-500"></i>
+                              {% else %}
+                                <i data-lucide="file" class="h-8 w-8 text-neutral-400"></i>
+                              {% endif %}
+                            </div>
+                          {% endif %}
+
+                          <!-- Filename / Action -->
+                          <div class="w-full truncate text-xs font-medium text-neutral-700 dark:text-neutral-300" title="{{ original_filename }}">
+                            {% if extension == 'docx' %}
+                              <button type="button" class="hover:text-blue-600 hover:underline" popovertarget="file-viewer-popover" onclick="viewDocx('{{ path }}', '{{ original_filename }}')">{{ original_filename }}</button>
+                            {% elif extension in ['xlsx', 'xls'] %}
+                              <button type="button" class="hover:text-blue-600 hover:underline" popovertarget="file-viewer-popover" onclick="viewExcel('{{ path }}', '{{ original_filename }}')">{{ original_filename }}</button>
+                            {% else %}
+                              <a href="{{ path }}" target="_blank" class="hover:text-blue-600 hover:underline">{{ original_filename }}</a>
                             {% endif %}
+                          </div>
+
+                          <!-- Rename Button (Instructor/Owner only) -->
+                          {% if session.user_id == project.user_id or (session.get('role') == 0 and project.status in [2, 3]) %}
+                            <button type="button" class="absolute top-2 right-2 p-1 text-neutral-400 opacity-0 transition-opacity group-hover:opacity-100 hover:text-blue-600" popovertarget="rename-popover" onclick="openRenamePopover('{{ path }}', '{{ original_filename }}')">
+                              <i data-lucide="edit-2" class="h-3 w-3"></i>
+                            </button>
+                          {% endif %}
                         </div>
                       {% endif %}
                     {% endfor %}
@@ -135,298 +128,262 @@
 
             <!-- Edit Project Form -->
             {% if session.user_id == project.user_id %}
-                <form action="/project/{{ project.id }}/update" method="POST" id="edit-form" class="hidden space-y-5" enctype="multipart/form-data">
-                  <div>
-                    <label for="name" class="mb-1.5 block text-sm font-bold text-neutral-700 dark:text-neutral-300">Project Name</label>
-                    <input type="text" name="name" id="name" value="{{ project.name }}" class="w-full rounded-xl border border-neutral-200 bg-transparent p-3 text-sm placeholder:text-neutral-400 focus:border-blue-600 focus:outline-none focus:ring-1 focus:ring-blue-600 dark:border-neutral-700 dark:bg-neutral-800 dark:text-white" required />
-                  </div>
-                  <div>
-                    <label for="description" class="mb-1.5 block text-sm font-bold text-neutral-700 dark:text-neutral-300">Description</label>
-                    <textarea name="description" id="description" class="min-h-[150px] w-full rounded-xl border border-neutral-200 bg-transparent p-3 text-sm placeholder:text-neutral-400 focus:border-blue-600 focus:outline-none focus:ring-1 focus:ring-blue-600 dark:border-neutral-700 dark:bg-neutral-800 dark:text-white" required>{{ project.description }}</textarea>
-                  </div>
-                  
-                  <!-- File Management inside Edit -->
-                  <div class="rounded-xl border border-neutral-200 bg-neutral-50 p-4 dark:border-neutral-700 dark:bg-neutral-800/50">
-                    <label class="mb-3 block text-sm font-bold text-neutral-700 dark:text-neutral-300">Manage Attachments</label>
-                    
-                    {% if project.attachment_path %}
-                        <div class="mb-4 space-y-2">
-                            {% set paths = project.attachment_path.split(';') %}
-                            {% for path in paths %}
-                                {% if path %}
-                                    {% set original_filename = path.split('/')[-1] %}
-                                    <div class="flex items-center gap-3 rounded-lg border border-neutral-200 bg-white p-2 dark:border-neutral-700 dark:bg-neutral-800">
-                                        <input type="checkbox" name="files_to_delete" value="{{ path }}" id="del-{{ loop.index }}" class="rounded text-red-500 focus:ring-red-400" />
-                                        <label for="del-{{ loop.index }}" class="text-sm text-neutral-600 dark:text-neutral-300 flex-grow truncate cursor-pointer">{{ original_filename }}</label>
-                                        <span class="text-xs text-red-500 font-medium">Delete</span>
-                                    </div>
-                                {% endif %}
-                            {% endfor %}
-                        </div>
-                    {% endif %}
-                    
-                    <label class="mb-1.5 block text-xs font-bold uppercase text-neutral-500 dark:text-neutral-400">Upload New Files</label>
-                    <input type="file" name="attachment" multiple class="w-full rounded-xl border border-neutral-200 p-2 text-sm text-neutral-500 file:mr-4 file:rounded-lg file:border-0 file:bg-neutral-200 file:px-4 file:py-2 file:text-sm file:font-semibold file:text-neutral-700 hover:file:bg-neutral-300 dark:border-neutral-700 dark:bg-neutral-800 dark:file:bg-neutral-700 dark:file:text-neutral-300" />
-                  </div>
+              <form action="/project/{{ project.id }}/update" method="POST" id="edit-form" class="hidden space-y-5" enctype="multipart/form-data">
+                <div>
+                  <label for="name" class="mb-1.5 block text-sm font-bold text-neutral-700 dark:text-neutral-300">Project Name</label>
+                  <input type="text" name="name" id="name" value="{{ project.name }}" class="w-full rounded-xl border border-neutral-200 bg-transparent p-3 text-sm placeholder:text-neutral-400 focus:border-blue-600 focus:ring-1 focus:ring-blue-600 focus:outline-none dark:border-neutral-700 dark:bg-neutral-800 dark:text-white" required />
+                </div>
+                <div>
+                  <label for="description" class="mb-1.5 block text-sm font-bold text-neutral-700 dark:text-neutral-300">Description</label>
+                  <textarea name="description" id="description" class="min-h-[150px] w-full rounded-xl border border-neutral-200 bg-transparent p-3 text-sm placeholder:text-neutral-400 focus:border-blue-600 focus:ring-1 focus:ring-blue-600 focus:outline-none dark:border-neutral-700 dark:bg-neutral-800 dark:text-white" required>{{ project.description }}</textarea>
+                </div>
 
-                  <div class="flex items-center gap-3 pt-2">
-                    <button type="submit" class="rounded-xl bg-blue-600 px-5 py-2.5 text-sm font-bold text-white hover:bg-blue-700">Save Changes</button>
-                    <button type="button" onclick="toggleEditForm()" class="rounded-xl border border-neutral-200 bg-white px-5 py-2.5 text-sm font-bold text-neutral-700 hover:bg-neutral-50 dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-300 dark:hover:bg-neutral-700">Cancel</button>
-                  </div>
-                </form>
+                <!-- File Management inside Edit -->
+                <div class="rounded-xl border border-neutral-200 bg-neutral-50 p-4 dark:border-neutral-700 dark:bg-neutral-800/50">
+                  <label class="mb-3 block text-sm font-bold text-neutral-700 dark:text-neutral-300">Manage Attachments</label>
+
+                  {% if project.attachment_path %}
+                    <div class="mb-4 space-y-2">
+                      {% set paths = project.attachment_path.split(';') %}
+                      {% for path in paths %}
+                        {% if path %}
+                          {% set original_filename = path.split('/')[-1] %}
+                          <div class="flex items-center gap-3 rounded-lg border border-neutral-200 bg-white p-2 dark:border-neutral-700 dark:bg-neutral-800">
+                            <input type="checkbox" name="files_to_delete" value="{{ path }}" id="del-{{ loop.index }}" class="rounded text-red-500 focus:ring-red-400" />
+                            <label for="del-{{ loop.index }}" class="flex-grow cursor-pointer truncate text-sm text-neutral-600 dark:text-neutral-300">{{ original_filename }}</label>
+                            <span class="text-xs font-medium text-red-500">Delete</span>
+                          </div>
+                        {% endif %}
+                      {% endfor %}
+                    </div>
+                  {% endif %}
+
+                  <label class="mb-1.5 block text-xs font-bold text-neutral-500 uppercase dark:text-neutral-400">Upload New Files</label>
+                  <input type="file" name="attachment" multiple class="w-full rounded-xl border border-neutral-200 p-2 text-sm text-neutral-500 file:mr-4 file:rounded-lg file:border-0 file:bg-neutral-200 file:px-4 file:py-2 file:text-sm file:font-semibold file:text-neutral-700 hover:file:bg-neutral-300 dark:border-neutral-700 dark:bg-neutral-800 dark:file:bg-neutral-700 dark:file:text-neutral-300" />
+                </div>
+
+                <div class="flex items-center gap-3 pt-2">
+                  <button type="submit" class="rounded-xl bg-blue-600 px-5 py-2.5 text-sm font-bold text-white hover:bg-blue-700">Save Changes</button>
+                  <button type="button" onclick="toggleEditForm()" class="rounded-xl border border-neutral-200 bg-white px-5 py-2.5 text-sm font-bold text-neutral-700 hover:bg-neutral-50 dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-300 dark:hover:bg-neutral-700">Cancel</button>
+                </div>
+              </form>
             {% endif %}
-          
+
             <!-- Edit Links Form -->
             {% if can_edit_links %}
-                 <form action="/project/{{ project.id }}/links" method="POST" id="links-form" class="hidden space-y-4 mt-6">
-                    <div>
-                        <label class="mb-1.5 block text-sm font-bold text-neutral-700 dark:text-neutral-300">Project URL</label>
-                        <input type="url" name="project_link" value="{{ project.project_link or '' }}" class="w-full rounded-xl border border-neutral-200 bg-transparent p-3 text-sm focus:border-blue-600 focus:outline-none focus:ring-1 focus:ring-blue-600 dark:border-neutral-700 dark:bg-neutral-800 dark:text-white" placeholder="https://example.com" />
-                    </div>
-                    <div>
-                        <label class="mb-1.5 block text-sm font-bold text-neutral-700 dark:text-neutral-300">GitHub URL</label>
-                        <input type="url" name="github_link" value="{{ project.github_link or '' }}" class="w-full rounded-xl border border-neutral-200 bg-transparent p-3 text-sm focus:border-blue-600 focus:outline-none focus:ring-1 focus:ring-blue-600 dark:border-neutral-700 dark:bg-neutral-800 dark:text-white" placeholder="https://github.com/..." />
-                    </div>
-                    <div class="flex items-center gap-3">
-                        <button type="submit" class="rounded-xl bg-blue-600 px-5 py-2.5 text-sm font-bold text-white hover:bg-blue-700">Save Links</button>
-                        <button type="button" onclick="toggleLinksForm()" class="rounded-xl border border-neutral-200 bg-white px-5 py-2.5 text-sm font-bold text-neutral-700 hover:bg-neutral-50 dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-300 dark:hover:bg-neutral-700">Cancel</button>
-                    </div>
-                 </form>
+              <form action="/project/{{ project.id }}/links" method="POST" id="links-form" class="mt-6 hidden space-y-4">
+                <div>
+                  <label class="mb-1.5 block text-sm font-bold text-neutral-700 dark:text-neutral-300">Project URL</label>
+                  <input type="url" name="project_link" value="{{ project.project_link or '' }}" class="w-full rounded-xl border border-neutral-200 bg-transparent p-3 text-sm focus:border-blue-600 focus:ring-1 focus:ring-blue-600 focus:outline-none dark:border-neutral-700 dark:bg-neutral-800 dark:text-white" placeholder="https://example.com" />
+                </div>
+                <div>
+                  <label class="mb-1.5 block text-sm font-bold text-neutral-700 dark:text-neutral-300">GitHub URL</label>
+                  <input type="url" name="github_link" value="{{ project.github_link or '' }}" class="w-full rounded-xl border border-neutral-200 bg-transparent p-3 text-sm focus:border-blue-600 focus:ring-1 focus:ring-blue-600 focus:outline-none dark:border-neutral-700 dark:bg-neutral-800 dark:text-white" placeholder="https://github.com/..." />
+                </div>
+                <div class="flex items-center gap-3">
+                  <button type="submit" class="rounded-xl bg-blue-600 px-5 py-2.5 text-sm font-bold text-white hover:bg-blue-700">Save Links</button>
+                  <button type="button" onclick="toggleLinksForm()" class="rounded-xl border border-neutral-200 bg-white px-5 py-2.5 text-sm font-bold text-neutral-700 hover:bg-neutral-50 dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-300 dark:hover:bg-neutral-700">Cancel</button>
+                </div>
+              </form>
             {% endif %}
-
           </div>
 
           <!-- Action Footers -->
-          
+
           <!-- Owner Actions -->
           {% if session.user_id == project.user_id %}
             <div class="flex items-center gap-3 border-t border-neutral-100 p-6 dark:border-neutral-800" id="control-buttons">
-                <button onclick="toggleEditForm()" class="flex items-center gap-2 rounded-xl border border-neutral-200 bg-white px-4 py-2 text-sm font-bold text-neutral-700 hover:bg-neutral-50 dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-300 dark:hover:bg-neutral-700">
-                    <i data-lucide="edit-2" class="h-4 w-4"></i> Edit Details
-                </button>
-                <form action="/project/{{ project.id }}/delete" method="POST" onsubmit="return confirm('Are you sure?');">
-                    <button type="submit" class="flex items-center gap-2 rounded-xl bg-red-50 px-4 py-2 text-sm font-bold text-red-600 hover:bg-red-100 dark:bg-red-900/20 dark:text-red-400 dark:hover:bg-red-900/40">
-                        <i data-lucide="trash-2" class="h-4 w-4"></i> Delete
-                    </button>
-                </form>
+              <button onclick="toggleEditForm()" class="flex items-center gap-2 rounded-xl border border-neutral-200 bg-white px-4 py-2 text-sm font-bold text-neutral-700 hover:bg-neutral-50 dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-300 dark:hover:bg-neutral-700"><i data-lucide="edit-2" class="h-4 w-4"></i> Edit Details</button>
+              <form action="/project/{{ project.id }}/delete" method="POST" onsubmit="return confirm('Are you sure?');">
+                <button type="submit" class="flex items-center gap-2 rounded-xl bg-red-50 px-4 py-2 text-sm font-bold text-red-600 hover:bg-red-100 dark:bg-red-900/20 dark:text-red-400 dark:hover:bg-red-900/40"><i data-lucide="trash-2" class="h-4 w-4"></i> Delete</button>
+              </form>
             </div>
           {% endif %}
 
           <!-- Student/Member Links Actions -->
           {% if can_edit_links %}
             <div class="flex items-center gap-3 border-t border-neutral-100 p-6 dark:border-neutral-800" id="links-control-buttons">
-                 <button onclick="toggleLinksForm()" class="flex items-center gap-2 rounded-xl bg-neutral-900 px-4 py-2 text-sm font-bold text-white hover:bg-neutral-700 dark:bg-white dark:text-neutral-900 dark:hover:bg-neutral-200">
-                    <i data-lucide="link" class="h-4 w-4"></i> Edit Links
-                </button>
+              <button onclick="toggleLinksForm()" class="flex items-center gap-2 rounded-xl bg-neutral-900 px-4 py-2 text-sm font-bold text-white hover:bg-neutral-700 dark:bg-white dark:text-neutral-900 dark:hover:bg-neutral-200"><i data-lucide="link" class="h-4 w-4"></i> Edit Links</button>
             </div>
           {% endif %}
 
           <!-- Instructor Actions -->
           {% if session.get('role') == 0 %}
-             <div class="border-t border-neutral-100 bg-neutral-50 p-6 dark:border-neutral-800 dark:bg-neutral-900/50">
-                <h3 class="mb-3 text-sm font-bold uppercase text-neutral-500 dark:text-neutral-400">Instructor Controls</h3>
-                <form action="/project/{{ project.id }}/approve" method="POST" class="flex flex-wrap gap-3">
-                    <button type="submit" name="new_status" value="4" class="rounded-xl bg-purple-600 px-4 py-2 text-sm font-bold text-white hover:bg-purple-700 disabled:opacity-50 disabled:cursor-not-allowed" {% if project.status < 3 %}disabled title="Project must be 'Taken' first"{% endif %}>
-                        Mark Finished
-                    </button>
-                    <button type="submit" name="new_status" value="2" class="rounded-xl bg-green-600 px-4 py-2 text-sm font-bold text-white hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed" {% if project.status == 2 %}disabled{% endif %}>
-                        Approve
-                    </button>
-                    <button type="submit" name="new_status" value="1" class="rounded-xl bg-yellow-500 px-4 py-2 text-sm font-bold text-white hover:bg-yellow-600 disabled:opacity-50 disabled:cursor-not-allowed" {% if is_pending_by_current_instructor %}disabled{% endif %}>
-                        Set Pending
-                    </button>
-                    <button type="submit" name="new_status" value="0" class="rounded-xl bg-red-600 px-4 py-2 text-sm font-bold text-white hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed" {% if project.status == 0 %}disabled{% endif %}>
-                        Unlist
-                    </button>
-                </form>
-                
-                {% if project.status in [2, 3] and session.user_id != project.user_id %}
-                    <div class="mt-4 pt-4 border-t border-neutral-200 dark:border-neutral-700">
-                        <button onclick="toggleInstructorFileForm()" class="text-sm font-bold text-blue-600 hover:underline dark:text-blue-400">Manage Project Files</button>
-                        
-                        <form action="/project/{{ project.id }}/instructor-manage-files" method="POST" id="instructor-file-form" class="hidden mt-4 space-y-4" enctype="multipart/form-data">
-                             <div class="rounded-xl border border-neutral-200 bg-white p-4 dark:border-neutral-700 dark:bg-neutral-800">
-                                <!-- (Reusing the file management UI structure here slightly simplified) -->
-                                <label class="block text-sm font-bold mb-2 text-neutral-700 dark:text-neutral-300">Add Files</label>
-                                <input type="file" name="attachment" multiple class="w-full rounded-lg border border-neutral-200 p-2 text-sm" />
-                                <div class="mt-3 flex gap-3">
-                                    <button type="submit" class="rounded-lg bg-blue-600 px-4 py-2 text-xs font-bold text-white">Save</button>
-                                    <button type="button" onclick="toggleInstructorFileForm()" class="rounded-lg border border-neutral-200 px-4 py-2 text-xs font-bold">Cancel</button>
-                                </div>
-                             </div>
-                        </form>
-                    </div>
-                {% endif %}
-             </div>
-          {% endif %}
+            <div class="border-t border-neutral-100 bg-neutral-50 p-6 dark:border-neutral-800 dark:bg-neutral-900/50">
+              <h3 class="mb-3 text-sm font-bold text-neutral-500 uppercase dark:text-neutral-400">Instructor Controls</h3>
+              <form action="/project/{{ project.id }}/approve" method="POST" class="flex flex-wrap gap-3">
+                <button type="submit" name="new_status" value="4" class="rounded-xl bg-purple-600 px-4 py-2 text-sm font-bold text-white hover:bg-purple-700 disabled:cursor-not-allowed disabled:opacity-50" {% if project.status < 3 %}disabled title="Project must be 'Taken' first"{% endif %}>Mark Finished</button>
+                <button type="submit" name="new_status" value="2" class="rounded-xl bg-green-600 px-4 py-2 text-sm font-bold text-white hover:bg-green-700 disabled:cursor-not-allowed disabled:opacity-50" {% if project.status == 2 %}disabled{% endif %}>Approve</button>
+                <button type="submit" name="new_status" value="1" class="rounded-xl bg-yellow-500 px-4 py-2 text-sm font-bold text-white hover:bg-yellow-600 disabled:cursor-not-allowed disabled:opacity-50" {% if is_pending_by_current_instructor %}disabled{% endif %}>Set Pending</button>
+                <button type="submit" name="new_status" value="0" class="rounded-xl bg-red-600 px-4 py-2 text-sm font-bold text-white hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-50" {% if project.status == 0 %}disabled{% endif %}>Unlist</button>
+              </form>
 
+              {% if project.status in [2, 3] and session.user_id != project.user_id %}
+                <div class="mt-4 border-t border-neutral-200 pt-4 dark:border-neutral-700">
+                  <button onclick="toggleInstructorFileForm()" class="text-sm font-bold text-blue-600 hover:underline dark:text-blue-400">Manage Project Files</button>
+
+                  <form action="/project/{{ project.id }}/instructor-manage-files" method="POST" id="instructor-file-form" class="mt-4 hidden space-y-4" enctype="multipart/form-data">
+                    <div class="rounded-xl border border-neutral-200 bg-white p-4 dark:border-neutral-700 dark:bg-neutral-800">
+                      <!-- (Reusing the file management UI structure here slightly simplified) -->
+                      <label class="mb-2 block text-sm font-bold text-neutral-700 dark:text-neutral-300">Add Files</label>
+                      <input type="file" name="attachment" multiple class="w-full rounded-lg border border-neutral-200 p-2 text-sm" />
+                      <div class="mt-3 flex gap-3">
+                        <button type="submit" class="rounded-lg bg-blue-600 px-4 py-2 text-xs font-bold text-white">Save</button>
+                        <button type="button" onclick="toggleInstructorFileForm()" class="rounded-lg border border-neutral-200 px-4 py-2 text-xs font-bold">Cancel</button>
+                      </div>
+                    </div>
+                  </form>
+                </div>
+              {% endif %}
+            </div>
+          {% endif %}
         </div>
 
         <!-- Comments Section -->
         <div class="space-y-6">
-            <h3 class="text-2xl font-bold text-neutral-900 dark:text-white">Comments</h3>
-            
-            {% if can_comment %}
-                <div class="flex gap-4">
-                    <div class="flex-shrink-0">
-                         <div class="flex h-10 w-10 items-center justify-center rounded-full bg-neutral-200 text-neutral-600 font-bold dark:bg-neutral-800 dark:text-neutral-400">
-                            {{ session.email[0]|upper }}
-                         </div>
-                    </div>
-                    <div class="flex-grow">
-                        <form action="/project/{{ project.id }}/comment" method="POST" enctype="multipart/form-data" class="space-y-3">
-                            <textarea name="comment" class="w-full rounded-xl border border-neutral-200 bg-white p-3 text-sm placeholder:text-neutral-400 focus:border-blue-600 focus:outline-none focus:ring-1 focus:ring-blue-600 dark:border-neutral-700 dark:bg-neutral-900 dark:text-white" placeholder="Write a comment..." rows="3"></textarea>
-                            <div class="flex items-center justify-between">
-                                <input type="file" name="attachment" multiple class="text-xs text-neutral-500 file:mr-2 file:rounded-lg file:border-0 file:bg-neutral-100 file:px-3 file:py-1.5 file:text-xs file:font-bold hover:file:bg-neutral-200 dark:file:bg-neutral-800 dark:file:text-neutral-300" />
-                                <button type="submit" class="rounded-xl bg-blue-600 px-4 py-2 text-sm font-bold text-white hover:bg-blue-700">Post</button>
-                            </div>
-                        </form>
-                    </div>
-                </div>
-            {% endif %}
+          <h3 class="text-2xl font-bold text-neutral-900 dark:text-white">Comments</h3>
 
-            <div class="space-y-6">
-                {% for comment in comments %}
-                    <div class="flex gap-4">
-                        <div class="flex-shrink-0">
-                             <div class="flex h-10 w-10 items-center justify-center rounded-full border-2 border-white bg-neutral-100 text-sm font-bold text-neutral-500 shadow-sm dark:border-neutral-900 dark:bg-neutral-800 dark:text-neutral-400">
-                                {{ comment.name[0]|upper if comment.name else '?' }}
-                             </div>
-                        </div>
-                        <div class="flex-grow">
-                            <div class="rounded-xl bg-white border border-neutral-200 p-4 shadow-sm dark:bg-neutral-900 dark:border-neutral-800">
-                                <div class="flex items-center justify-between mb-2">
-                                    <div class="flex items-center gap-2">
-                                        <span class="font-bold text-sm text-neutral-900 dark:text-white">{{ comment.name }}</span>
-                                        {% if comment.role == 0 %}
-                                            <span class="rounded-full bg-red-100 px-2 py-0.5 text-[10px] font-bold text-red-600 dark:bg-red-900/30 dark:text-red-400">Instructor</span>
-                                        {% elif comment.role == 1 %}
-                                            <span class="rounded-full bg-blue-100 px-2 py-0.5 text-[10px] font-bold text-blue-600 dark:bg-blue-900/30 dark:text-blue-400">Business</span>
-                                        {% elif comment.role == 3 %}
-                                            <span class="rounded-full bg-green-100 px-2 py-0.5 text-[10px] font-bold text-green-600 dark:bg-green-900/30 dark:text-green-400">Student</span>
-                                        {% endif %}
-                                    </div>
-                                    <span class="text-xs text-neutral-400">{{ comment.created_at.strftime('%b %d, %I:%M %p') }}</span>
-                                </div>
-                                <p class="text-sm text-neutral-700 dark:text-neutral-300 whitespace-pre-line">{{ comment.comment }}</p>
-                                
-                                <!-- RESTORED: Detailed Comment Attachments Logic -->
-                                {% if comment.attachment_path %}
-                                    <div class="mt-3 flex flex-wrap gap-2">
-                                        {% set paths = comment.attachment_path.split(';') %}
-                                        {% for path in paths %}
-                                            {% if path %}
-                                                {% set original_filename = path.split('/')[-1] %}
-                                                {% set extension = original_filename.split('.')[-1].lower() %}
-                                                
-                                                {% if extension in ['jpg', 'jpeg', 'png', 'gif', 'webp'] %}
-                                                  <a href="{{ path }}" target="_blank" class="block">
-                                                    <img src="{{ path }}" alt="Attachment" class="h-16 w-16 rounded-lg object-cover border border-neutral-200 dark:border-neutral-700" />
-                                                  </a>
-                                                {% elif extension == 'docx' %}
-                                                  <button type="button" class="inline-flex items-center gap-1 rounded-lg bg-blue-50 px-3 py-1.5 text-xs font-medium text-blue-700 hover:bg-blue-100 dark:bg-blue-900/30 dark:text-blue-300 dark:hover:bg-blue-900/50" popovertarget="file-viewer-popover" onclick="viewDocx('{{ path }}', '{{ original_filename }}')">
-                                                    <i data-lucide="file-type-2" class="h-3 w-3"></i> {{ original_filename }}
-                                                  </button>
-                                                {% elif extension in ['xlsx', 'xls'] %}
-                                                  <button type="button" class="inline-flex items-center gap-1 rounded-lg bg-green-50 px-3 py-1.5 text-xs font-medium text-green-700 hover:bg-green-100 dark:bg-green-900/30 dark:text-green-300 dark:hover:bg-green-900/50" popovertarget="file-viewer-popover" onclick="viewExcel('{{ path }}', '{{ original_filename }}')">
-                                                    <i data-lucide="sheet" class="h-3 w-3"></i> {{ original_filename }}
-                                                  </button>
-                                                {% else %}
-                                                  <a href="{{ path }}" target="_blank" class="inline-flex items-center gap-1 rounded-lg bg-neutral-100 px-3 py-1.5 text-xs font-medium text-neutral-600 hover:bg-neutral-200 dark:bg-neutral-800 dark:text-neutral-300">
-                                                    <i data-lucide="paperclip" class="h-3 w-3"></i> {{ original_filename }}
-                                                  </a>
-                                                {% endif %}
-                                            {% endif %}
-                                        {% endfor %}
-                                    </div>
-                                {% endif %}
-                            </div>
-                            
-                            {% if session.user_id == comment.user_id or (session.get('role') == 0 and (comment.role == 1 or comment.role == 3)) %}
-                                <form action="/project/{{ project.id }}/comment/{{ comment.id }}/delete" method="POST" onsubmit="return confirm('Delete this comment?');" class="mt-1 text-right">
-                                    <button type="submit" class="text-xs font-medium text-red-500 hover:text-red-600">Delete</button>
-                                </form>
-                            {% endif %}
-                        </div>
-                    </div>
-                {% else %}
-                    <p class="text-center text-sm text-neutral-500 italic">No comments yet. Be the first to share your thoughts.</p>
-                {% endfor %}
+          {% if can_comment %}
+            <div class="flex gap-4">
+              <div class="flex-shrink-0">
+                <div class="flex h-10 w-10 items-center justify-center rounded-full bg-neutral-200 font-bold text-neutral-600 dark:bg-neutral-800 dark:text-neutral-400">{{ session.email[0]|upper }}</div>
+              </div>
+              <div class="flex-grow">
+                <form action="/project/{{ project.id }}/comment" method="POST" enctype="multipart/form-data" class="space-y-3">
+                  <textarea name="comment" class="w-full rounded-xl border border-neutral-200 bg-white p-3 text-sm placeholder:text-neutral-400 focus:border-blue-600 focus:ring-1 focus:ring-blue-600 focus:outline-none dark:border-neutral-700 dark:bg-neutral-900 dark:text-white" placeholder="Write a comment..." rows="3"></textarea>
+                  <div class="flex items-center justify-between">
+                    <input type="file" name="attachment" multiple class="text-xs text-neutral-500 file:mr-2 file:rounded-lg file:border-0 file:bg-neutral-100 file:px-3 file:py-1.5 file:text-xs file:font-bold hover:file:bg-neutral-200 dark:file:bg-neutral-800 dark:file:text-neutral-300" />
+                    <button type="submit" class="rounded-xl bg-blue-600 px-4 py-2 text-sm font-bold text-white hover:bg-blue-700">Post</button>
+                  </div>
+                </form>
+              </div>
             </div>
+          {% endif %}
+
+          <div class="space-y-6">
+            {% for comment in comments %}
+              <div class="flex gap-4">
+                <div class="flex-shrink-0">
+                  <div class="flex h-10 w-10 items-center justify-center rounded-full border-2 border-white bg-neutral-100 text-sm font-bold text-neutral-500 shadow-sm dark:border-neutral-900 dark:bg-neutral-800 dark:text-neutral-400">{{ comment.name[0]|upper if comment.name else '?' }}</div>
+                </div>
+                <div class="flex-grow">
+                  <div class="rounded-xl border border-neutral-200 bg-white p-4 shadow-sm dark:border-neutral-800 dark:bg-neutral-900">
+                    <div class="mb-2 flex items-center justify-between">
+                      <div class="flex items-center gap-2">
+                        <span class="text-sm font-bold text-neutral-900 dark:text-white">{{ comment.name }}</span>
+                        {% if comment.role == 0 %}
+                          <span class="rounded-full bg-red-100 px-2 py-0.5 text-[10px] font-bold text-red-600 dark:bg-red-900/30 dark:text-red-400">Instructor</span>
+                        {% elif comment.role == 1 %}
+                          <span class="rounded-full bg-blue-100 px-2 py-0.5 text-[10px] font-bold text-blue-600 dark:bg-blue-900/30 dark:text-blue-400">Business</span>
+                        {% elif comment.role == 3 %}
+                          <span class="rounded-full bg-green-100 px-2 py-0.5 text-[10px] font-bold text-green-600 dark:bg-green-900/30 dark:text-green-400">Student</span>
+                        {% endif %}
+                      </div>
+                      <span class="text-xs text-neutral-400">{{ comment.created_at.strftime('%b %d, %I:%M %p') }}</span>
+                    </div>
+                    <p class="text-sm whitespace-pre-line text-neutral-700 dark:text-neutral-300">{{ comment.comment }}</p>
+
+                    <!-- RESTORED: Detailed Comment Attachments Logic -->
+                    {% if comment.attachment_path %}
+                      <div class="mt-3 flex flex-wrap gap-2">
+                        {% set paths = comment.attachment_path.split(';') %}
+                        {% for path in paths %}
+                          {% if path %}
+                            {% set original_filename = path.split('/')[-1] %}
+                            {% set extension = original_filename.split('.')[-1].lower() %}
+
+                            {% if extension in ['jpg', 'jpeg', 'png', 'gif', 'webp'] %}
+                              <a href="{{ path }}" target="_blank" class="block">
+                                <img src="{{ path }}" alt="Attachment" class="h-16 w-16 rounded-lg border border-neutral-200 object-cover dark:border-neutral-700" />
+                              </a>
+                            {% elif extension == 'docx' %}
+                              <button type="button" class="inline-flex items-center gap-1 rounded-lg bg-blue-50 px-3 py-1.5 text-xs font-medium text-blue-700 hover:bg-blue-100 dark:bg-blue-900/30 dark:text-blue-300 dark:hover:bg-blue-900/50" popovertarget="file-viewer-popover" onclick="viewDocx('{{ path }}', '{{ original_filename }}')"><i data-lucide="file-type-2" class="h-3 w-3"></i> {{ original_filename }}</button>
+                            {% elif extension in ['xlsx', 'xls'] %}
+                              <button type="button" class="inline-flex items-center gap-1 rounded-lg bg-green-50 px-3 py-1.5 text-xs font-medium text-green-700 hover:bg-green-100 dark:bg-green-900/30 dark:text-green-300 dark:hover:bg-green-900/50" popovertarget="file-viewer-popover" onclick="viewExcel('{{ path }}', '{{ original_filename }}')"><i data-lucide="sheet" class="h-3 w-3"></i> {{ original_filename }}</button>
+                            {% else %}
+                              <a href="{{ path }}" target="_blank" class="inline-flex items-center gap-1 rounded-lg bg-neutral-100 px-3 py-1.5 text-xs font-medium text-neutral-600 hover:bg-neutral-200 dark:bg-neutral-800 dark:text-neutral-300"> <i data-lucide="paperclip" class="h-3 w-3"></i> {{ original_filename }} </a>
+                            {% endif %}
+                          {% endif %}
+                        {% endfor %}
+                      </div>
+                    {% endif %}
+                  </div>
+
+                  {% if session.user_id == comment.user_id or (session.get('role') == 0 and (comment.role == 1 or comment.role == 3)) %}
+                    <form action="/project/{{ project.id }}/comment/{{ comment.id }}/delete" method="POST" onsubmit="return confirm('Delete this comment?');" class="mt-1 text-right">
+                      <button type="submit" class="text-xs font-medium text-red-500 hover:text-red-600">Delete</button>
+                    </form>
+                  {% endif %}
+                </div>
+              </div>
+            {% else %}
+              <p class="text-center text-sm text-neutral-500 italic">No comments yet. Be the first to share your thoughts.</p>
+            {% endfor %}
+          </div>
         </div>
-        
       </div>
 
       <!-- Right Column: Chat (Only shown if can_chat) -->
       {% if can_chat %}
         <div class="lg:col-span-1">
-             <div class="sticky top-24 flex h-[600px] flex-col overflow-hidden rounded-2xl border border-neutral-200 bg-white shadow-sm dark:border-neutral-800 dark:bg-neutral-900">
-                <div class="border-b border-neutral-100 bg-neutral-50 p-4 dark:border-neutral-800 dark:bg-neutral-800/50">
-                    <h3 class="font-bold text-neutral-900 dark:text-white flex items-center gap-2">
-                        <i data-lucide="message-square" class="h-4 w-4 text-blue-500"></i> Team Chat
-                    </h3>
-                </div>
-                
-                <div id="chat-messages" class="flex-grow space-y-4 overflow-y-auto p-4 bg-white dark:bg-neutral-900">
-                    {% for msg in chat_history %}
-                        <div id="message-{{ msg.message_id }}" class="flex flex-col {% if msg.email == session.email %}items-end{% else %}items-start{% endif %}">
-                            <div class="flex items-center gap-2 mb-1">
-                                <span class="text-xs font-medium text-neutral-500 dark:text-neutral-400">{{ msg.email.split('@')[0] }}</span>
-                                <span class="text-[10px] text-neutral-400">{{ msg.timestamp.strftime("%I:%M %p") }}</span>
-                                {% if msg.email == session.email %}
-                                    <button class="delete-btn opacity-0 hover:opacity-100 transition-opacity text-neutral-400 hover:text-red-500" data-message-id="{{ msg.message_id }}">
-                                        <i data-lucide="trash-2" class="h-3 w-3"></i>
-                                    </button>
-                                {% endif %}
-                            </div>
-                            <div class="max-w-[85%] rounded-2xl px-4 py-2 text-sm {% if msg.email == session.email %}bg-blue-600 text-white rounded-br-none{% else %}bg-neutral-100 text-neutral-800 dark:bg-neutral-800 dark:text-neutral-200 rounded-bl-none{% endif %}">
-                                {{ msg.message_text }}
-                                
-                                <!-- RESTORED: Detailed Chat Attachments Logic (Jinja for history) -->
-                                {% if msg.attachment_path %}
-                                    {% set original_filename = msg.attachment_path.split('/')[-1] %}
-                                    {% set extension = original_filename.split('.')[-1].lower() %}
-                                    
-                                    <div class="mt-2 pt-2 border-t border-white/20">
-                                        {% if extension in ['jpg', 'jpeg', 'png', 'gif', 'webp'] %}
-                                            <a href="{{ msg.attachment_path }}" target="_blank">
-                                                <img src="{{ msg.attachment_path }}" alt="Chat Attachment" class="max-w-[150px] rounded-lg h-auto" />
-                                            </a>
-                                        {% elif extension == 'docx' %}
-                                             <button type="button" class="flex items-center gap-1 text-xs underline hover:no-underline font-bold" popovertarget="file-viewer-popover" onclick="viewDocx('{{ msg.attachment_path }}', '{{ original_filename }}')">
-                                                <i data-lucide="file-type-2" class="h-3 w-3"></i> View {{ original_filename }}
-                                             </button>
-                                        {% elif extension in ['xlsx', 'xls'] %}
-                                             <button type="button" class="flex items-center gap-1 text-xs underline hover:no-underline font-bold" popovertarget="file-viewer-popover" onclick="viewExcel('{{ msg.attachment_path }}', '{{ original_filename }}')">
-                                                <i data-lucide="sheet" class="h-3 w-3"></i> View {{ original_filename }}
-                                             </button>
-                                        {% else %}
-                                            <a href="{{ msg.attachment_path }}" target="_blank" class="flex items-center gap-1 text-xs underline hover:no-underline font-bold">
-                                                <i data-lucide="paperclip" class="h-3 w-3"></i> View {{ original_filename }}
-                                            </a>
-                                        {% endif %}
-                                    </div>
-                                {% endif %}
-                            </div>
-                        </div>
-                    {% endfor %}
-                </div>
+          <div class="sticky top-24 flex h-[600px] flex-col overflow-hidden rounded-2xl border border-neutral-200 bg-white shadow-sm dark:border-neutral-800 dark:bg-neutral-900">
+            <div class="border-b border-neutral-100 bg-neutral-50 p-4 dark:border-neutral-800 dark:bg-neutral-800/50">
+              <h3 class="flex items-center gap-2 font-bold text-neutral-900 dark:text-white"><i data-lucide="message-square" class="h-4 w-4 text-blue-500"></i> Team Chat</h3>
+            </div>
 
-                <div class="border-t border-neutral-100 p-3 dark:border-neutral-800 bg-neutral-50 dark:bg-neutral-800/30">
-                    <form id="chat-form" class="flex flex-col gap-2">
-                        <div class="relative">
-                            <input type="text" id="message-input" placeholder="Type a message..." class="w-full rounded-xl border border-neutral-300 bg-white p-3 pr-12 text-sm focus:border-blue-600 focus:outline-none focus:ring-1 focus:ring-blue-600 dark:border-neutral-700 dark:bg-neutral-900 dark:text-white" autocomplete="off" />
-                            <button type="submit" class="absolute right-2 top-2 rounded-lg bg-blue-600 p-1.5 text-white hover:bg-blue-700 transition">
-                                <i data-lucide="send" class="h-4 w-4"></i>
-                            </button>
-                        </div>
-                        <input type="file" id="chat-file-input" class="text-xs text-neutral-500 file:mr-2 file:rounded-lg file:border-0 file:bg-white file:px-2 file:py-1 file:text-xs file:font-bold hover:file:bg-neutral-200 dark:file:bg-neutral-900 dark:file:text-neutral-300" />
-                    </form>
+            <div id="chat-messages" class="flex-grow space-y-4 overflow-y-auto bg-white p-4 dark:bg-neutral-900">
+              {% for msg in chat_history %}
+                <div id="message-{{ msg.message_id }}" class="{% if msg.email == session.email %}items-end{% else %}items-start{% endif %} flex flex-col">
+                  <div class="mb-1 flex items-center gap-2">
+                    <span class="text-xs font-medium text-neutral-500 dark:text-neutral-400">{{ msg.email.split('@')[0] }}</span>
+                    <span class="text-[10px] text-neutral-400">{{ msg.timestamp.strftime("%I:%M %p") }}</span>
+                    {% if msg.email == session.email %}
+                      <button class="delete-btn text-neutral-400 opacity-0 transition-opacity hover:text-red-500 hover:opacity-100" data-message-id="{{ msg.message_id }}">
+                        <i data-lucide="trash-2" class="h-3 w-3"></i>
+                      </button>
+                    {% endif %}
+                  </div>
+                  <div class="{% if msg.email == session.email %}bg-blue-600 text-white rounded-br-none{% else %}bg-neutral-100 text-neutral-800 dark:bg-neutral-800 dark:text-neutral-200 rounded-bl-none{% endif %} max-w-[85%] rounded-2xl px-4 py-2 text-sm">
+                    {{ msg.message_text }}
+
+                    <!-- RESTORED: Detailed Chat Attachments Logic (Jinja for history) -->
+                    {% if msg.attachment_path %}
+                      {% set original_filename = msg.attachment_path.split('/')[-1] %}
+                      {% set extension = original_filename.split('.')[-1].lower() %}
+
+                      <div class="mt-2 border-t border-white/20 pt-2">
+                        {% if extension in ['jpg', 'jpeg', 'png', 'gif', 'webp'] %}
+                          <a href="{{ msg.attachment_path }}" target="_blank">
+                            <img src="{{ msg.attachment_path }}" alt="Chat Attachment" class="h-auto max-w-[150px] rounded-lg" />
+                          </a>
+                        {% elif extension == 'docx' %}
+                          <button type="button" class="flex items-center gap-1 text-xs font-bold underline hover:no-underline" popovertarget="file-viewer-popover" onclick="viewDocx('{{ msg.attachment_path }}', '{{ original_filename }}')"><i data-lucide="file-type-2" class="h-3 w-3"></i> View {{ original_filename }}</button>
+                        {% elif extension in ['xlsx', 'xls'] %}
+                          <button type="button" class="flex items-center gap-1 text-xs font-bold underline hover:no-underline" popovertarget="file-viewer-popover" onclick="viewExcel('{{ msg.attachment_path }}', '{{ original_filename }}')"><i data-lucide="sheet" class="h-3 w-3"></i> View {{ original_filename }}</button>
+                        {% else %}
+                          <a href="{{ msg.attachment_path }}" target="_blank" class="flex items-center gap-1 text-xs font-bold underline hover:no-underline"> <i data-lucide="paperclip" class="h-3 w-3"></i> View {{ original_filename }} </a>
+                        {% endif %}
+                      </div>
+                    {% endif %}
+                  </div>
                 </div>
-             </div>
+              {% endfor %}
+            </div>
+
+            <div class="border-t border-neutral-100 bg-neutral-50 p-3 dark:border-neutral-800 dark:bg-neutral-800/30">
+              <form id="chat-form" class="flex flex-col gap-2">
+                <div class="relative">
+                  <input type="text" id="message-input" placeholder="Type a message..." class="w-full rounded-xl border border-neutral-300 bg-white p-3 pr-12 text-sm focus:border-blue-600 focus:ring-1 focus:ring-blue-600 focus:outline-none dark:border-neutral-700 dark:bg-neutral-900 dark:text-white" autocomplete="off" />
+                  <button type="submit" class="absolute top-2 right-2 rounded-lg bg-blue-600 p-1.5 text-white transition hover:bg-blue-700">
+                    <i data-lucide="send" class="h-4 w-4"></i>
+                  </button>
+                </div>
+                <input type="file" id="chat-file-input" class="text-xs text-neutral-500 file:mr-2 file:rounded-lg file:border-0 file:bg-white file:px-2 file:py-1 file:text-xs file:font-bold hover:file:bg-neutral-200 dark:file:bg-neutral-900 dark:file:text-neutral-300" />
+              </form>
+            </div>
+          </div>
         </div>
       {% endif %}
-
     </div>
   </div>
 
@@ -437,11 +394,11 @@
       <div class="flex items-center gap-4">
         <a id="file-viewer-download" href="#" download="file" class="rounded-lg bg-neutral-100 px-3 py-1.5 text-xs font-bold text-neutral-700 hover:bg-neutral-200 dark:bg-neutral-800 dark:text-neutral-300">Download</a>
         <button popovertarget="file-viewer-popover" popovertargetaction="hide" class="rounded-full p-1 text-neutral-400 hover:bg-neutral-100 hover:text-neutral-600 dark:hover:bg-neutral-800">
-            <i data-lucide="x" class="h-5 w-5"></i>
+          <i data-lucide="x" class="h-5 w-5"></i>
         </button>
       </div>
     </div>
-    <div id="file-viewer-content" class="overflow-auto p-6 h-[60vh]"></div>
+    <div id="file-viewer-content" class="h-[60vh] overflow-auto p-6"></div>
   </div>
 
   <div id="rename-popover" popover class="m-auto w-full max-w-md rounded-2xl border border-neutral-200 bg-white shadow-2xl backdrop:bg-neutral-900/50 backdrop:backdrop-blur-sm dark:border-neutral-800 dark:bg-neutral-900">
@@ -455,7 +412,7 @@
       <input type="hidden" name="old_path" id="rename-old-path" />
       <div>
         <label for="rename-new-name" class="mb-1.5 block text-sm font-bold text-neutral-700 dark:text-neutral-300">New Filename</label>
-        <input type="text" name="new_filename" id="rename-new-name" class="w-full rounded-xl border border-neutral-200 bg-transparent p-3 text-sm placeholder:text-neutral-400 focus:border-blue-600 focus:outline-none focus:ring-1 focus:ring-blue-600 dark:border-neutral-700 dark:bg-neutral-800 dark:text-white" required />
+        <input type="text" name="new_filename" id="rename-new-name" class="w-full rounded-xl border border-neutral-200 bg-transparent p-3 text-sm placeholder:text-neutral-400 focus:border-blue-600 focus:ring-1 focus:ring-blue-600 focus:outline-none dark:border-neutral-700 dark:bg-neutral-800 dark:text-white" required />
         <p class="mt-1 text-xs text-neutral-500">The file extension will be preserved automatically.</p>
       </div>
       <button type="submit" class="w-full rounded-xl bg-blue-600 py-2.5 text-sm font-bold text-white transition hover:bg-blue-700">Rename</button>
@@ -525,7 +482,7 @@
         const table = contentEl.querySelector("table");
         if (table) {
           table.className = "w-full text-sm text-left text-neutral-600 dark:text-neutral-400 border-collapse";
-          table.querySelectorAll("td, th").forEach(c => c.className = "border border-neutral-200 p-2 dark:border-neutral-700");
+          table.querySelectorAll("td, th").forEach((c) => (c.className = "border border-neutral-200 p-2 dark:border-neutral-700"));
         }
       } catch (error) {
         contentEl.innerHTML = '<p class="text-center text-red-500">Could not load workbook.</p>';
@@ -555,12 +512,12 @@
           msgContainer.className = `flex flex-col ${isCurrentUser ? "items-end" : "items-start"}`;
 
           const trashIcon = `<svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-trash-2 h-3 w-3"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/><line x1="10" x2="10" y1="11" y2="17"/><line x1="14" x2="14" y1="11" y2="17"/></svg>`;
-          
+
           let deleteBtnHtml = isCurrentUser ? `<button class="delete-btn opacity-0 hover:opacity-100 transition-opacity text-neutral-400 hover:text-red-500" data-message-id="${data.message_id}">${trashIcon}</button>` : "";
 
           const infoDiv = document.createElement("div");
           infoDiv.className = "flex items-center gap-2 mb-1";
-          infoDiv.innerHTML = `${deleteBtnHtml}<span class="text-xs font-medium text-neutral-500 dark:text-neutral-400">${data.email.split('@')[0]}</span> <span class="text-[10px] text-neutral-400">${data.timestamp}</span>`;
+          infoDiv.innerHTML = `${deleteBtnHtml}<span class="text-xs font-medium text-neutral-500 dark:text-neutral-400">${data.email.split("@")[0]}</span> <span class="text-[10px] text-neutral-400">${data.timestamp}</span>`;
 
           const messageBody = document.createElement("div");
           messageBody.className = `max-w-[85%] rounded-2xl px-4 py-2 text-sm ${isCurrentUser ? "bg-blue-600 text-white rounded-br-none" : "bg-neutral-100 text-neutral-800 dark:bg-neutral-800 dark:text-neutral-200 rounded-bl-none"}`;
@@ -568,46 +525,46 @@
 
           // RESTORED: JS Logic for new socket messages
           if (data.attachment_path) {
-             const original_filename = data.attachment_path.split("/").pop();
-             const extension = original_filename.split(".").pop().toLowerCase();
-             const container = document.createElement('div');
-             container.className = "mt-2 pt-2 border-t border-white/20";
+            const original_filename = data.attachment_path.split("/").pop();
+            const extension = original_filename.split(".").pop().toLowerCase();
+            const container = document.createElement("div");
+            container.className = "mt-2 pt-2 border-t border-white/20";
 
-             if (["jpg", "jpeg", "png", "gif", "webp"].includes(extension)) {
-                const link = document.createElement('a');
-                link.href = data.attachment_path;
-                link.target = '_blank';
-                const img = document.createElement('img');
-                img.src = data.attachment_path;
-                img.className = "max-w-[150px] rounded-lg h-auto";
-                link.appendChild(img);
-                container.appendChild(link);
-             } else if (extension === 'docx') {
-                const btn = document.createElement('button');
-                btn.className = "flex items-center gap-1 text-xs underline hover:no-underline font-bold";
-                btn.setAttribute("popovertarget", "file-viewer-popover");
-                btn.onclick = () => viewDocx(data.attachment_path, original_filename);
-                btn.innerHTML = `<i data-lucide="file-type-2" class="h-3 w-3"></i> View ${original_filename}`;
-                container.appendChild(btn);
-             } else if (['xlsx', 'xls'].includes(extension)) {
-                const btn = document.createElement('button');
-                btn.className = "flex items-center gap-1 text-xs underline hover:no-underline font-bold";
-                btn.setAttribute("popovertarget", "file-viewer-popover");
-                btn.onclick = () => viewExcel(data.attachment_path, original_filename);
-                btn.innerHTML = `<i data-lucide="sheet" class="h-3 w-3"></i> View ${original_filename}`;
-                container.appendChild(btn);
-             } else {
-                const link = document.createElement('a');
-                link.href = data.attachment_path;
-                link.target = '_blank';
-                link.className = "flex items-center gap-1 text-xs underline hover:no-underline font-bold";
-                link.innerHTML = `<i data-lucide="paperclip" class="h-3 w-3"></i> View ${original_filename}`;
-                container.appendChild(link);
-             }
-             messageBody.appendChild(container);
-             
-             // Re-init icons for the new dynamic content if needed, though innerHTML usually works with font/svg
-             if (window.lucide) window.lucide.createIcons();
+            if (["jpg", "jpeg", "png", "gif", "webp"].includes(extension)) {
+              const link = document.createElement("a");
+              link.href = data.attachment_path;
+              link.target = "_blank";
+              const img = document.createElement("img");
+              img.src = data.attachment_path;
+              img.className = "max-w-[150px] rounded-lg h-auto";
+              link.appendChild(img);
+              container.appendChild(link);
+            } else if (extension === "docx") {
+              const btn = document.createElement("button");
+              btn.className = "flex items-center gap-1 text-xs underline hover:no-underline font-bold";
+              btn.setAttribute("popovertarget", "file-viewer-popover");
+              btn.onclick = () => viewDocx(data.attachment_path, original_filename);
+              btn.innerHTML = `<i data-lucide="file-type-2" class="h-3 w-3"></i> View ${original_filename}`;
+              container.appendChild(btn);
+            } else if (["xlsx", "xls"].includes(extension)) {
+              const btn = document.createElement("button");
+              btn.className = "flex items-center gap-1 text-xs underline hover:no-underline font-bold";
+              btn.setAttribute("popovertarget", "file-viewer-popover");
+              btn.onclick = () => viewExcel(data.attachment_path, original_filename);
+              btn.innerHTML = `<i data-lucide="sheet" class="h-3 w-3"></i> View ${original_filename}`;
+              container.appendChild(btn);
+            } else {
+              const link = document.createElement("a");
+              link.href = data.attachment_path;
+              link.target = "_blank";
+              link.className = "flex items-center gap-1 text-xs underline hover:no-underline font-bold";
+              link.innerHTML = `<i data-lucide="paperclip" class="h-3 w-3"></i> View ${original_filename}`;
+              container.appendChild(link);
+            }
+            messageBody.appendChild(container);
+
+            // Re-init icons for the new dynamic content if needed, though innerHTML usually works with font/svg
+            if (window.lucide) window.lucide.createIcons();
           }
 
           msgContainer.appendChild(infoDiv);
@@ -617,16 +574,16 @@
         });
 
         socket.on("message_deleted", (data) => {
-            const el = document.getElementById(`message-${data.message_id}`);
-            if (el) el.remove();
+          const el = document.getElementById(`message-${data.message_id}`);
+          if (el) el.remove();
         });
-        
+
         // Delete delegation
         messagesContainer.addEventListener("click", (e) => {
-            const btn = e.target.closest('.delete-btn');
-            if (btn && confirm("Delete message?")) {
-                socket.emit("delete_message", { message_id: btn.dataset.messageId });
-            }
+          const btn = e.target.closest(".delete-btn");
+          if (btn && confirm("Delete message?")) {
+            socket.emit("delete_message", { message_id: btn.dataset.messageId });
+          }
         });
 
         chatForm.addEventListener("submit", (e) => {

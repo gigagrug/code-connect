@@ -6,65 +6,57 @@
 
 {% block content %}
   <div class="container mx-auto max-w-7xl px-4 py-8">
-    
     <!-- Header -->
     <div class="mb-8">
       <h1 class="text-3xl font-bold text-neutral-900 dark:text-white">Application Review</h1>
-      <p class="text-neutral-500 dark:text-neutral-400">
-        Applying for <a href="/job/{{ application.job_id }}" class="font-medium text-blue-600 hover:underline">{{ application.job_title }}</a>
-      </p>
+      <p class="text-neutral-500 dark:text-neutral-400">Applying for <a href="/job/{{ application.job_id }}" class="font-medium text-blue-600 hover:underline">{{ application.job_title }}</a></p>
     </div>
 
     <div class="grid grid-cols-1 gap-8 lg:grid-cols-3">
-      
       <!-- Left Column: Application Details -->
-      <div class="lg:col-span-2 space-y-6">
+      <div class="space-y-6 lg:col-span-2">
         <div class="overflow-hidden rounded-2xl border border-neutral-200 bg-white shadow-sm dark:border-neutral-800 dark:bg-neutral-900">
           <div class="p-8">
-            <div class="flex items-start justify-between mb-6">
-                <div>
-                    <h2 class="text-2xl font-bold text-neutral-900 dark:text-white">{{ application.applicant_name or 'Unknown Applicant' }}</h2>
-                    <p class="text-sm text-neutral-500 dark:text-neutral-400">{{ application.applicant_email }}</p>
-                </div>
-                <div class="rounded-full bg-blue-100 p-3 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400">
-                    <i data-lucide="user" class="h-6 w-6"></i>
-                </div>
+            <div class="mb-6 flex items-start justify-between">
+              <div>
+                <h2 class="text-2xl font-bold text-neutral-900 dark:text-white">{{ application.applicant_name or 'Unknown Applicant' }}</h2>
+                <p class="text-sm text-neutral-500 dark:text-neutral-400">{{ application.applicant_email }}</p>
+              </div>
+              <div class="rounded-full bg-blue-100 p-3 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400">
+                <i data-lucide="user" class="h-6 w-6"></i>
+              </div>
             </div>
 
             <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                <!-- Resume Card -->
-                <div class="rounded-xl border border-neutral-200 bg-neutral-50 p-4 dark:border-neutral-700 dark:bg-neutral-800/50">
-                    <div class="flex items-center gap-3 mb-3">
-                        <div class="rounded-lg bg-white p-2 shadow-sm dark:bg-neutral-700">
-                            <i data-lucide="file-text" class="h-5 w-5 text-red-500"></i>
-                        </div>
-                        <span class="font-semibold text-neutral-900 dark:text-white">Resume</span>
-                    </div>
-                    {% if application.resume_path %}
-                        <a href="{{ application.resume_path }}" target="_blank" class="flex items-center justify-center gap-2 w-full rounded-lg bg-white border border-neutral-200 py-2 text-sm font-bold text-neutral-700 hover:bg-neutral-50 dark:bg-neutral-700 dark:border-neutral-600 dark:text-white dark:hover:bg-neutral-600">
-                            View Document <i data-lucide="external-link" class="h-3 w-3"></i>
-                        </a>
-                    {% else %}
-                        <button disabled class="w-full rounded-lg border border-dashed border-neutral-300 py-2 text-sm text-neutral-400 cursor-not-allowed dark:border-neutral-600">Not Provided</button>
-                    {% endif %}
+              <!-- Resume Card -->
+              <div class="rounded-xl border border-neutral-200 bg-neutral-50 p-4 dark:border-neutral-700 dark:bg-neutral-800/50">
+                <div class="mb-3 flex items-center gap-3">
+                  <div class="rounded-lg bg-white p-2 shadow-sm dark:bg-neutral-700">
+                    <i data-lucide="file-text" class="h-5 w-5 text-red-500"></i>
+                  </div>
+                  <span class="font-semibold text-neutral-900 dark:text-white">Resume</span>
                 </div>
+                {% if application.resume_path %}
+                  <a href="{{ application.resume_path }}" target="_blank" class="flex w-full items-center justify-center gap-2 rounded-lg border border-neutral-200 bg-white py-2 text-sm font-bold text-neutral-700 hover:bg-neutral-50 dark:border-neutral-600 dark:bg-neutral-700 dark:text-white dark:hover:bg-neutral-600"> View Document <i data-lucide="external-link" class="h-3 w-3"></i> </a>
+                {% else %}
+                  <button disabled class="w-full cursor-not-allowed rounded-lg border border-dashed border-neutral-300 py-2 text-sm text-neutral-400 dark:border-neutral-600">Not Provided</button>
+                {% endif %}
+              </div>
 
-                <!-- Cover Letter Card -->
-                <div class="rounded-xl border border-neutral-200 bg-neutral-50 p-4 dark:border-neutral-700 dark:bg-neutral-800/50">
-                    <div class="flex items-center gap-3 mb-3">
-                        <div class="rounded-lg bg-white p-2 shadow-sm dark:bg-neutral-700">
-                            <i data-lucide="align-left" class="h-5 w-5 text-blue-500"></i>
-                        </div>
-                        <span class="font-semibold text-neutral-900 dark:text-white">Cover Letter</span>
-                    </div>
-                    {% if application.cover_letter_path %}
-                        <a href="{{ application.cover_letter_path }}" target="_blank" class="flex items-center justify-center gap-2 w-full rounded-lg bg-white border border-neutral-200 py-2 text-sm font-bold text-neutral-700 hover:bg-neutral-50 dark:bg-neutral-700 dark:border-neutral-600 dark:text-white dark:hover:bg-neutral-600">
-                            View Document <i data-lucide="external-link" class="h-3 w-3"></i>
-                        </a>
-                    {% else %}
-                        <button disabled class="w-full rounded-lg border border-dashed border-neutral-300 py-2 text-sm text-neutral-400 cursor-not-allowed dark:border-neutral-600">Not Provided</button>
-                    {% endif %}
+              <!-- Cover Letter Card -->
+              <div class="rounded-xl border border-neutral-200 bg-neutral-50 p-4 dark:border-neutral-700 dark:bg-neutral-800/50">
+                <div class="mb-3 flex items-center gap-3">
+                  <div class="rounded-lg bg-white p-2 shadow-sm dark:bg-neutral-700">
+                    <i data-lucide="align-left" class="h-5 w-5 text-blue-500"></i>
+                  </div>
+                  <span class="font-semibold text-neutral-900 dark:text-white">Cover Letter</span>
                 </div>
+                {% if application.cover_letter_path %}
+                  <a href="{{ application.cover_letter_path }}" target="_blank" class="flex w-full items-center justify-center gap-2 rounded-lg border border-neutral-200 bg-white py-2 text-sm font-bold text-neutral-700 hover:bg-neutral-50 dark:border-neutral-600 dark:bg-neutral-700 dark:text-white dark:hover:bg-neutral-600"> View Document <i data-lucide="external-link" class="h-3 w-3"></i> </a>
+                {% else %}
+                  <button disabled class="w-full cursor-not-allowed rounded-lg border border-dashed border-neutral-300 py-2 text-sm text-neutral-400 dark:border-neutral-600">Not Provided</button>
+                {% endif %}
+              </div>
             </div>
           </div>
         </div>
@@ -74,62 +66,53 @@
       <div class="lg:col-span-1">
         <div class="flex h-[600px] flex-col overflow-hidden rounded-2xl border border-neutral-200 bg-white shadow-sm dark:border-neutral-800 dark:bg-neutral-900">
           <div class="border-b border-neutral-100 bg-neutral-50 p-4 dark:border-neutral-800 dark:bg-neutral-800/50">
-            <h3 class="font-bold text-neutral-900 dark:text-white flex items-center gap-2">
-                <i data-lucide="message-square" class="h-4 w-4 text-blue-500"></i> Discussion
-            </h3>
+            <h3 class="flex items-center gap-2 font-bold text-neutral-900 dark:text-white"><i data-lucide="message-square" class="h-4 w-4 text-blue-500"></i> Discussion</h3>
           </div>
-          
-          <div id="chat-messages" class="flex-grow space-y-4 overflow-y-auto p-4 bg-white dark:bg-neutral-900">
+
+          <div id="chat-messages" class="flex-grow space-y-4 overflow-y-auto bg-white p-4 dark:bg-neutral-900">
             {% for msg in chat_history %}
-              <div id="message-{{ msg.message_id }}" class="flex flex-col {% if msg.email == session.email %}items-end{% else %}items-start{% endif %}">
-                <div class="flex items-center gap-2 mb-1">
+              <div id="message-{{ msg.message_id }}" class="{% if msg.email == session.email %}items-end{% else %}items-start{% endif %} flex flex-col">
+                <div class="mb-1 flex items-center gap-2">
                   <span class="text-xs font-medium text-neutral-500 dark:text-neutral-400">{{ msg.email.split('@')[0] }}</span>
                   <span class="text-[10px] text-neutral-400">{{ msg.timestamp.strftime("%I:%M %p") }}</span>
-                   {% if msg.email == session.email %}
-                    <button class="delete-btn opacity-0 hover:opacity-100 transition-opacity text-neutral-400 hover:text-red-500" data-message-id="{{ msg.message_id }}">
-                        <i data-lucide="trash-2" class="h-3 w-3"></i>
+                  {% if msg.email == session.email %}
+                    <button class="delete-btn text-neutral-400 opacity-0 transition-opacity hover:text-red-500 hover:opacity-100" data-message-id="{{ msg.message_id }}">
+                      <i data-lucide="trash-2" class="h-3 w-3"></i>
                     </button>
                   {% endif %}
                 </div>
-                <div class="max-w-[85%] rounded-2xl px-4 py-2 text-sm {% if msg.email == session.email %}bg-blue-600 text-white rounded-br-none{% else %}bg-neutral-100 text-neutral-800 dark:bg-neutral-800 dark:text-neutral-200 rounded-bl-none{% endif %}">
+                <div class="{% if msg.email == session.email %}bg-blue-600 text-white rounded-br-none{% else %}bg-neutral-100 text-neutral-800 dark:bg-neutral-800 dark:text-neutral-200 rounded-bl-none{% endif %} max-w-[85%] rounded-2xl px-4 py-2 text-sm">
                   {{ msg.message_text }}
 
                   <!-- HISTORICAL ATTACHMENTS LOGIC -->
                   {% if msg.attachment_path %}
                     {% set original_filename = msg.attachment_path.split('/')[-1] %}
                     {% set extension = original_filename.split('.')[-1].lower() %}
-                    <div class="mt-2 pt-2 border-t border-white/20">
-                        {% if extension in ['jpg', 'jpeg', 'png', 'gif', 'webp'] %}
-                            <a href="{{ msg.attachment_path }}" target="_blank">
-                                <img src="{{ msg.attachment_path }}" alt="Chat Attachment" class="max-w-[150px] rounded-lg h-auto" />
-                            </a>
-                        {% elif extension == 'docx' %}
-                             <button type="button" class="flex items-center gap-1 text-xs underline hover:no-underline font-bold" popovertarget="file-viewer-popover" onclick="viewDocx('{{ msg.attachment_path }}', '{{ original_filename }}')">
-                                <i data-lucide="file-type-2" class="h-3 w-3"></i> View {{ original_filename }}
-                             </button>
-                        {% elif extension in ['xlsx', 'xls'] %}
-                             <button type="button" class="flex items-center gap-1 text-xs underline hover:no-underline font-bold" popovertarget="file-viewer-popover" onclick="viewExcel('{{ msg.attachment_path }}', '{{ original_filename }}')">
-                                <i data-lucide="sheet" class="h-3 w-3"></i> View {{ original_filename }}
-                             </button>
-                        {% else %}
-                            <a href="{{ msg.attachment_path }}" target="_blank" class="flex items-center gap-1 text-xs underline hover:no-underline font-bold">
-                                <i data-lucide="paperclip" class="h-3 w-3"></i> View {{ original_filename }}
-                            </a>
-                        {% endif %}
+                    <div class="mt-2 border-t border-white/20 pt-2">
+                      {% if extension in ['jpg', 'jpeg', 'png', 'gif', 'webp'] %}
+                        <a href="{{ msg.attachment_path }}" target="_blank">
+                          <img src="{{ msg.attachment_path }}" alt="Chat Attachment" class="h-auto max-w-[150px] rounded-lg" />
+                        </a>
+                      {% elif extension == 'docx' %}
+                        <button type="button" class="flex items-center gap-1 text-xs font-bold underline hover:no-underline" popovertarget="file-viewer-popover" onclick="viewDocx('{{ msg.attachment_path }}', '{{ original_filename }}')"><i data-lucide="file-type-2" class="h-3 w-3"></i> View {{ original_filename }}</button>
+                      {% elif extension in ['xlsx', 'xls'] %}
+                        <button type="button" class="flex items-center gap-1 text-xs font-bold underline hover:no-underline" popovertarget="file-viewer-popover" onclick="viewExcel('{{ msg.attachment_path }}', '{{ original_filename }}')"><i data-lucide="sheet" class="h-3 w-3"></i> View {{ original_filename }}</button>
+                      {% else %}
+                        <a href="{{ msg.attachment_path }}" target="_blank" class="flex items-center gap-1 text-xs font-bold underline hover:no-underline"> <i data-lucide="paperclip" class="h-3 w-3"></i> View {{ original_filename }} </a>
+                      {% endif %}
                     </div>
                   {% endif %}
                   <!-- END ATTACHMENTS LOGIC -->
-
                 </div>
               </div>
             {% endfor %}
           </div>
-          
-          <div class="border-t border-neutral-100 p-4 dark:border-neutral-800 bg-neutral-50 dark:bg-neutral-800/30">
+
+          <div class="border-t border-neutral-100 bg-neutral-50 p-4 dark:border-neutral-800 dark:bg-neutral-800/30">
             <form id="chat-form" class="flex flex-col gap-2">
               <div class="relative">
-                <input type="text" id="message-input" placeholder="Type a message..." class="w-full rounded-xl border border-neutral-300 bg-white p-3 pr-12 text-sm focus:border-blue-600 focus:outline-none focus:ring-1 focus:ring-blue-600 dark:border-neutral-700 dark:bg-neutral-900 dark:text-white" autocomplete="off" />
-                <button type="submit" class="absolute right-2 top-2 rounded-lg bg-blue-600 p-1.5 text-white hover:bg-blue-700 transition">
+                <input type="text" id="message-input" placeholder="Type a message..." class="w-full rounded-xl border border-neutral-300 bg-white p-3 pr-12 text-sm focus:border-blue-600 focus:ring-1 focus:ring-blue-600 focus:outline-none dark:border-neutral-700 dark:bg-neutral-900 dark:text-white" autocomplete="off" />
+                <button type="submit" class="absolute top-2 right-2 rounded-lg bg-blue-600 p-1.5 text-white transition hover:bg-blue-700">
                   <i data-lucide="send" class="h-4 w-4"></i>
                 </button>
               </div>
@@ -138,7 +121,6 @@
           </div>
         </div>
       </div>
-
     </div>
   </div>
 
@@ -149,11 +131,11 @@
       <div class="flex items-center gap-4">
         <a id="file-viewer-download" href="#" download="file" class="rounded-lg bg-neutral-100 px-3 py-1.5 text-xs font-bold text-neutral-700 hover:bg-neutral-200 dark:bg-neutral-800 dark:text-neutral-300">Download</a>
         <button popovertarget="file-viewer-popover" popovertargetaction="hide" class="rounded-full p-1 text-neutral-400 hover:bg-neutral-100 hover:text-neutral-600 dark:hover:bg-neutral-800">
-            <i data-lucide="x" class="h-5 w-5"></i>
+          <i data-lucide="x" class="h-5 w-5"></i>
         </button>
       </div>
     </div>
-    <div id="file-viewer-content" class="overflow-auto p-6 h-[60vh]"></div>
+    <div id="file-viewer-content" class="h-[60vh] overflow-auto p-6"></div>
   </div>
 
   <script>
@@ -197,7 +179,7 @@
         const table = contentEl.querySelector("table");
         if (table) {
           table.className = "w-full text-sm text-left text-neutral-600 dark:text-neutral-400 border-collapse";
-          table.querySelectorAll("td, th").forEach(c => c.className = "border border-neutral-200 p-2 dark:border-neutral-700");
+          table.querySelectorAll("td, th").forEach((c) => (c.className = "border border-neutral-200 p-2 dark:border-neutral-700"));
         }
       } catch (error) {
         contentEl.innerHTML = '<p class="text-center text-red-500">Could not load workbook.</p>';
@@ -229,7 +211,7 @@
 
         // Use the string directly, do not use new Date()
         const timeString = data.timestamp;
-        const name = data.email.split('@')[0];
+        const name = data.email.split("@")[0];
 
         const trashIcon = `<svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-trash-2 h-3 w-3"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/><line x1="10" x2="10" y1="11" y2="17"/><line x1="14" x2="14" y1="11" y2="17"/></svg>`;
 
@@ -237,13 +219,11 @@
             <div class="flex items-center gap-2 mb-1">
                 <span class="text-xs font-medium text-neutral-500 dark:text-neutral-400">${name}</span>
                 <span class="text-[10px] text-neutral-400">${timeString}</span>
-                ${isCurrentUser ? `<button class="delete-btn opacity-0 hover:opacity-100 transition-opacity text-neutral-400 hover:text-red-500" data-message-id="${data.message_id}">${trashIcon}</button>` : ''}
+                ${isCurrentUser ? `<button class="delete-btn opacity-0 hover:opacity-100 transition-opacity text-neutral-400 hover:text-red-500" data-message-id="${data.message_id}">${trashIcon}</button>` : ""}
             </div>
         `;
 
-        let bubbleClass = isCurrentUser 
-            ? "bg-blue-600 text-white rounded-br-none" 
-            : "bg-neutral-100 text-neutral-800 dark:bg-neutral-800 dark:text-neutral-200 rounded-bl-none";
+        let bubbleClass = isCurrentUser ? "bg-blue-600 text-white rounded-br-none" : "bg-neutral-100 text-neutral-800 dark:bg-neutral-800 dark:text-neutral-200 rounded-bl-none";
 
         let bodyHtml = `
             <div class="max-w-[85%] rounded-2xl px-4 py-2 text-sm ${bubbleClass}">
@@ -253,27 +233,27 @@
 
         // JS Logic for new socket messages (Attachments)
         if (data.attachment_path) {
-             const original_filename = data.attachment_path.split("/").pop();
-             const extension = original_filename.split(".").pop().toLowerCase();
-             
-             // Note: We construct this as a DOM element to append to bodyHtml logic more cleanly or just inject HTML string
-             // For simplicity in this hybrid block, let's create a container div in the string
-             let attachHtml = '<div class="mt-2 pt-2 border-t border-white/20">';
-             
-             if (["jpg", "jpeg", "png", "gif", "webp"].includes(extension)) {
-                attachHtml += `<a href="${data.attachment_path}" target="_blank"><img src="${data.attachment_path}" alt="Chat Attachment" class="max-w-[150px] rounded-lg h-auto" /></a>`;
-             } else if (extension === 'docx') {
-                attachHtml += `<button type="button" class="flex items-center gap-1 text-xs underline hover:no-underline font-bold" popovertarget="file-viewer-popover" onclick="viewDocx('${data.attachment_path}', '${original_filename}')"><i data-lucide="file-type-2" class="h-3 w-3"></i> View ${original_filename}</button>`;
-             } else if (['xlsx', 'xls'].includes(extension)) {
-                attachHtml += `<button type="button" class="flex items-center gap-1 text-xs underline hover:no-underline font-bold" popovertarget="file-viewer-popover" onclick="viewExcel('${data.attachment_path}', '${original_filename}')"><i data-lucide="sheet" class="h-3 w-3"></i> View ${original_filename}</button>`;
-             } else {
-                attachHtml += `<a href="${data.attachment_path}" target="_blank" class="flex items-center gap-1 text-xs underline hover:no-underline font-bold"><i data-lucide="paperclip" class="h-3 w-3"></i> View ${original_filename}</a>`;
-             }
-             attachHtml += '</div>';
-             
-             // Inject into body
-             // Using regex replace to insert before closing div is brittle, better to reconstruct
-             bodyHtml = `
+          const original_filename = data.attachment_path.split("/").pop();
+          const extension = original_filename.split(".").pop().toLowerCase();
+
+          // Note: We construct this as a DOM element to append to bodyHtml logic more cleanly or just inject HTML string
+          // For simplicity in this hybrid block, let's create a container div in the string
+          let attachHtml = '<div class="mt-2 pt-2 border-t border-white/20">';
+
+          if (["jpg", "jpeg", "png", "gif", "webp"].includes(extension)) {
+            attachHtml += `<a href="${data.attachment_path}" target="_blank"><img src="${data.attachment_path}" alt="Chat Attachment" class="max-w-[150px] rounded-lg h-auto" /></a>`;
+          } else if (extension === "docx") {
+            attachHtml += `<button type="button" class="flex items-center gap-1 text-xs underline hover:no-underline font-bold" popovertarget="file-viewer-popover" onclick="viewDocx('${data.attachment_path}', '${original_filename}')"><i data-lucide="file-type-2" class="h-3 w-3"></i> View ${original_filename}</button>`;
+          } else if (["xlsx", "xls"].includes(extension)) {
+            attachHtml += `<button type="button" class="flex items-center gap-1 text-xs underline hover:no-underline font-bold" popovertarget="file-viewer-popover" onclick="viewExcel('${data.attachment_path}', '${original_filename}')"><i data-lucide="sheet" class="h-3 w-3"></i> View ${original_filename}</button>`;
+          } else {
+            attachHtml += `<a href="${data.attachment_path}" target="_blank" class="flex items-center gap-1 text-xs underline hover:no-underline font-bold"><i data-lucide="paperclip" class="h-3 w-3"></i> View ${original_filename}</a>`;
+          }
+          attachHtml += "</div>";
+
+          // Inject into body
+          // Using regex replace to insert before closing div is brittle, better to reconstruct
+          bodyHtml = `
                 <div class="max-w-[85%] rounded-2xl px-4 py-2 text-sm ${bubbleClass}">
                     ${data.message}
                     ${attachHtml}
@@ -294,7 +274,7 @@
 
       // Event delegation for delete
       messagesContainer.addEventListener("click", (e) => {
-        const btn = e.target.closest('.delete-btn');
+        const btn = e.target.closest(".delete-btn");
         if (btn) {
           if (confirm("Delete this message?")) {
             socket.emit("delete_application_message", { message_id: btn.dataset.messageId });
@@ -312,18 +292,18 @@
         const payload = { application_id: applicationId, message: val };
 
         if (file) {
-            const reader = new FileReader();
-            reader.onload = (event) => {
-              payload.file = event.target.result;
-              payload.filename = file.name;
-              socket.emit("new_application_message", payload);
-              messageInput.value = "";
-              fileInput.value = null;
-            };
-            reader.readAsDataURL(file);
-        } else {
+          const reader = new FileReader();
+          reader.onload = (event) => {
+            payload.file = event.target.result;
+            payload.filename = file.name;
             socket.emit("new_application_message", payload);
             messageInput.value = "";
+            fileInput.value = null;
+          };
+          reader.readAsDataURL(file);
+        } else {
+          socket.emit("new_application_message", payload);
+          messageInput.value = "";
         }
       });
     });
