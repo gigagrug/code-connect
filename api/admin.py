@@ -1,7 +1,6 @@
 import bcrypt
 from sqlalchemy import text
-from flask import request, flash, redirect, url_for, session, render_template, jsonify
-from .projects import get_projects_for_user, get_projects_for_student
+from flask import flash, redirect, url_for, session
 
 def register_admin(request, engine, is_debug=False):
     email = request.form.get('email')
@@ -107,16 +106,174 @@ def login_admin(request, engine, is_debug=False):
 
     return redirect(url_for('login'))
 
-def get_projects_paginated(engine, page: int = 1, per_page: int = 5):
-    page = max(page, 1)
+def get_jobs_paginated(engine, page: int = 1, per_page: int = 6, q: str | None = None, status: str | None = None):
+    page = max(int(page or 1), 1)
+    per_page = max(int(per_page or 1), 1)
     offset = (page - 1) * per_page
+
+    where = []
+    params = {}
+
+    if q:
+        where.append("(title LIKE :q OR description LIKE :q)")
+        params["q"] = f"%{q}%"
+
+    if status:
+        where.append("status = :status")
+        params["status"] = status
+
+    where_sql = ("WHERE " + " AND ".join(where)) if where else ""
+
     with engine.connect() as conn:
-        total = conn.execute(text("SELECT COUNT(*) FROM projects")).scalar()
-        rows = conn.execute(text("""
-            SELECT *
-            FROM projects
-            ORDER BY created_at DESC, id DESC
-            LIMIT :limit OFFSET :offset
-        """), {"limit": per_page, "offset": offset}).mappings().all()
+        total = conn.execute(text(f"SELECT COUNT(*) FROM jobs {where_sql}"), params).scalar() or 0
+
+        counts = conn.execute(text(
+            """
+            SELECT 
+              SUM(CASE WHEN status = 0 THEN 1 ELSE 0 END) AS pending_count,
+              SUM(CASE WHEN status = 1 THEN 1 ELSE 0 END) AS approved_count,
+              SUM(CASE WHEN status = 2 THEN 1 ELSE 0 END) AS taken_count
+            FROM jobs
+            """
+        )).mappings().first() or {"pending_count": 0, "approved_count": 0, "taken_count": 0}
+
+        try:
+            rows = conn.execute(
+                text(f"""
+                    SELECT *
+                    FROM jobs
+                    {where_sql}
+                    ORDER BY id ASC
+                    LIMIT :limit OFFSET :offset
+                """),
+                {**params, "limit": per_page, "offset": offset},
+            ).mappings().all()
+        except Exception:
+            rows = conn.execute(
+                text(f"""
+                    SELECT *
+                    FROM jobs
+                    {where_sql}
+                    ORDER BY id ASC
+                    LIMIT :limit OFFSET :offset
+                """),
+                {**params, "limit": per_page, "offset": offset},
+            ).mappings().all()
+
     total_pages = max(1, (total + per_page - 1) // per_page)
-    return rows, total, total_pages
+    return rows, total, total_pages, counts.get("pending_count", 0), counts.get("approved_count", 0), counts.get("taken_count", 0)
+
+def get_projects_paginated(engine, page: int = 1, per_page: int = 6, q: str | None = None, status: str | None = None):
+    page = max(int(page or 1), 1)
+    per_page = max(int(per_page or 1), 1)
+    offset = (page - 1) * per_page
+
+    where = []
+    params = {}
+
+    if q:
+        where.append("(title LIKE :q OR description LIKE :q)")
+        params["q"] = f"%{q}%"
+
+    if status:
+        where.append("status = :status")
+        params["status"] = status
+
+    where_sql = ("WHERE " + " AND ".join(where)) if where else ""
+
+    with engine.connect() as conn:
+        total = conn.execute(text(f"SELECT COUNT(*) FROM projects {where_sql}"), params).scalar() or 0
+
+        counts = conn.execute(text(
+            """
+            SELECT 
+              SUM(CASE WHEN status = 0 THEN 1 ELSE 0 END) AS pending_count,
+              SUM(CASE WHEN status = 1 THEN 1 ELSE 0 END) AS approved_count,
+              SUM(CASE WHEN status = 2 THEN 1 ELSE 0 END) AS taken_count
+            FROM projects
+            """
+        )).mappings().first() or {"pending_count": 0, "approved_count": 0, "taken_count": 0}
+
+        try:
+            rows = conn.execute(
+                text(f"""
+                    SELECT *
+                    FROM projects
+                    {where_sql}
+                    ORDER BY id ASC
+                    LIMIT :limit OFFSET :offset
+                """),
+                {**params, "limit": per_page, "offset": offset},
+            ).mappings().all()
+        except Exception:
+            rows = conn.execute(
+                text(f"""
+                    SELECT *
+                    FROM projects
+                    {where_sql}
+                    ORDER BY id ASC
+                    LIMIT :limit OFFSET :offset
+                """),
+                {**params, "limit": per_page, "offset": offset},
+            ).mappings().all()
+
+    total_pages = max(1, (total + per_page - 1) // per_page)
+    return rows, total, total_pages, counts.get("pending_count", 0), counts.get("approved_count", 0), counts.get("taken_count", 0)
+
+def get_users_paginated(engine, page: int = 1, per_page: int = 6, q: str | None = None, status: str | None = None):
+    page = max(int(page or 1), 1)
+    per_page = max(int(per_page or 1), 1)
+    offset = (page - 1) * per_page
+
+    where = []
+    params = {}
+
+    if q:
+        where.append("(title LIKE :q OR description LIKE :q)")
+        params["q"] = f"%{q}%"
+
+    if status:
+        where.append("status = :status")
+        params["status"] = status
+
+    where_sql = ("WHERE " + " AND ".join(where)) if where else ""
+
+    with engine.connect() as conn:
+        total = conn.execute(text(f"SELECT COUNT(*) FROM users {where_sql}"), params).scalar() or 0
+
+        counts = conn.execute(text(
+            """
+            SELECT 
+              SUM(CASE WHEN role = 0 THEN 1 ELSE 0 END) AS pending_count,
+              SUM(CASE WHEN role = 1 THEN 1 ELSE 0 END) AS approved_count,
+              SUM(CASE WHEN role = 2 THEN 1 ELSE 0 END) AS taken_count
+            FROM users
+            """
+        )).mappings().first() or {"pending_count": 0, "approved_count": 0, "taken_count": 0}
+
+        try:
+            rows = conn.execute(
+                text(f"""
+                    SELECT *
+                    FROM users
+                    {where_sql}
+                    ORDER BY id ASC
+                    LIMIT :limit OFFSET :offset
+                """),
+                {**params, "limit": per_page, "offset": offset},
+            ).mappings().all()
+        except Exception:
+            rows = conn.execute(
+                text(f"""
+                    SELECT *
+                    FROM users
+                    {where_sql}
+                    ORDER BY id ASC
+                    LIMIT :limit OFFSET :offset
+                """),
+                {**params, "limit": per_page, "offset": offset},
+            ).mappings().all()
+
+    total_pages = max(1, (total + per_page - 1) // per_page)
+    return rows, total, total_pages, counts.get("pending_count", 0), counts.get("approved_count", 0), counts.get("taken_count", 0)
+

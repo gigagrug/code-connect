@@ -106,6 +106,8 @@ def serve_upload(project_name, filename):
     return send_from_directory(project_dir, filename)
 # Admin
 ## create routes only under '/admin/'
+
+
 @app.route('/admin', endpoint='admin')
 def admin_index():
     page = request.args.get('page', default=1, type=int) or 1
@@ -117,7 +119,7 @@ def admin_index():
 
 @app.route('/admin/jobs', endpoint='adminjobs')
 def admin_jobs_index():
-    # page = request.args.get('page', default=1, type=int) or 1
+    page = request.args.get('page', default=1, type=int) or 1
     per_page = 6
     jobs, total, total_pages, pending_count, approved_count, taken_count = get_jobs_paginated(engine, page=page, per_page=per_page)
     if page > total_pages:
@@ -126,8 +128,10 @@ def admin_jobs_index():
 
 @app.route('/admin/users', endpoint='adminusers')
 def admin_users_index():
-    page = request.args.get('page', default=q, type=int) or 1
+    page = request.args.get('page', default=1, type=int) or 1
     per_page = 6
+    users, total, total_pages, pending_count, approved_count, taken_count = get_users_paginated(engine, page=page, per_page=per_page)
+    return render_template('/admin/adminusers.html', users=users, page=page, per_page=per_page, total=total, total_pages=total_pages, pending_count=pending_count, approved_count=approved_count, taken_count=taken_count)
 # Users
 @app.route('/')
 def index():

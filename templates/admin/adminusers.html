@@ -55,7 +55,7 @@
         </div>
       </section>
 
-      {% if jobs and jobs|length %}
+      {% if users and users|length %}
         <!-- Controls -->
         <section class="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div class="flex items-center gap-2">
@@ -75,7 +75,7 @@
 
         <!-- Table -->
         <div class="overflow-x-auto rounded-xl border bg-white shadow-sm dark:bg-gray-900">
-          <table id="jobsTable" class="min-w-full text-sm">
+          <table id="usersTable" class="min-w-full text-sm">
             <thead class="sticky top-0 z-10 bg-gray-50 text-left text-gray-800 shadow-sm dark:bg-gray-800 dark:text-gray-100">
               <tr>
                 <th data-sort="number" class="cursor-pointer px-4 py-3 font-semibold select-none">ID</th>
@@ -87,20 +87,26 @@
               </tr>
             </thead>
             <tbody class="divide-y divide-gray-200 dark:divide-gray-800">
-              {% for j in jobs %}
+                 <!-- code that displays users i think -->
+              {% for j in users %}
                 <tr class="hover:bg-gray-50/60 dark:hover:bg-gray-800/60" data-status="{{ j.status }}">
+                    <!--index-->
                   <td class="px-4 py-3 text-gray-700 dark:text-gray-200" data-value="{{ j.id }}">{{ j.id }}</td>
-                  <td class="px-4 py-3" data-value="{{ j.title }}">
-                    <div class="font-semibold">{{ j.title or ('Job #' ~ j.id) }}</div>
+                   <!-- name and desc-->
+                  <td class="px-4 py-3" data-value="{{ j.name }}">
+                    <!-- name -->
+                    <div class="font-semibold">{{ j.name or ('Job #' ~ j.id) }}</div>
+                    <!-- desc, uneccesary maybe? -->
                     <div class="line-clamp-2 text-xs text-gray-500 dark:text-gray-400">{{ j.description }}</div>
                   </td>
-                  <td class="px-4 py-3" data-value="{{ j.status }}">
-                    {% if j.status == 2 %}
+                  <!-- status replace with -->
+                  <td class="px-4 py-3" data-value="{{ j.role }}">
+                    {% if j.role == 2 %}
                       <span class="inline-flex items-center rounded-md border border-blue-200 bg-blue-50 px-2 py-0.5 text-xs font-medium text-blue-700 dark:border-blue-900/50 dark:bg-blue-900/30 dark:text-blue-300">Taken</span>
-                    {% elif j.status == 1 %}
+                    {% elif j.role == 1 %}
                       <span class="inline-flex items-center rounded-md border border-green-200 bg-green-50 px-2 py-0.5 text-xs font-medium text-green-700 dark:border-green-900/50 dark:bg-green-900/30 dark:text-green-300">Approved</span>
                     {% else %}
-                      <span class="inline-flex items-center rounded-md border border-amber-200 bg-amber-50 px-2 py-0.5 text-xs font-medium text-amber-800 dark:border-amber-900/50 dark:bg-amber-900/30 dark:text-amber-300">Pending</span>
+                      <span class="inline-flex items-centers rounded-md border border-amber-200 bg-amber-50 px-2 py-0.5 text-xs font-medium text-amber-800 dark:border-amber-900/50 dark:bg-amber-900/30 dark:text-amber-300">Pending</span>
                     {% endif %}
                   </td>
                   <td class="px-4 py-3 text-xs text-gray-600 dark:text-gray-300">
@@ -126,7 +132,7 @@
         </div>
       {% else %}
         <div class="rounded-xl border bg-white p-8 text-center dark:bg-gray-900">
-          <p class="text-gray-700 dark:text-gray-200">No jobs yet.</p>
+          <p class="text-gray-700 dark:text-gray-200">No users yet.</p>
           <p class="text-sm text-gray-500 dark:text-gray-400">Please check back later.</p>
         </div>
       {% endif %}
@@ -138,22 +144,22 @@
         {% set end   = page + window if page + window < total_pages else total_pages %}
 
         <nav class="mt-8 flex items-center justify-between" aria-label="Pagination">
-          <div class="text-sm">Page <span class="font-semibold">{{ page }}</span> of <span class="font-semibold">{{ total_pages }}</span> &bull; Total jobs: <span class="font-semibold">{{ total }}</span></div>
+          <div class="text-sm">Page <span class="font-semibold">{{ page }}</span> of <span class="font-semibold">{{ total_pages }}</span> &bull; Total users: <span class="font-semibold">{{ total }}</span></div>
 
           <ul class="inline-flex items-center gap-1">
             <!-- First -->
             <li>
-              <a href="{{ url_for('adminjobs', page=1) }}" rel="first" aria-disabled="{{ 'true' if page == 1 else 'false' }}" tabindex="{{ '-1' if page == 1 else '0' }}" class="{{ 'pointer-events-none opacity-40' if page == 1 }} rounded-lg border px-3 py-1.5 text-sm"> First </a>
+              <a href="{{ url_for('adminusers', page=1) }}" rel="first" aria-disabled="{{ 'true' if page == 1 else 'false' }}" tabindex="{{ '-1' if page == 1 else '0' }}" class="{{ 'pointer-events-none opacity-40' if page == 1 }} rounded-lg border px-3 py-1.5 text-sm"> First </a>
             </li>
 
             <!-- Prev -->
             <li>
-              <a href="{{ url_for('adminjobs', page=page-1) }}" rel="prev" aria-disabled="{{ 'true' if page == 1 else 'false' }}" tabindex="{{ '-1' if page == 1 else '0' }}" class="{{ 'pointer-events-none opacity-40' if page == 1 }} rounded-lg border px-3 py-1.5 text-sm"> Prev </a>
+              <a href="{{ url_for('adminusers', page=page-1) }}" rel="prev" aria-disabled="{{ 'true' if page == 1 else 'false' }}" tabindex="{{ '-1' if page == 1 else '0' }}" class="{{ 'pointer-events-none opacity-40' if page == 1 }} rounded-lg border px-3 py-1.5 text-sm"> Prev </a>
             </li>
 
             <!-- leading ellipsis -->
             {% if start > 1 %}
-              <li><a href="{{ url_for('adminjobs', page=1) }}" class="rounded-lg border px-3 py-1.5 text-sm">1</a></li>
+              <li><a href="{{ url_for('adminusers', page=1) }}" class="rounded-lg border px-3 py-1.5 text-sm">1</a></li>
               {% if start > 2 %}<li class="px-2">&hellip;</li>{% endif %}
             {% endif %}
 
@@ -163,7 +169,7 @@
                 {% if pnum == page %}
                   <span aria-current="page" class="rounded-lg border px-3 py-1.5 text-sm">{{ pnum }}</span>
                 {% else %}
-                  <a href="{{ url_for('adminjobs', page=pnum) }}" class="rounded-lg border px-3 py-1.5 text-sm">{{ pnum }}</a>
+                  <a href="{{ url_for('adminusers', page=pnum) }}" class="rounded-lg border px-3 py-1.5 text-sm">{{ pnum }}</a>
                 {% endif %}
               </li>
             {% endfor %}
@@ -171,17 +177,17 @@
             <!-- trailing ellipsis -->
             {% if end < total_pages %}
               {% if end < total_pages - 1 %}<li class="px-2">&hellip;</li>{% endif %}
-              <li><a href="{{ url_for('adminjobs', page=total_pages) }}" class="rounded-lg border px-3 py-1.5 text-sm">{{ total_pages }}</a></li>
+              <li><a href="{{ url_for('adminusers', page=total_pages) }}" class="rounded-lg border px-3 py-1.5 text-sm">{{ total_pages }}</a></li>
             {% endif %}
 
             <!-- Next -->
             <li>
-              <a href="{{ url_for('adminjobs', page=page+1) }}" rel="next" aria-disabled="{{ 'true' if page == total_pages else 'false' }}" tabindex="{{ '-1' if page == total_pages else '0' }}" class="{{ 'pointer-events-none opacity-40' if page == total_pages }} rounded-lg border px-3 py-1.5 text-sm"> Next </a>
+              <a href="{{ url_for('adminusers', page=page+1) }}" rel="next" aria-disabled="{{ 'true' if page == total_pages else 'false' }}" tabindex="{{ '-1' if page == total_pages else '0' }}" class="{{ 'pointer-events-none opacity-40' if page == total_pages }} rounded-lg border px-3 py-1.5 text-sm"> Next </a>
             </li>
 
             <!-- Last -->
             <li>
-              <a href="{{ url_for('adminjobs', page=total_pages) }}" rel="last" aria-disabled="{{ 'true' if page == total_pages else 'false' }}" tabindex="{{ '-1' if page == total_pages else '0' }}" class="{{ 'pointer-events-none opacity-40' if page == total_pages }} rounded-lg border px-3 py-1.5 text-sm"> Last </a>
+              <a href="{{ url_for('adminusers', page=total_pages) }}" rel="last" aria-disabled="{{ 'true' if page == total_pages else 'false' }}" tabindex="{{ '-1' if page == total_pages else '0' }}" class="{{ 'pointer-events-none opacity-40' if page == total_pages }} rounded-lg border px-3 py-1.5 text-sm"> Last </a>
             </li>
           </ul>
         </nav>
@@ -190,7 +196,7 @@
       <!-- Inline enhancements (search, filter, sort, relative time) -->
       <script>
         (function () {
-          const table = document.getElementById("jobsTable");
+          const table = document.getElementById("usersTable");
           const tbody = table?.querySelector("tbody");
           const search = document.getElementById("search");
           const statusFilter = document.getElementById("statusFilter");
