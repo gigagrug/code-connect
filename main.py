@@ -110,6 +110,13 @@ def admin_jobs_index():
         page = total_pages
     return render_template('/admin/adminjobs.html', jobs=jobs, page=page, per_page=per_page, total=total, total_pages=total_pages, pending_count=pending_count, approved_count=approved_count, taken_count=taken_count)
 
+@app.route('/admin/users', endpoint='adminusers')
+def admin_users_index():
+    page = request.args.get('page', default=1, type=int) or 1
+    per_page = 6
+    users, total, total_pages, pending_count, approved_count, taken_count = get_users_paginated(engine, page=page, per_page=per_page)
+    return render_template('/admin/adminusers.html', users=users, page=page, per_page=per_page, total=total, total_pages=total_pages, pending_count=pending_count, approved_count=approved_count, taken_count=taken_count)
+# Users
 @app.route('/admin/jobs/<int:job_id>/update', methods=['POST'])
 def admin_job_update(job_id):
     if 'user_id' not in session:
