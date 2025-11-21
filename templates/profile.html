@@ -142,10 +142,10 @@
           </div>
 
           <!-- Created Projects -->
-          <div class="rounded-2xl border border-neutral-200 bg-white p-6 shadow-sm dark:border-neutral-800 dark:bg-neutral-900">
-            <h3 class="mb-6 flex items-center gap-2 text-xl font-bold text-neutral-900 dark:text-white"><i data-lucide="folder-plus" class="h-5 w-5 text-blue-500"></i> Created Projects</h3>
+          {% if created_projects %}
+            <div class="rounded-2xl border border-neutral-200 bg-white p-6 shadow-sm dark:border-neutral-800 dark:bg-neutral-900">
+              <h3 class="mb-6 flex items-center gap-2 text-xl font-bold text-neutral-900 dark:text-white"><i data-lucide="folder-plus" class="h-5 w-5 text-blue-500"></i> Created Projects</h3>
 
-            {% if created_projects %}
               <div class="overflow-hidden rounded-xl border border-neutral-200 shadow-sm dark:border-neutral-800">
                 <table class="w-full text-left">
                   <thead class="border-b border-neutral-200 bg-neutral-50 dark:border-neutral-800 dark:bg-neutral-800/50">
@@ -163,10 +163,8 @@
                   </tbody>
                 </table>
               </div>
-            {% else %}
-              <div class="col-span-full rounded-xl border border-dashed border-neutral-300 p-8 text-center text-sm text-neutral-500 dark:border-neutral-700">You haven't created any projects.</div>
-            {% endif %}
-          </div>
+            </div>
+          {% endif %}
         </div>
       {% endif %}
 

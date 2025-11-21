@@ -32,14 +32,9 @@ def _get_upload_paths(project_name, original_filename):
     url_path = f"/uploads/{sanitized_project_name}/{final_filename}"
     return (final_fs_save_path, url_path)
 
-# --- NEW HELPER FUNCTION ---
 def _get_project_participants_emails(project_id, engine):
     """
     Gets a unique set of emails for everyone involved in a project.
-    - Project Owner
-    - All students on all teams
-    - All instructors linked via instructor_projects
-    - All instructors of the students on the teams
     """
     emails = set()
     try:
@@ -85,8 +80,6 @@ def _get_project_participants_emails(project_id, engine):
         print(f"Error getting project participant emails: {e}")
     
     return emails
-# --- END NEW HELPER FUNCTION ---
-
 
 def get_project_by_id(project_id, engine):
     try:
@@ -235,7 +228,6 @@ def approve_project(project_id, engine):
                 update_project_query = text("UPDATE projects SET status = :status WHERE id = :project_id")
                 connection.execute(update_project_query, {"status": new_status, "project_id": project_id})
 
-            # Transaction commits here if all succeeded
             status_messages = {
                 2: ("Project approved. You are now the sole approver.", "success"),
                 1: ("Project status set to 'Pending'. You are now linked to it.", "info"),
@@ -276,16 +268,40 @@ def get_projects_for_user(engine):
         print(f"Database error fetching user projects: {e}")
         return []
 
-def get_all_projects(engine, session, page=1, per_page=12):
+def get_all_projects(engine, session, page=1, per_page=12, search_query=None, status_filter=None, sort_order='desc'):
     try:
         offset = (page - 1) * per_page
         user_role = session.get('role')
         user_id = session.get('user_id')
         
-        query_text = ""
-        params = {}
+        # --- Filter Construction ---
+        where_clauses = []
+        params = {
+            "per_page": per_page,
+            "offset": offset
+        }
+
+        if search_query:
+            where_clauses.append("(p.name LIKE :search OR u.name LIKE :search)")
+            params["search"] = f"%{search_query}%"
+
+        if status_filter is not None and status_filter != '':
+            # If status is "all" (or similar empty string logic in JS), we just don't add this clause
+            # But if it's a specific number string:
+            try:
+                status_val = int(status_filter)
+                where_clauses.append("p.status = :status_val")
+                params["status_val"] = status_val
+            except ValueError:
+                pass # Ignore invalid status filters
+
+        # --- Sorting Construction ---
+        # Security: Whitelist sort direction
+        direction = "ASC" if sort_order == 'asc' else "DESC"
+        order_by_clause = f"ORDER BY p.id {direction}"
 
         if user_role == 3:
+            # --- Student View (Filtered by Instructor logic) ---
             with engine.connect() as conn:
                 instructor_query = text("SELECT instructor_id FROM users WHERE id = :user_id")
                 result = conn.execute(instructor_query, {"user_id": user_id}).first()
@@ -294,34 +310,47 @@ def get_all_projects(engine, session, page=1, per_page=12):
                     return []
                 
                 instructor_id = result.instructor_id
+                params["instructor_id"] = instructor_id
 
-            query_text = """
+            # Base Constraint: Must be approved by student's instructor
+            where_clauses.append("ip.instructor_id = :instructor_id")
+            where_clauses.append("ip.status = 2")
+
+            where_str = " AND ".join(where_clauses)
+            query_text = f"""
                 SELECT p.id, p.name, p.description, p.status, u.name AS business_name, u.role
                 FROM projects p
                 JOIN users u ON p.user_id = u.id
                 JOIN instructor_projects ip ON p.id = ip.project_id
-                WHERE ip.instructor_id = :instructor_id AND ip.status = 2
-                ORDER BY p.id DESC
+                WHERE {where_str}
+                {order_by_clause}
                 LIMIT :per_page OFFSET :offset
             """
-            params = {
-                "instructor_id": instructor_id,
-                "per_page": per_page,
-                "offset": offset
-            }
         else:
-            query_text = """
+            # --- General View (Public / Business / Instructor Browsing) ---
+            # Base Constraint: Status must be 0 or 1 (unless overridden by filter?)
+            # Standard logic was "p.status IN (0, 1)".
+            # If a user explicitly filters for "Finished" (4), they won't see it if we hardcode 0,1.
+            # However, usually public index only shows Available (1) or Unlisted/Pending (0).
+            # Let's respect the filter if provided, otherwise default to 0,1.
+            
+            if status_filter is not None and status_filter != '':
+                 # If filtering, we trust the filter (and the WHERE logic added above)
+                 # But we should likely still prevent seeing deleted stuff if that existed.
+                 pass 
+            else:
+                 where_clauses.append("p.status IN (0, 1)")
+
+            where_str = " AND ".join(where_clauses) if where_clauses else "1=1"
+            
+            query_text = f"""
                 SELECT p.id, p.name, p.description, p.status, u.name AS business_name, u.role
                 FROM projects p
                 JOIN users u ON p.user_id = u.id
-                WHERE p.status IN (0, 1)
-                ORDER BY p.id DESC
+                WHERE {where_str}
+                {order_by_clause}
                 LIMIT :per_page OFFSET :offset
             """
-            params = {
-                "per_page": per_page,
-                "offset": offset
-            }
 
         with engine.connect() as connection:
             query = text(query_text)
@@ -334,8 +363,12 @@ def get_all_projects(engine, session, page=1, per_page=12):
 
 def load_projects_html(engine):
     page = request.args.get('page', 1, type=int)
+    search = request.args.get('search', None)
+    status = request.args.get('status', None)
+    sort = request.args.get('sort', 'desc')
+    
     per_page = 12 
-    projects = get_all_projects(engine, session, page=page, per_page=per_page)
+    projects = get_all_projects(engine, session, page=page, per_page=per_page, search_query=search, status_filter=status, sort_order=sort)
     return render_template('partials/projects_list.html', projects=projects)
 
 def check_if_user_can_edit_links(user_id, project, engine):
@@ -394,7 +427,7 @@ def get_projects_for_student(engine):
         with engine.connect() as conn:
             student_teams_query = text("""
                 SELECT p.id as project_id, p.name as project_name, p.description as project_description,
-                       t.id as team_id, t.name as team_name
+                        t.id as team_id, t.name as team_name
                 FROM team_members tm
                 JOIN teams t ON tm.team_id = t.id
                 JOIN projects p ON t.project_id = p.id

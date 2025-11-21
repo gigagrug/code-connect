@@ -270,7 +270,7 @@ def get_business_profile_data(user_id, engine):
                 FROM projects p
                 JOIN users u ON p.user_id = u.id
                 WHERE p.user_id = :user_id
-                ORDER BY p.created_at DESC
+                ORDER BY p.id DESC
             """)
             projects = conn.execute(projects_query, {"user_id": user_id}).mappings().all()
 

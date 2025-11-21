@@ -143,7 +143,13 @@ def index():
             if student_projects:
                 first_project_id = student_projects[0]['project_id']
                 return redirect(url_for('project_page', project_id=first_project_id))
-        projects = get_all_projects(engine, session, page=1, per_page=12)
+        
+        # Get Params for initial load if present in URL
+        search = request.args.get('search', None)
+        status_filter = request.args.get('status', None)
+        sort = request.args.get('sort', 'desc')
+        
+        projects = get_all_projects(engine, session, page=1, per_page=12, search_query=search, status_filter=status_filter, sort_order=sort)
         return render_template('index.html', projects=projects)
     else:
         return render_template('landing_page.html')
@@ -157,11 +163,11 @@ def project_page(project_id):
     if 'user_id' not in session:
         flash("You need to be logged in to view this page.", "warning")
         return redirect(url_for('login'))
-     
+      
     project = get_project_by_id(project_id, engine)
     if project:
         user_id = session.get('user_id')
-         
+          
         can_chat = check_if_user_can_chat(user_id, project_id, engine)
         can_edit_links = check_if_user_can_edit_links(user_id, project, engine)
         can_comment = check_if_user_can_comment(user_id, project, engine)
@@ -169,7 +175,7 @@ def project_page(project_id):
         teams = get_teams_for_project(project_id, engine)
         comments = get_comments_for_project(project_id, engine, session)
         chat_history = []
-         
+          
         if can_chat:
             with engine.connect() as conn:
                 history_query = text("""
@@ -194,7 +200,7 @@ def project_page(project_id):
                 }).first()
                 if result:
                     is_pending_by_current_instructor = True
-         
+          
         return render_template(
             'project.html', 
             project=project, 
@@ -235,11 +241,11 @@ def jobs_page():
     if 'user_id' not in session:
         flash("You must be logged in to view this page.", "warning")
         return redirect(url_for('login'))
-     
+      
     if session.get('role') not in [2, 3]:
         flash("You do not have permission to view this page.", "danger")
         return redirect(url_for('index'))
-         
+          
     open_jobs = get_open_jobs(engine)
     return render_template('jobs.html', jobs=open_jobs)
 
@@ -252,20 +258,20 @@ def job_page(job_id):
     if 'user_id' not in session:
         flash("You need to be logged in to view this page.", "warning")
         return redirect(url_for('login'))
-         
+          
     job = get_job_by_id(job_id, engine)
     if job:
         applications = []
         my_application = None 
-         
+          
         if session.get('user_id') == job.user_id:
             applications = get_job_applications(job_id, engine)
-         
+          
         elif session.get('role') in [2, 3]:
             with engine.connect() as conn:
                 query = text("SELECT * FROM job_applications WHERE job_id = :job_id AND user_id = :user_id")
                 my_application = conn.execute(query, {"job_id": job_id, "user_id": session.get('user_id')}).mappings().first()
-                 
+                  
         return render_template('job.html', job=job, applications=applications, my_application=my_application)
     else:
         flash("Job not found.", "danger")
@@ -304,15 +310,15 @@ def view_application(application_id):
     if 'user_id' not in session:
         flash("You must be logged in to view this page.", "warning")
         return redirect(url_for('login'))
-         
+          
     app_data = get_application_by_id(application_id, engine)
-     
+      
     if not app_data:
         flash("Application not found or you do not have permission to view it.", "danger")
         return redirect(url_for('index'))
-         
+          
     chat_history = get_application_chat_history(application_id, engine)
-     
+      
     return render_template(
         'application.html',
         application=app_data,
@@ -388,7 +394,7 @@ def create_user_route():
 @app.route('/group/create', methods=['POST'])
 def create_group_route():
     return create_group(engine)
-     
+      
 @app.route('/group/assign', methods=['POST'])
 def assign_user_route():
     return assign_user_to_team(engine)
