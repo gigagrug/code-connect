@@ -1,16 +1,36 @@
 {% extends "./layouts/shell.html" %}
 
 {% block content %}
-  <form action="/login" method="POST" class="card text mx-auto mt-6 max-w-[500px] space-y-4 p-5">
-    <h1 class="mb-2 text-center text-2xl font-bold">Login</h1>
-    <label class="mb-2 block text-sm font-bold" for="reg_email"> Email </label>
-    <input name="email" class="input" id="reg_email" type="email" placeholder="your@email.com" />
-    <label class="mb-2 block text-sm font-bold" for="reg_pwd">Password</label>
-    <input name="password" class="input" id="reg_pwd" type="password" placeholder="*****" />
-    <button type="submit" class="inline-flex w-full items-center justify-center rounded-lg bg-blue-600 px-5 py-2.5 text-white hover:bg-blue-800 focus:ring-blue-300 disabled:bg-neutral-700">Login</button>
-    <p class="text-neutral-500">
-      Dont have an account?
-      <a href="/register" class="font-medium text-blue-600 hover:underline">Register</a>
-    </p>
-  </form>
+  <div class="flex items-center justify-center p-4">
+    <form action="/login" method="POST" class="mx-auto mt-6 w-full max-w-[500px] space-y-6 rounded-2xl border border-neutral-200 bg-white p-8 shadow-xl dark:border-neutral-800 dark:bg-neutral-900">
+      <div class="text-center">
+        <h1 class="text-3xl font-bold text-neutral-900 dark:text-white">Welcome Back</h1>
+        <p class="mt-2 text-sm text-neutral-500 dark:text-neutral-400">Please enter your details to sign in.</p>
+      </div>
+      <div class="space-y-4">
+        <div>
+          <label class="mb-1.5 block text-sm font-bold text-neutral-700 dark:text-neutral-300" for="reg_email">Email Address</label>
+          <div class="relative">
+            <input name="email" class="w-full rounded-xl border border-neutral-300 bg-transparent p-3 pl-10 placeholder:text-neutral-400 focus:border-blue-600 focus:ring-1 focus:ring-blue-600 focus:outline-none dark:border-neutral-700 dark:bg-neutral-800 dark:placeholder:text-neutral-500 dark:focus:border-blue-500" id="reg_email" type="email" placeholder="name@example.com" required />
+            <i data-lucide="mail" class="absolute top-3.5 left-3 h-5 w-5 text-neutral-400"></i>
+          </div>
+        </div>
+        <div>
+          <label class="mb-1.5 block text-sm font-bold text-neutral-700 dark:text-neutral-300" for="reg_pwd">Password</label>
+          <div class="relative">
+            <input name="password" class="w-full rounded-xl border border-neutral-300 bg-transparent p-3 pl-10 placeholder:text-neutral-400 focus:border-blue-600 focus:ring-1 focus:ring-blue-600 focus:outline-none dark:border-neutral-700 dark:bg-neutral-800 dark:placeholder:text-neutral-500 dark:focus:border-blue-500" id="reg_pwd" type="password" placeholder="••••••••" required />
+            <i data-lucide="lock" class="absolute top-3.5 left-3 h-5 w-5 text-neutral-400"></i>
+          </div>
+        </div>
+        <div class="text-right">
+          <a href="/forgot_password" class="text-sm font-bold text-blue-600 hover:underline dark:text-blue-400">Forgot Password?</a>
+        </div>
+      </div>
+      <button type="submit" class="w-full rounded-xl bg-blue-600 px-5 py-3.5 text-sm font-bold text-white shadow-lg shadow-blue-600/20 transition-all hover:bg-blue-700 hover:shadow-blue-600/40 focus:ring-4 focus:ring-blue-600/20 disabled:bg-neutral-700">Login</button>
+      <p class="text-center text-sm text-neutral-500 dark:text-neutral-400">
+        Don't have an account?
+        <a href="/register" class="font-bold text-blue-600 hover:underline dark:text-blue-400">Register</a>
+      </p>
+    </form>
+  </div>
 {% endblock %}

@@ -1,3 +1,21 @@
+DROP_SCHEMA_SQL = """
+DROP TABLE IF EXISTS admin_messages;
+DROP TABLE IF EXISTS chat_messages;
+DROP TABLE IF EXISTS project_requests;
+DROP TABLE IF EXISTS team_members;
+DROP TABLE IF EXISTS teams;
+DROP TABLE IF EXISTS instructor_projects;
+DROP TABLE IF EXISTS application_messages;
+DROP TABLE IF EXISTS job_applications;
+DROP TABLE IF EXISTS jobs;
+DROP TABLE IF EXISTS comments;
+DROP TABLE IF EXISTS projects;
+DROP TABLE IF EXISTS instructor_requests;
+DROP TABLE IF EXISTS password_reset_tokens;
+DROP TABLE IF EXISTS users;
+"""
+
+CREATE_SCHEMA_SQL = """
 CREATE TABLE IF NOT EXISTS users (
 	id INT AUTO_INCREMENT PRIMARY KEY,
 	name VARCHAR(150),
@@ -12,12 +30,11 @@ CREATE TABLE IF NOT EXISTS users (
 	FOREIGN KEY (instructor_id) REFERENCES users(id) ON DELETE SET NULL
 );
 
-CREATE TABLE IF NOT EXISTS permission_change_requests (
+CREATE TABLE IF NOT EXISTS password_reset_tokens (
 	id INT AUTO_INCREMENT PRIMARY KEY,
 	user_id INT NOT NULL,
-	requested_role INT NOT NULL,
-	status INT DEFAULT 0,
-	created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+	token VARCHAR(255) NOT NULL UNIQUE,
+	expires_at DATETIME NOT NULL,
 	FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 );
 
@@ -50,8 +67,32 @@ CREATE TABLE IF NOT EXISTS jobs (
 	user_id INT NOT NULL,
 	title VARCHAR(255) NOT NULL,
 	description TEXT NOT NULL,
+	link TEXT,
 	status INT NOT NULL DEFAULT 0,
 	created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+	FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS job_applications (
+	id INT AUTO_INCREMENT PRIMARY KEY,
+	job_id INT NOT NULL,
+	user_id INT NOT NULL,
+	resume_path VARCHAR(512) NULL,
+	cover_letter_path VARCHAR(512) NULL,
+	created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+	FOREIGN KEY (job_id) REFERENCES jobs(id) ON DELETE CASCADE,
+	FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+	UNIQUE KEY unique_application (job_id, user_id)
+);
+
+CREATE TABLE IF NOT EXISTS application_messages (
+	id INT AUTO_INCREMENT PRIMARY KEY,
+	application_id INT NOT NULL,
+	user_id INT NOT NULL,
+	message_text TEXT NOT NULL,
+	attachment_path VARCHAR(512) NULL,
+	timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,
+	FOREIGN KEY (application_id) REFERENCES job_applications(id) ON DELETE CASCADE,
 	FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 );
 
@@ -125,29 +166,4 @@ CREATE TABLE IF NOT EXISTS admin_messages (
 	timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,
 	FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 );
-
--- schema rollback
-
-DROP TABLE IF EXISTS admin_messages;
-
-DROP TABLE IF EXISTS chat_messages;
-
-DROP TABLE IF EXISTS project_requests;
-
-DROP TABLE IF EXISTS team_members;
-
-DROP TABLE IF EXISTS teams;
-
-DROP TABLE IF EXISTS instructor_projects;
-
-DROP TABLE IF EXISTS jobs;
-
-DROP TABLE IF EXISTS comments;
-
-DROP TABLE IF EXISTS projects;
-
-DROP TABLE IF EXISTS instructor_requests;
-
-DROP TABLE IF EXISTS permission_change_requests;
-
-DROP TABLE IF EXISTS users;
+"""

@@ -1,25 +1,94 @@
 {% extends "./layouts/shell.html" %}
 
 {% block content %}
-  <div class="container mx-auto px-4 py-8">
-    <h2 class="text mb-6 text-center text-3xl font-bold">Explore All Projects</h2>
+  <div class="container mx-auto max-w-7xl px-4 py-8">
+    <h2 class="mb-8 text-center text-3xl font-bold text-neutral-900 dark:text-white">Explore All Projects</h2>
 
-    <div id="projects-grid" class="grid grid-cols-1 gap-8 md:grid-cols-2 lg:grid-cols-3">
-      {% for project in projects %}
-        {% include "partials/project_card.html" %}
-      {% endfor %}
+    <!-- Controls: Search, Filter, Sort -->
+    <div class="mb-6 flex flex-col gap-4 rounded-xl border border-neutral-200 bg-white p-4 shadow-sm lg:flex-row lg:items-center lg:justify-between dark:border-neutral-800 dark:bg-neutral-900">
+      <!-- Search -->
+      <div class="flex w-full items-center gap-2 lg:w-1/3">
+        <div class="relative w-full">
+          <div class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
+            <i data-lucide="search" class="h-5 w-5 text-neutral-400"></i>
+          </div>
+          <input type="text" id="search-input" class="block w-full rounded-lg border border-neutral-300 bg-neutral-50 p-2.5 pl-10 text-sm text-neutral-900 focus:border-blue-500 focus:ring-blue-500 dark:border-neutral-700 dark:bg-neutral-800 dark:text-white dark:placeholder-neutral-400 dark:focus:border-blue-500 dark:focus:ring-blue-500" placeholder="Search projects or creators..." />
+        </div>
+        <button id="search-btn" class="rounded-lg bg-neutral-800 px-4 py-2.5 text-sm font-medium text-white hover:bg-neutral-900 focus:ring-4 focus:ring-neutral-300 focus:outline-none dark:bg-neutral-700 dark:hover:bg-neutral-600 dark:focus:ring-neutral-800">Search</button>
+      </div>
+
+      <!-- Filters Group -->
+      <div class="flex w-full flex-col gap-4 sm:flex-row lg:w-auto">
+        <!-- Status Filter -->
+        <div class="flex items-center gap-2">
+          <label for="status-filter" class="text-sm font-medium text-neutral-700 dark:text-neutral-300">Status:</label>
+          <select id="status-filter" class="block w-full rounded-lg border border-neutral-300 bg-neutral-50 p-2.5 text-sm text-neutral-900 focus:border-blue-500 focus:ring-blue-500 sm:w-40 dark:border-neutral-700 dark:bg-neutral-800 dark:text-white dark:focus:border-blue-500 dark:focus:ring-blue-500">
+            <option value="">All</option>
+            <option value="0">Unlisted/Draft</option>
+            <option value="1">Pending/Open</option>
+            <option value="2">Approved</option>
+          </select>
+        </div>
+
+        <!-- Sort Order -->
+        <div class="flex items-center gap-2">
+          <label for="sort-order" class="text-sm font-medium text-neutral-700 dark:text-neutral-300">Sort:</label>
+          <select id="sort-order" class="block w-full rounded-lg border border-neutral-300 bg-neutral-50 p-2.5 text-sm text-neutral-900 focus:border-blue-500 focus:ring-blue-500 sm:w-40 dark:border-neutral-700 dark:bg-neutral-800 dark:text-white dark:focus:border-blue-500 dark:focus:ring-blue-500">
+            <option value="desc">Newest First</option>
+            <option value="asc">Oldest First</option>
+          </select>
+        </div>
+      </div>
     </div>
 
-    <div id="loader" class="py-8 text-center text-2xl" style="display: none;">Loading...</div>
+    <!-- Projects Table -->
+    <div class="overflow-hidden rounded-xl border border-neutral-200 bg-white shadow-sm dark:border-neutral-800 dark:bg-neutral-900">
+      <table class="w-full text-left">
+        <thead class="border-b border-neutral-200 bg-neutral-50 dark:border-neutral-800 dark:bg-neutral-800/50">
+          <tr>
+            <th scope="col" class="px-6 py-4 text-xs font-bold tracking-wider text-neutral-500 uppercase dark:text-neutral-400">Status</th>
+            <th scope="col" class="px-6 py-4 text-xs font-bold tracking-wider text-neutral-500 uppercase dark:text-neutral-400">Project Name</th>
+            <th scope="col" class="px-6 py-4 text-xs font-bold tracking-wider text-neutral-500 uppercase dark:text-neutral-400">Description</th>
+            <th scope="col" class="px-6 py-4 text-xs font-bold tracking-wider text-neutral-500 uppercase dark:text-neutral-400">Created By</th>
+          </tr>
+        </thead>
+        <tbody id="projects-grid" class="divide-y divide-neutral-200 dark:divide-neutral-800">
+          {% for project in projects %}
+            {% include "partials/project_card.html" %}
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+
+    <div id="loader" class="py-8 text-center text-neutral-500 dark:text-neutral-400" style="display: none;">
+      <div class="flex flex-col items-center justify-center gap-2">
+        <i data-lucide="loader-2" class="h-6 w-6 animate-spin"></i>
+        <span class="text-sm font-medium">Loading more projects...</span>
+      </div>
+    </div>
   </div>
 
   <script>
     document.addEventListener("DOMContentLoaded", () => {
       const projectsGrid = document.getElementById("projects-grid");
       const loader = document.getElementById("loader");
+      const searchInput = document.getElementById("search-input");
+      const searchBtn = document.getElementById("search-btn");
+      const statusFilter = document.getElementById("status-filter");
+      const sortOrder = document.getElementById("sort-order");
+
       let currentPage = 1;
       let isLoading = false;
       let noMoreProjects = false;
+
+      // Reset function when filters change
+      const resetAndLoad = () => {
+        projectsGrid.innerHTML = ""; // Clear existing projects
+        currentPage = 0; // Reset page (will become 1 in loadMoreProjects)
+        noMoreProjects = false;
+        loader.innerHTML = '<div class="flex flex-col items-center justify-center gap-2"><i data-lucide="loader-2" class="h-6 w-6 animate-spin"></i><span class="text-sm font-medium">Loading projects...</span></div>';
+        loadMoreProjects();
+      };
 
       const loadMoreProjects = async () => {
         if (isLoading || noMoreProjects) return;
@@ -28,20 +97,38 @@
         loader.style.display = "block";
         currentPage++;
 
+        const searchValue = searchInput.value.trim();
+        const statusValue = statusFilter.value;
+        const sortValue = sortOrder.value;
+
         try {
-          const response = await fetch(`/api/load-projects?page=${currentPage}`);
+          const params = new URLSearchParams({
+            page: currentPage,
+            sort: sortValue,
+          });
+
+          if (searchValue) params.append("search", searchValue);
+          if (statusValue) params.append("status", statusValue);
+
+          const response = await fetch(`/api/load-projects?${params.toString()}`);
           const newProjectsHtml = await response.text();
 
           if (newProjectsHtml.trim() === "") {
             noMoreProjects = true;
-            loader.innerHTML = "You've reached the end!";
+            loader.innerHTML = '<span class="text-sm font-medium">You\'ve reached the end!</span>';
+            // If grid is empty and we reached the end immediately, show "No results"
+            if (currentPage === 1 && projectsGrid.children.length === 0) {
+              projectsGrid.innerHTML = '<tr><td colspan="4" class="p-8 text-center text-neutral-500">No projects found matching your criteria.</td></tr>';
+            }
             return;
           }
 
           projectsGrid.insertAdjacentHTML("beforeend", newProjectsHtml);
+          // Re-initialize icons for newly added content
+          if (window.lucide) window.lucide.createIcons();
         } catch (error) {
           console.error("Failed to load more projects:", error);
-          loader.innerHTML = "Failed to load projects.";
+          loader.innerHTML = '<span class="text-sm font-medium text-red-500">Failed to load projects.</span>';
         } finally {
           isLoading = false;
           if (!noMoreProjects) {
@@ -50,7 +137,17 @@
         }
       };
 
+      // Event Listeners
+      searchBtn.addEventListener("click", resetAndLoad);
+      searchInput.addEventListener("keypress", (e) => {
+        if (e.key === "Enter") resetAndLoad();
+      });
+      statusFilter.addEventListener("change", resetAndLoad);
+      sortOrder.addEventListener("change", resetAndLoad);
+
       const checkAndLoadInitial = async () => {
+        // If the initial server render was empty (rare but possible if defaults return nothing), load.
+        // Or if screen is huge.
         while (window.innerHeight >= document.body.offsetHeight && !noMoreProjects) {
           await loadMoreProjects();
         }
@@ -62,7 +159,12 @@
         }
       });
 
-      checkAndLoadInitial();
+      // Note: We don't call checkAndLoadInitial() immediately if we already have server-rendered content,
+      // but the scroll listener handles it.
+      // However, if the user refreshes with specific query params in URL (not implemented in server-side index yet),
+      // the initial load might be "all".
+      // For this implementation, the initial server render is "default".
+      // We could trigger a client-side reload if we wanted to enforce client-state, but standard behavior is fine.
     });
   </script>
 {% endblock %}

@@ -2,8 +2,16 @@ import bcrypt
 from sqlalchemy import text
 from flask import request, flash, redirect, url_for, session, render_template
 from .projects import get_projects_for_user, get_projects_for_student
+from .job import get_my_applications
+import os
+import resend
+import secrets
+from datetime import datetime, timedelta
 
-def register_user(request, engine, is_debug=False):
+RESEND_KEY = os.environ.get('RESEND_KEY')
+RESEND_EMAIL = os.environ.get('RESEND_EMAIL') 
+
+def register_user(request, engine):
     email = request.form.get('email')
     password = request.form.get('password')
     password2 = request.form.get('password2')
@@ -28,12 +36,10 @@ def register_user(request, engine, is_debug=False):
 
     try:
         db_password = ""
-        if is_debug:
-            db_password = password
-        else:
-            password_bytes = password.encode('utf-8')
-            salt = bcrypt.gensalt()
-            db_password = bcrypt.hashpw(password_bytes, salt).decode('utf-8')
+        db_password = password
+        password_bytes = password.encode('utf-8')
+        salt = bcrypt.gensalt()
+        db_password = bcrypt.hashpw(password_bytes, salt).decode('utf-8')
 
         with engine.connect() as connection:
             query = text("SELECT email FROM users WHERE email = :email")
@@ -64,7 +70,7 @@ def register_user(request, engine, is_debug=False):
     return redirect(url_for('register'))
 
 
-def login_user(request, engine, is_debug=False):
+def login_user(request, engine):
     email = request.form.get('email')
     password = request.form.get('password')
 
@@ -83,12 +89,9 @@ def login_user(request, engine, is_debug=False):
 
             if result:
                 password_matches = False
-                if is_debug:
-                    password_matches = (result.password == password)
-                else:
-                    hashed_password_from_db = result.password.encode('utf-8')
-                    submitted_password_bytes = password.encode('utf-8')
-                    password_matches = bcrypt.checkpw(submitted_password_bytes, hashed_password_from_db)
+                hashed_password_from_db = result.password.encode('utf-8')
+                submitted_password_bytes = password.encode('utf-8')
+                password_matches = bcrypt.checkpw(submitted_password_bytes, hashed_password_from_db)
 
                 if password_matches:
                     session.clear()
@@ -97,8 +100,8 @@ def login_user(request, engine, is_debug=False):
                     session['role'] = result.role
                     session['permission'] = result.permission
                     flash(f"Welcome back, {email}!", "success")
-                    return redirect(url_for('profile'))
-            
+                    return redirect(url_for('index'))
+                
             flash("Invalid email or password. Please try again.", "danger")
 
     except Exception as e:
@@ -107,68 +110,146 @@ def login_user(request, engine, is_debug=False):
 
     return redirect(url_for('login'))
 
-def get_profile_data(engine):
-    user_role = session.get('role')
-    user_id = session.get('user_id')
+def handle_forgot_password(request, engine):
+    if request.method == 'POST':
+        email = request.form.get('email')
+        if not email:
+            flash("Email address is required.", "danger")
+            return redirect(url_for('forgot_password'))
 
-    if user_role == 3: # Student Logic
+        if not RESEND_KEY:
+            print("RESEND_KEY environment variable not set. Cannot send password reset email.")
+            flash("Email service is not configured. Please contact support.", "danger")
+            return redirect(url_for('forgot_password'))
+
+        try:
+            with engine.connect() as conn:
+                with conn.begin():
+                    # Find user by email
+                    user_query = text("SELECT id FROM users WHERE email = :email")
+                    user = conn.execute(user_query, {"email": email}).mappings().first()
+
+                    if user:
+                        # 1. Generate a secure token
+                        token = secrets.token_urlsafe(32)
+                        expires_at = datetime.utcnow() + timedelta(hours=1) # Token valid for 1 hour
+                        user_id = user.id
+
+                        # 2. Store the token in the database (still inside transaction)
+                        # Invalidate any old tokens for this user
+                        delete_old_tokens = text("DELETE FROM password_reset_tokens WHERE user_id = :user_id")
+                        conn.execute(delete_old_tokens, {"user_id": user_id})
+                        
+                        # Insert the new token
+                        insert_token = text("""
+                            INSERT INTO password_reset_tokens (user_id, token, expires_at)
+                            VALUES (:user_id, :token, :expires_at)
+                        """)
+                        conn.execute(insert_token, {"user_id": user_id, "token": token, "expires_at": expires_at})
+
+                        # 3. Create the reset link
+                        reset_url = url_for('reset_password', token=token, _external=True)
+
+                        # 4. Send the email (STILL inside transaction)
+                        html_content = f"""
+                        <p>Hello,</p>
+                        <p>You requested a password reset for your account. Click the link below to set a new password:</p>
+                        <p><a href="{reset_url}">{reset_url}</a></p>
+                        <p>This link will expire in 1 hour.</p>
+                        <p>If you did not request this, please ignore this email.</p>
+                        """
+                        
+                        try:
+                            resend.api_key = RESEND_KEY
+                            r = resend.Emails.send({
+                                "from": RESEND_EMAIL,
+                                "to": email,
+                                "subject": "Your Password Reset Request",
+                                "html": html_content
+                            })
+                        
+                        except Exception as e:
+                            print(f"Error sending email via Resend: {e}")
+                            flash("Could not send password reset email. Please try again later.", "danger")
+                            return redirect(url_for('forgot_password'))
+
+            flash("If an account with that email exists, a password reset link has been sent.", "info")
+            return redirect(url_for('login'))
+
+        except Exception as e:
+            print(f"Database error during password reset request: {e}")
+            flash("An error occurred. Please try again later.", "danger")
+            return redirect(url_for('forgot_password'))
+    return render_template('forgot_password.html')
+
+
+def handle_reset_password(request, engine, token):
+    try:
         with engine.connect() as conn:
-            student_query = text("""
-                SELECT s.instructor_id, i.email AS instructor_email
-                FROM users s LEFT JOIN users i ON s.instructor_id = i.id
-                WHERE s.id = :student_id
-            """)
-            student_info = conn.execute(student_query, {"student_id": user_id}).first()
-
-            pending_request = None
-            instructors = []
             
-            if not student_info.instructor_id:
-                req_query = text("""
-                    SELECT r.id, u.email AS instructor_email
-                    FROM instructor_requests r JOIN users u ON r.instructor_id = u.id
-                    WHERE r.student_id = :student_id AND r.status = 0
-                """)
-                pending_request = conn.execute(req_query, {"student_id": user_id}).first()
-
-                if not pending_request:
-                    inst_query = text("SELECT id, email FROM users WHERE role = 0 ORDER BY email")
-                    instructors = conn.execute(inst_query).all()
-
-            assignments = get_projects_for_student(engine)
-            return render_template('profile.html', 
-                                   assignments=assignments, 
-                                   student_info=student_info,
-                                   instructors=instructors,
-                                   pending_request=pending_request)
-
-    elif user_role == 0: # Instructor Logic
-        with engine.connect() as conn:
-            # New query to get projects managed by the instructor
-            approved_projects_query = text("""
-                SELECT p.id, p.name, p.description, p.status
-                FROM instructor_projects ip
-                JOIN projects p ON ip.project_id = p.id
-                WHERE ip.instructor_id = :instructor_id
-                ORDER BY p.id DESC
+            query = text("""
+                SELECT user_id, expires_at FROM password_reset_tokens
+                WHERE token = :token
             """)
-            approved_projects = conn.execute(
-                approved_projects_query, 
-                {"instructor_id": user_id}
-            ).mappings().all()
+            token_data = conn.execute(query, {"token": token}).mappings().first()
 
-        # Also get projects created by the instructor
-        created_projects = get_projects_for_user(engine)
-        
-        return render_template(
-            'profile.html',
-            approved_projects=approved_projects,
-            created_projects=created_projects
-        )
+            if not token_data:
+                flash("Invalid password reset link.", "danger")
+                conn.rollback() # Rollback the autobegin transaction
+                return redirect(url_for('login'))
 
-    else: # Logic for other roles (e.g., Business)
-        projects = get_projects_for_user(engine)
-        return render_template('profile.html', projects=projects)
+            if datetime.utcnow() > token_data.expires_at:
+                flash("Your password reset link has expired. Please request a new one.", "danger")
+                
+                # We are already in a transaction. Just execute and commit.
+                delete_query = text("DELETE FROM password_reset_tokens WHERE token = :token")
+                conn.execute(delete_query, {"token": token})
+                conn.commit() # Commit the token deletion
+                
+                return redirect(url_for('login'))
+            
+            user_id = token_data.user_id
+
+            # If it's a POST request, handle the form submission
+            if request.method == 'POST':
+                password = request.form.get('password')
+                password2 = request.form.get('password2')
+
+                if not password or not password2:
+                    flash("Both password fields are required.", "danger")
+                    conn.rollback() # Rollback the autobegin transaction
+                    return render_template('reset_password.html', token=token) # Re-render form
+
+                if password != password2:
+                    flash("Passwords do not match.", "danger")
+                    conn.rollback() # Rollback the autobegin transaction
+                    return render_template('reset_password.html', token=token)
+
+                # Hash the new password
+                password_bytes = password.encode('utf-8')
+                salt = bcrypt.gensalt()
+                db_password = bcrypt.hashpw(password_bytes, salt).decode('utf-8')
+
+                # We are still in the original transaction.
+                # Execute update and delete, then commit.
+                update_pass_query = text("UPDATE users SET password = :password WHERE id = :user_id")
+                conn.execute(update_pass_query, {"password": db_password, "user_id": user_id})
+
+                delete_token_query = text("DELETE FROM password_reset_tokens WHERE token = :token")
+                conn.execute(delete_token_query, {"token": token})
+                
+                conn.commit() # Commit password update and token deletion
+                
+                flash("Your password has been updated successfully! You can now log in.", "success")
+                return redirect(url_for('login'))
+
+            conn.rollback()
+            return render_template('reset_password.html', token=token)
+
+    except Exception as e:
+        print(f"Error during password reset: {e}")
+        flash("An error occurred while resetting your password. Please try again.", "danger")
+        return redirect(url_for('login'))
 
 def get_business_profile_data(user_id, engine):
     try:
@@ -185,11 +266,11 @@ def get_business_profile_data(user_id, engine):
                 return None
 
             projects_query = text("""
-                SELECT p.id, p.name, p.description, p.status, u.name
+                SELECT p.id, p.name, p.description, p.status, u.name AS business_name
                 FROM projects p
                 JOIN users u ON p.user_id = u.id
                 WHERE p.user_id = :user_id
-                ORDER BY p.created_at DESC
+                ORDER BY p.id DESC
             """)
             projects = conn.execute(projects_query, {"user_id": user_id}).mappings().all()
 
@@ -204,7 +285,6 @@ def get_business_profile_data(user_id, engine):
         return None
 
 def update_profile(engine):
-    """Handles updating user profile information."""
     if 'user_id' not in session:
         flash("You must be logged in to update your profile.", "danger")
         return redirect('/login')
@@ -216,18 +296,16 @@ def update_profile(engine):
 
     try:
         with engine.connect() as conn:
-            with conn.begin():  # Start a transaction
-                # Update name for the current user
+            with conn.begin(): 
                 query_name = text("UPDATE users SET name = :name WHERE id = :user_id")
                 conn.execute(query_name, {"name": name, "user_id": user_id})
 
-                # Role-specific updates
-                if user_role == 1:  # Business User can also update bio
+                if user_role == 1: 
                     bio = request.form.get('bio', '').strip()
                     query_bio = text("UPDATE users SET bio = :bio WHERE id = :user_id")
                     conn.execute(query_bio, {"bio": bio, "user_id": user_id})
 
-                elif user_role == 3:  # Student can also update graduation year
+                elif user_role == 3: 
                     graduation = request.form.get('graduation', '').strip()
                     query_grad = text("UPDATE users SET graduation = :graduation WHERE id = :user_id")
                     conn.execute(query_grad, {"graduation": graduation, "user_id": user_id})
@@ -243,12 +321,11 @@ def get_profile_data(engine):
     user_role = session.get('role')
     user_id = session.get('user_id')
 
-    # Fetch base user data for everyone
     with engine.connect() as conn:
         user_data_query = text("SELECT name, bio FROM users WHERE id = :user_id")
         user_data = conn.execute(user_data_query, {"user_id": user_id}).mappings().first()
 
-    if user_role == 3: # Student Logic
+    if user_role == 3:
         with engine.connect() as conn:
             student_query = text("""
                 SELECT s.instructor_id, i.name AS instructor_email, s.graduation
@@ -271,16 +348,18 @@ def get_profile_data(engine):
                 if not pending_request:
                     inst_query = text("SELECT id, email FROM users WHERE role = 0 ORDER BY email")
                     instructors = conn.execute(inst_query).all()
-
+        
         assignments = get_projects_for_student(engine)
+        applications = get_my_applications(user_id, engine)
         return render_template('profile.html', 
-                               assignments=assignments, 
-                               student_info=student_info,
-                               instructors=instructors,
-                               pending_request=pending_request,
-                               user_data=user_data) # Pass user_data as well
+                                assignments=assignments, 
+                                student_info=student_info,
+                                instructors=instructors,
+                                pending_request=pending_request,
+                                user_data=user_data,
+                                applications=applications) # Pass applications
 
-    elif user_role == 0: # Instructor Logic
+    elif user_role == 0:
         with engine.connect() as conn:
             approved_projects_query = text("""
                 SELECT p.id, p.name, p.description, p.status, u.name
@@ -302,12 +381,14 @@ def get_profile_data(engine):
             user_data=user_data
         )
 
-    else: # Logic for Business and other roles
-        projects = get_projects_for_user(engine)
-        return render_template('profile.html', projects=projects, user_data=user_data)
+    elif user_role == 2:
+        applications = get_my_applications(user_id, engine)
+        return render_template('profile.html', user_data=user_data, applications=applications)
+        
+    else:
+        return render_template('profile.html', user_data=user_data)
 
 def create_admin_message(request, engine):
-    """Saves a new message from a user to the admin."""
     if 'user_id' not in session:
         flash("You must be logged in to send a message.", "warning")
         return redirect(url_for('login'))
@@ -315,7 +396,7 @@ def create_admin_message(request, engine):
     message = request.form.get('message')
     if not message or not message.strip():
         flash("Message cannot be empty.", "danger")
-        return redirect(url_or('profile'))
+        return redirect(url_for('profile'))
 
     user_id = session['user_id']
     
@@ -324,7 +405,7 @@ def create_admin_message(request, engine):
             query = text("INSERT INTO admin_messages (user_id, message) VALUES (:user_id, :message)")
             conn.execute(query, {"user_id": user_id, "message": message.strip()})
             conn.commit()
-        flash("Your message has been sent to the administrators.", "success")
+            flash("Your message has been sent to the administrators.", "success")
     except Exception as e:
         print(f"Error saving admin message: {e}")
         flash("An error occurred while sending your message.", "danger")

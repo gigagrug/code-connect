@@ -106,7 +106,7 @@ def login_admin(request, engine, is_debug=False):
 
     return redirect(url_for('login'))
 
-def get_jobs_paginated(engine, page: int = 1, per_page: int = 6, q: str | None = None, status: str | None = None):
+def get_projects_paginated(engine, page: int = 1, per_page: int = 6, q: str | None = None, status: str | None = None):
     page = max(int(page or 1), 1)
     per_page = max(int(per_page or 1), 1)
     offset = (page - 1) * per_page
