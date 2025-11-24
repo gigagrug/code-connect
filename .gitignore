@@ -3,3 +3,4 @@ package-lock.json
 .vscode
 uploads
 .idea
+__pycache__
