@@ -150,7 +150,7 @@
                           {% set original_filename = path.split('/')[-1] %}
                           <div class="flex items-center gap-3 rounded-lg border border-neutral-200 bg-white p-2 dark:border-neutral-700 dark:bg-neutral-800">
                             <input type="checkbox" name="files_to_delete" value="{{ path }}" id="del-{{ loop.index }}" class="rounded text-red-500 focus:ring-red-400" />
-                            <label for="del-{{ loop.index }}" class="flex-grow cursor-pointer truncate text-sm text-neutral-600 dark:text-neutral-300">{{ original_filename }}</label>
+                            <label for="del-{{ loop.index }}" class="grow cursor-pointer truncate text-sm text-neutral-600 dark:text-neutral-300">{{ original_filename }}</label>
                             <span class="text-xs font-medium text-red-500">Delete</span>
                           </div>
                         {% endif %}
@@ -245,10 +245,10 @@
 
           {% if can_comment %}
             <div class="flex gap-4">
-              <div class="flex-shrink-0">
+              <div class="shrink-0">
                 <div class="flex h-10 w-10 items-center justify-center rounded-full bg-neutral-200 font-bold text-neutral-600 dark:bg-neutral-800 dark:text-neutral-400">{{ session.email[0]|upper }}</div>
               </div>
-              <div class="flex-grow">
+              <div class="grow">
                 <form action="/project/{{ project.id }}/comment" method="POST" enctype="multipart/form-data" class="space-y-3">
                   <textarea name="comment" class="w-full rounded-xl border border-neutral-200 bg-white p-3 text-sm placeholder:text-neutral-400 focus:border-blue-600 focus:ring-1 focus:ring-blue-600 focus:outline-none dark:border-neutral-700 dark:bg-neutral-900 dark:text-white" placeholder="Write a comment..." rows="3"></textarea>
                   <div class="flex items-center justify-between">
@@ -263,10 +263,10 @@
           <div class="space-y-6">
             {% for comment in comments %}
               <div class="flex gap-4">
-                <div class="flex-shrink-0">
+                <div class="shrink-0">
                   <div class="flex h-10 w-10 items-center justify-center rounded-full border-2 border-white bg-neutral-100 text-sm font-bold text-neutral-500 shadow-sm dark:border-neutral-900 dark:bg-neutral-800 dark:text-neutral-400">{{ comment.name[0]|upper if comment.name else '?' }}</div>
                 </div>
-                <div class="flex-grow">
+                <div class="grow">
                   <div class="rounded-xl border border-neutral-200 bg-white p-4 shadow-sm dark:border-neutral-800 dark:bg-neutral-900">
                     <div class="mb-2 flex items-center justify-between">
                       <div class="flex items-center gap-2">
@@ -331,7 +331,7 @@
               <h3 class="flex items-center gap-2 font-bold text-neutral-900 dark:text-white"><i data-lucide="message-square" class="h-4 w-4 text-blue-500"></i> Team Chat</h3>
             </div>
 
-            <div id="chat-messages" class="flex-grow space-y-4 overflow-y-auto bg-white p-4 dark:bg-neutral-900">
+            <div id="chat-messages" class="grow space-y-4 overflow-y-auto bg-white p-4 dark:bg-neutral-900">
               {% for msg in chat_history %}
                 <div id="message-{{ msg.message_id }}" class="{% if msg.email == session.email %}items-end{% else %}items-start{% endif %} flex flex-col">
                   <div class="mb-1 flex items-center gap-2">

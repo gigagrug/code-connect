@@ -69,7 +69,7 @@
             <h3 class="flex items-center gap-2 font-bold text-neutral-900 dark:text-white"><i data-lucide="message-square" class="h-4 w-4 text-blue-500"></i> Discussion</h3>
           </div>
 
-          <div id="chat-messages" class="flex-grow space-y-4 overflow-y-auto bg-white p-4 dark:bg-neutral-900">
+          <div id="chat-messages" class="grow space-y-4 overflow-y-auto bg-white p-4 dark:bg-neutral-900">
             {% for msg in chat_history %}
               <div id="message-{{ msg.message_id }}" class="{% if msg.email == session.email %}items-end{% else %}items-start{% endif %} flex flex-col">
                 <div class="mb-1 flex items-center gap-2">
