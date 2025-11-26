@@ -257,7 +257,6 @@ def apply_to_job(job_id, request, engine):
     return redirect(url_for('job_page', job_id=job_id))
 
 def get_job_applications(job_id, engine):
-    """Gets all applications for a specific job."""
     try:
         with engine.connect() as conn:
             query = text("""
@@ -325,7 +324,6 @@ def get_application_by_id(application_id, engine):
         return None
 
 def check_if_user_can_chat_application(user_id, application_id, engine):
-    """Checks if a user is either the applicant or the job owner for a chat."""
     if not user_id:
         return False
     
@@ -333,7 +331,6 @@ def check_if_user_can_chat_application(user_id, application_id, engine):
     return app_data is not None
 
 def get_application_chat_history(application_id, engine):
-    """Gets all chat messages for a specific application."""
     try:
         with engine.connect() as conn:
             query = text("""

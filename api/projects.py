@@ -33,9 +33,6 @@ def _get_upload_paths(project_name, original_filename):
     return (final_fs_save_path, url_path)
 
 def _get_project_participants_emails(project_id, engine):
-    """
-    Gets a unique set of emails for everyone involved in a project.
-    """
     emails = set()
     try:
         with engine.connect() as conn:
@@ -780,9 +777,6 @@ def add_comment_to_project(project_id, request, engine):
         flash(f"An error occurred while posting your comment: {e}", "danger")
         return redirect(url_for('project_page', project_id=project_id))
 
-    # --- NEW EMAIL NOTIFICATION LOGIC ---
-    # This is in a separate try/except so that if emails fail,
-    # the user's comment is still successfully posted.
     try:
         if not RESEND_KEY:
             print("Warning: RESEND_KEY not set. Skipping comment notification email.")
@@ -836,12 +830,7 @@ def add_comment_to_project(project_id, request, engine):
         
     except Exception as e:
         print(f"CRITICAL: Comment saved but email notification failed: {e}")
-        # We don't flash an error to the user, as their comment *was* successful.
-        # We just log the error.
-
     return redirect(url_for('project_page', project_id=project_id))
-    # --- END NEW LOGIC ---
-
 
 def delete_comment_on_project(project_id, comment_id, engine):
     user_id = session.get('user_id')

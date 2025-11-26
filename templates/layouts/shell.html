@@ -24,16 +24,29 @@
           <div class="flex h-8 w-8 items-center justify-center rounded-lg bg-linear-to-br from-blue-600 to-emerald-500 font-bold text-white">C</div>
           <span class="text-2xl font-bold text-neutral-900 dark:text-white">Code<span class="text-blue-600">Connect</span></span>
         </a>
-        <div class="flex items-center gap-6 text-sm font-medium">
+        <div class="flex w-full items-center justify-end gap-6 text-sm font-medium sm:w-auto">
           <ul class="flex flex-row items-center space-x-6 text-neutral-600 dark:text-neutral-300">
             {% if 'email' in session %}
               {% if session['email'] and session.get('role') in [3] %}
                 <a href="/jobs" class="hover:text-blue-600 dark:hover:text-blue-400">Jobs</a>
               {% endif %}
+              
               <a href="/profile" class="hover:text-blue-600 dark:hover:text-blue-400">Profile</a>
-              {% if session['email'] and session.get('role') in [0] %}
-                <a href="/userMgt" class="hover:text-blue-600 dark:hover:text-blue-400">UserMgt</a>
+              
+              {% if session['email'] and session.get('role') == 10 %}
+                <a href="/admin" class="hover:text-blue-600 dark:hover:text-blue-400">Projects</a>
+                <a href="/admin/jobs" class="hover:text-blue-600 dark:hover:text-blue-400">Jobs</a>
+                <a href="/admin/users" class="hover:text-blue-600 dark:hover:text-blue-400">Users</a>
               {% endif %}
+
+              {% if session['email'] and session.get('role') == 0 %}
+                <a href="/classroom" class="hover:text-blue-600 dark:hover:text-blue-400">Classroom</a>
+              {% endif %}
+
+              {% if session['email'] and session.get('role') == 1 %}
+                 <a href="/business/{{ session.get('user_id') }}" class="hover:text-blue-600 dark:hover:text-blue-400">My Business</a>
+              {% endif %}
+
             {% else %}
               <a href="/register" class="hover:text-blue-600 dark:hover:text-blue-400">Register</a>
               <a href="/login" class="hover:text-blue-600 dark:hover:text-blue-400">Login</a>

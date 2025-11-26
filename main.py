@@ -1,5 +1,4 @@
 import os
-import sys
 import sqlalchemy
 import time
 from sqlalchemy import text
@@ -9,8 +8,8 @@ from api.auth import *
 from api.projects import *
 from api.mgt import *
 from api.invite import *
-from api.chat import *
-from api.admin import *
+from api.chat import init_chat, init_application_chat
+from api.admin import register_admin, login_admin, get_projects_paginated, get_users_paginated
 from api.adminjobs import *
 from api.job import *
 from schema.dummydata import seed_data
@@ -20,6 +19,7 @@ app = Flask(__name__)
 app.secret_key = os.getenv("FLASK_SECRET_KEY")
 UPLOAD_DIR = os.path.join(os.path.abspath(os.path.dirname(__file__)), 'uploads')
 app.config['UPLOAD_DIR'] = UPLOAD_DIR
+app.debug = os.getenv("FLASK_DEBUG", "0") == "1"
 db_url = os.getenv("DB_URL")
 
 if not db_url:
@@ -57,26 +57,24 @@ def manage_database_on_startup():
     if not engine:
         print("❌ Database engine not initialized. Skipping schema management.")
         return
-    if os.environ.get("WERKZEUG_RUN_MAIN") == "true":
-        if app.debug:
-            print("🚀 Starting **DEBUG** database reset (Drop/Create/Seed)...")
-            try:
-                execute_raw_sql(engine, DROP_SCHEMA_SQL)
-                execute_raw_sql(engine, CREATE_SCHEMA_SQL)
-                seed_data(engine) 
-                print("\n🎉 Database has been successfully **RESET and SEEDED**! 🎉\n")
-            except Exception as e:
-                print(f"\n🔥 Database reset failed: {e} 🔥")
-                sys.exit(1)
-        else:
-            print("Production mode detected. Starting **CREATE ONLY** schema run.")
-            try:
-                execute_raw_sql(engine, CREATE_SCHEMA_SQL)
-                print("✅ CREATE_SCHEMA_SQL executed. Existing data preserved. (No seeding in Prod mode.)")
-            except Exception as e:
-                print(f"⚠️ Could not execute CREATE_SCHEMA_SQL. Check database logs for details: {e}")
-if os.getenv("FLASK_DEBUG", "0") == "1":
-    app.debug = True
+    if app.debug and os.environ.get("WERKZEUG_RUN_MAIN") != "true":
+        return
+    if app.debug:
+        print("🚀 Starting **DEBUG** database reset (Drop/Create/Seed)...")
+        try:
+            execute_raw_sql(engine, DROP_SCHEMA_SQL)
+            execute_raw_sql(engine, CREATE_SCHEMA_SQL)
+            seed_data(engine) 
+            print("\n🎉 Database has been successfully **RESET and SEEDED**! 🎉\n")
+        except Exception as e:
+            print(f"\n🔥 Database reset failed: {e} 🔥")
+    else:
+        print("Production mode detected (FLASK_DEBUG=0). Starting **CREATE ONLY** schema run.")
+        try:
+            execute_raw_sql(engine, CREATE_SCHEMA_SQL)
+            print("✅ CREATE_SCHEMA_SQL executed. Existing data preserved.")
+        except Exception as e:
+            print(f"⚠️ Could not execute CREATE_SCHEMA_SQL. Check database logs for details: {e}")
 
 manage_database_on_startup() 
 
@@ -89,7 +87,7 @@ def serve_upload(project_name, filename):
     project_dir = os.path.join(app.config['UPLOAD_DIR'], project_name)
     return send_from_directory(project_dir, filename)
 
-@app.route('/admin', endpoint='admin')
+@app.route('/admin')
 def admin_index():
     page = request.args.get('page', default=1, type=int) or 1
     per_page = 6
@@ -97,6 +95,18 @@ def admin_index():
     if page > total_pages:
         page = total_pages
     return render_template('/admin/admin.html', projects=projects, page=page, per_page=per_page, total=total, total_pages=total_pages, pending_count=pending_count, approved_count=approved_count, taken_count=taken_count)
+
+@app.route('/admin/register', methods=['POST', 'GET'])
+def admin_register():
+    if request.method == 'POST':
+        return register_admin(request, engine)
+    return render_template('/admin/adminregister.html')
+
+@app.route('/admin/login', methods=['GET', 'POST'])
+def admin_login():
+    if request.method == 'POST':
+        return login_admin(request, engine)
+    return render_template('/admin/adminlogin.html')
 
 @app.route('/admin/jobs', endpoint='adminjobs')
 def admin_jobs_index():
@@ -361,7 +371,7 @@ def business_jobs(user_id):
         return redirect(url_for('index'))
     return profile_page
 
-@app.route('/userMgt', methods=['GET'])
+@app.route('/classroom', methods=['GET'])
 def user_mgt():
     if 'user_id' not in session or session.get('role') != 0:
         flash("Access restricted to instructors.", "danger")
