@@ -1,0 +1,42 @@
+{#Include with {% include 'partials/nav.html' %}. #}
+
+{% set ns = namespace(active=active_page or request.endpoint or '') %}
+{% set jobs_route = 'adminjobs' if session.get('role') in [0] else 'jobs_page' %}
+{% set jobs_href = url_for(jobs_route) %}
+{% set messages_href = url_for('profile') + '#messages' %}
+
+<nav class="sticky top-0 z-40 border-b border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900">
+  <div class="mx-auto flex max-w-6xl items-center justify-between gap-4 px-4 py-3">
+    <a href="{{ url_for('index') }}" class="flex items-center gap-2 text-lg font-semibold text-gray-900 dark:text-gray-100">
+      <span class="rounded-full bg-indigo-600 px-2 py-1 text-xs font-bold uppercase text-white">CC</span>
+      <span>Code Connect</span>
+    </a>
+
+    <div class="flex flex-wrap items-center gap-3 text-sm font-semibold">
+      {% set links = [
+        {'label': 'Home Page', 'href': url_for('index'), 'keys': ['index']},
+        {'label': 'Jobs', 'href': jobs_href, 'keys': ['jobs_page', 'adminjobs']},
+        {'label': 'Messages', 'href': messages_href, 'keys': ['profile']},
+        {'label': 'Users', 'href': url_for('user_mgt'), 'keys': ['user_mgt']},
+      ] %}
+
+      {% for link in links %}
+        {% set is_active = ns.active in link['keys'] %}
+        <a
+          href="{{ link.href }}"
+          class="rounded-lg px-3 py-2 transition {{ 'bg-indigo-600 text-white dark:bg-indigo-500' if is_active else 'text-gray-700 hover:bg-gray-100 dark:text-gray-200 dark:hover:bg-gray-800' }}">
+          {{ link.label }}
+        </a>
+      {% endfor %}
+
+      {% if 'user_id' in session %}
+        <a href="{{ url_for('profile') }}" class="rounded-lg px-3 py-2 text-gray-700 hover:bg-gray-100 dark:text-gray-200 dark:hover:bg-gray-800">Profile</a>
+      {% else %}
+        <a href="{{ url_for('login') }}" class="rounded-lg px-3 py-2 text-gray-700 hover:bg-gray-100 dark:text-gray-200 dark:hover:bg-gray-800">Login</a>
+        <a href="{{ url_for('register') }}" class="rounded-lg px-3 py-2 text-gray-700 hover:bg-gray-100 dark:text-gray-200 dark:hover:bg-gray-800">Register</a>
+      {% endif %}
+
+      <button type="button" onclick="theme()" class="rounded-lg border border-gray-200 px-3 py-2 text-gray-700 hover:bg-gray-100 dark:border-gray-700 dark:text-gray-100 dark:hover:bg-gray-800">Theme</button>
+    </div>
+  </div>
+</nav>

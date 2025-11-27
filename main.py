@@ -11,6 +11,7 @@ from api.invite import *
 from api.chat import *
 from api.admin import *
 from api.adminjobs import *
+from api.adminmessages import *
 from api.job import *
 
 app = Flask(__name__)
@@ -130,6 +131,14 @@ def admin_jobs_index():
     if page > total_pages:
         page = total_pages
     return render_template('/admin/adminjobs.html', jobs=jobs, page=page, per_page=per_page, total=total, total_pages=total_pages, pending_count=pending_count, approved_count=approved_count, taken_count=taken_count)
+
+@app.route('/admin/messages', endpoint='adminmessages')
+def admin_messages_index():
+    if 'user_id' not in session:
+        flash("You must be logged in to view admin messages.", "warning")
+        return redirect(url_for('login'))
+    messages = get_admin_messages(engine)
+    return render_template('/admin/adminmessages.html', admin_messages=messages)
 
 @app.route('/admin/jobs/<int:job_id>/update', methods=['POST'])
 def admin_job_update(job_id):
