@@ -11,6 +11,7 @@ from api.invite import *
 from api.chat import init_chat, init_application_chat
 from api.admin import register_admin, login_admin, get_projects_paginated, get_users_paginated
 from api.adminjobs import *
+from api.adminmessages import *
 from api.job import *
 from schema.dummydata import seed_data
 from schema.schema import DROP_SCHEMA_SQL, CREATE_SCHEMA_SQL
@@ -127,6 +128,14 @@ def admin_users_index():
     users, total, total_pages, pending_count, approved_count, taken_count = get_users_paginated(engine, page=page, per_page=per_page)
     return render_template('/admin/adminusers.html', users=users, page=page, per_page=per_page, total=total, total_pages=total_pages, pending_count=pending_count, approved_count=approved_count, taken_count=taken_count)
 # Users
+@app.route('/admin/messages', endpoint='adminmessages')
+def admin_messages_index():
+    if 'user_id' not in session:
+        flash("You must be logged in to view admin messages.", "warning")
+        return redirect(url_for('login'))
+    messages = get_admin_messages(engine)
+    return render_template('/admin/adminmessages.html', admin_messages=messages)
+
 @app.route('/admin/jobs/<int:job_id>/update', methods=['POST'])
 def admin_job_update(job_id):
     if 'user_id' not in session:
