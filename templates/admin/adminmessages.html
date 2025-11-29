@@ -1,53 +1,78 @@
-<!doctype html>
-<html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <meta name="theme-color" content="#111827" />
-    <link href="/static/output.css" rel="stylesheet" />
-    <script src="/static/theme.js"></script>
-    <title>Admin Messages</title>
-  </head>
-  <body class="bg-neutral-50 text-gray-900 dark:bg-gray-900 dark:text-gray-100">
-    <main class="mx-auto max-w-6xl px-4 pb-8 pt-24 lg:pt-28">
-      <header class="mb-6 flex items-end justify-between gap-4">
-        <div>
-          <h1 class="text-3xl font-extrabold tracking-tight text-gray-900 dark:text-gray-100">Admin Messages</h1>
-          <p class="text-sm font-semibold text-gray-600 dark:text-gray-400">Review all messages sent to admins.</p>
-        </div>
-        <div class="text-sm font-semibold text-gray-700 dark:text-gray-300">
-          Total: <span class="font-bold">{{ admin_messages|length if admin_messages else 0 }}</span>
-        </div>
-      </header>
+{% extends "./layouts/shell.html" %}
 
-      {% if admin_messages %}
-        <div class="overflow-x-auto rounded-xl border bg-white shadow-sm dark:border-gray-800 dark:bg-gray-900">
-          <table class="min-w-full text-sm">
-            <thead class="sticky top-0 z-10 bg-gray-50 text-left text-gray-800 shadow-sm dark:bg-gray-800 dark:text-gray-100">
-              <tr>
-                <th class="px-4 py-3 font-semibold">ID</th>
-                <th class="px-4 py-3 font-semibold">User ID</th>
-                <th class="px-4 py-3 font-semibold">Message</th>
-                <th class="px-4 py-3 font-semibold">Timestamp</th>
+{% block content %}
+<div class="container mx-auto max-w-7xl px-4 py-8">
+  
+  <!-- Header -->
+  <div class="mb-8 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+    <div>
+      <h1 class="text-3xl font-bold text-neutral-900 dark:text-white">Admin Messages</h1>
+      <p class="mt-1 text-neutral-500 dark:text-neutral-400">Review all inquiries sent to administrators.</p>
+    </div>
+    <div class="text-sm font-medium text-neutral-500 dark:text-neutral-400">
+      Total Messages: <span class="font-bold text-neutral-900 dark:text-white">{{ admin_messages|length if admin_messages else 0 }}</span>
+    </div>
+  </div>
+
+  <!-- Dashboard Stats (Simplified for Messages) -->
+  <section class="mb-8 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
+    <div class="rounded-2xl border border-neutral-200 bg-white p-6 shadow-sm dark:border-neutral-800 dark:bg-neutral-900">
+      <div class="flex items-center justify-between">
+        <div>
+          <p class="text-sm font-medium text-neutral-500 dark:text-neutral-400">Inbox</p>
+          <p class="mt-2 text-3xl font-bold text-neutral-900 dark:text-white">{{ admin_messages|length if admin_messages else 0 }}</p>
+        </div>
+        <div class="rounded-full bg-neutral-100 p-3 text-neutral-600 dark:bg-neutral-800 dark:text-neutral-300">
+          <i data-lucide="inbox" class="h-6 w-6"></i>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  {% if admin_messages %}
+    <!-- Table -->
+    <div class="overflow-hidden rounded-2xl border border-neutral-200 bg-white shadow-sm dark:border-neutral-800 dark:bg-neutral-900">
+      <div class="overflow-x-auto">
+        <table class="w-full text-left text-sm">
+          <thead class="bg-neutral-50 border-b border-neutral-200 dark:bg-neutral-800/50 dark:border-neutral-800">
+            <tr>
+              <th class="px-6 py-4 text-xs font-bold uppercase tracking-wider text-neutral-500 dark:text-neutral-400">ID</th>
+              <th class="px-6 py-4 text-xs font-bold uppercase tracking-wider text-neutral-500 dark:text-neutral-400">From User ID</th>
+              <th class="px-6 py-4 text-xs font-bold uppercase tracking-wider text-neutral-500 dark:text-neutral-400">Message Content</th>
+              <th class="px-6 py-4 text-xs font-bold uppercase tracking-wider text-neutral-500 dark:text-neutral-400">Date</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-neutral-200 dark:divide-neutral-800">
+            {% for m in admin_messages %}
+              <tr class="group hover:bg-neutral-50 dark:hover:bg-neutral-800/50 transition-colors">
+                <td class="px-6 py-4 text-neutral-500 dark:text-neutral-400 font-mono text-xs">#{{ m.id }}</td>
+                <td class="px-6 py-4">
+                    <span class="inline-flex items-center gap-1.5 rounded-md bg-blue-50 px-2 py-1 text-xs font-medium text-blue-700 dark:bg-blue-900/30 dark:text-blue-300">
+                        UID: {{ m.user_id }}
+                    </span>
+                </td>
+                <td class="px-6 py-4">
+                    <p class="text-sm text-neutral-900 dark:text-white leading-relaxed max-w-2xl whitespace-pre-wrap">{{ m.message }}</p>
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap text-xs text-neutral-500 dark:text-neutral-400">
+                    {{ m.timestamp }}
+                </td>
               </tr>
-            </thead>
-            <tbody class="divide-y divide-gray-200 dark:divide-gray-800">
-              {% for m in admin_messages %}
-                <tr class="hover:bg-gray-50/60 dark:hover:bg-gray-800/60">
-                  <td class="px-4 py-3 text-gray-700 dark:text-gray-200">{{ m.id }}</td>
-                  <td class="px-4 py-3 text-gray-700 dark:text-gray-200">{{ m.user_id }}</td>
-                  <td class="px-4 py-3 text-gray-900 dark:text-gray-100">{{ m.message }}</td>
-                  <td class="px-4 py-3 text-xs text-gray-600 dark:text-gray-300">{{ m.timestamp }}</td>
-                </tr>
-              {% endfor %}
-            </tbody>
-          </table>
-        </div>
-      {% else %}
-        <div class="rounded-xl border bg-white p-8 text-center text-gray-700 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-200">
-          No admin messages yet.
-        </div>
-      {% endif %}
-    </main>
-  </body>
-</html>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  {% else %}
+    <!-- Empty State -->
+    <div class="flex flex-col items-center justify-center rounded-2xl border border-dashed border-neutral-300 bg-neutral-50 py-16 text-center dark:border-neutral-800 dark:bg-neutral-900">
+      <div class="mb-4 rounded-full bg-neutral-100 p-4 dark:bg-neutral-800">
+        <i data-lucide="mail-open" class="h-8 w-8 text-neutral-400"></i>
+      </div>
+      <h3 class="text-lg font-semibold text-neutral-900 dark:text-white">No messages found</h3>
+      <p class="text-neutral-500 dark:text-neutral-400">Your inbox is completely empty.</p>
+    </div>
+  {% endif %}
+
+</div>
+{% endblock %}
