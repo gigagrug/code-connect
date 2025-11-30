@@ -9,23 +9,26 @@ jobs:
     steps:
       - name: Deploy via SSH
         uses: appleboy/ssh-action@v1.2.4
+        env:
+          # 1. Map the secrets to environment variables
+          DB_URL: ${{ secrets.DB_URL }}
+          MYSQL_PASSWORD: ${{ secrets.MYSQL_PASSWORD }}
+          MYSQL_USER: ${{ secrets.MYSQL_USER }}
+          MYSQL_DATABASE: ${{ secrets.MYSQL_DATABASE }}
+          FLASK_SECRET_KEY: ${{ secrets.FLASK_SECRET_KEY }}
+          # (Add any others needed by your docker-compose.yml)
         with:
           host: ${{ secrets.HOST }}
           username: ${{ secrets.USER }}
           password: ${{ secrets.PASSWORD }}
           port: 22
+          
+          # 2. LIST the variables you want to send to the server
+          envs: DB_URL,MYSQL_PASSWORD,MYSQL_USER,MYSQL_DATABASE,FLASK_SECRET_KEY
+          
           script: |
-            # Force load the user profile
-            source ~/.bashrc
-
-            # Navigate to the project directory
             cd code-connect/
-
-            # Stop the running containers
+            # Docker will now see the variables because 'envs' sent them
             docker compose down
-
-            # Pull the latest changes from GitHub
             git pull origin main
-
-            # Rebuild and start the containers in detached mode
             docker compose up -d --build
