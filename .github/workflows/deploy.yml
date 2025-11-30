@@ -15,6 +15,9 @@ jobs:
           password: ${{ secrets.PASSWORD }}
           port: 22
           script: |
+            # Force load the user profile
+            source ~/.bashrc
+
             # Navigate to the project directory
             cd code-connect/
 
