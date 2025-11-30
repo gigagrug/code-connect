@@ -30,9 +30,9 @@
               {% if session['email'] and session.get('role') in [3] %}
                 <a href="/jobs" class="hover:text-blue-600 dark:hover:text-blue-400">Jobs</a>
               {% endif %}
-              
+
               <a href="/profile" class="hover:text-blue-600 dark:hover:text-blue-400">Profile</a>
-              
+
               {% if session['email'] and session.get('role') == 10 %}
                 <a href="/admin" class="hover:text-blue-600 dark:hover:text-blue-400">Projects</a>
                 <a href="/admin/jobs" class="hover:text-blue-600 dark:hover:text-blue-400">Jobs</a>
@@ -45,9 +45,8 @@
               {% endif %}
 
               {% if session['email'] and session.get('role') == 1 %}
-                 <a href="/business/{{ session.get('user_id') }}" class="hover:text-blue-600 dark:hover:text-blue-400">My Business</a>
+                <a href="/business/{{ session.get('user_id') }}" class="hover:text-blue-600 dark:hover:text-blue-400">My Business</a>
               {% endif %}
-
             {% else %}
               <a href="/register" class="hover:text-blue-600 dark:hover:text-blue-400">Register</a>
               <a href="/login" class="hover:text-blue-600 dark:hover:text-blue-400">Login</a>

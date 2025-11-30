@@ -1,206 +1,199 @@
 {% extends "./layouts/shell.html" %}
 
 {% block content %}
-<div class="container mx-auto max-w-7xl px-4 py-8">
-  
-  <!-- Header -->
-  <div class="mb-8 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
-    <div>
-      <h1 class="text-3xl font-bold text-neutral-900 dark:text-white">Jobs Administration</h1>
-      <p class="mt-1 text-neutral-500 dark:text-neutral-400">Manage and review all job postings.</p>
+  <div class="container mx-auto max-w-7xl px-4 py-8">
+    <!-- Header -->
+    <div class="mb-8 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+      <div>
+        <h1 class="text-3xl font-bold text-neutral-900 dark:text-white">Jobs Administration</h1>
+        <p class="mt-1 text-neutral-500 dark:text-neutral-400">Manage and review all job postings.</p>
+      </div>
+      <div class="text-sm font-medium text-neutral-500 dark:text-neutral-400">Total Jobs: <span class="font-bold text-neutral-900 dark:text-white">{{ total }}</span></div>
     </div>
-    <div class="text-sm font-medium text-neutral-500 dark:text-neutral-400">
-      Total Jobs: <span class="font-bold text-neutral-900 dark:text-white">{{ total }}</span>
-    </div>
-  </div>
 
-  <!-- Dashboard Stats Grid -->
-  <section class="mb-8 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
-    <!-- Total -->
-    <div class="rounded-2xl border border-neutral-200 bg-white p-6 shadow-sm dark:border-neutral-800 dark:bg-neutral-900">
-      <div class="flex items-center justify-between">
-        <div>
-          <p class="text-sm font-medium text-neutral-500 dark:text-neutral-400">Total Jobs</p>
-          <p class="mt-2 text-3xl font-bold text-neutral-900 dark:text-white">{{ total }}</p>
-        </div>
-        <div class="rounded-full bg-neutral-100 p-3 text-neutral-600 dark:bg-neutral-800 dark:text-neutral-300">
-          <i data-lucide="briefcase" class="h-6 w-6"></i>
+    <!-- Dashboard Stats Grid -->
+    <section class="mb-8 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
+      <!-- Total -->
+      <div class="rounded-2xl border border-neutral-200 bg-white p-6 shadow-sm dark:border-neutral-800 dark:bg-neutral-900">
+        <div class="flex items-center justify-between">
+          <div>
+            <p class="text-sm font-medium text-neutral-500 dark:text-neutral-400">Total Jobs</p>
+            <p class="mt-2 text-3xl font-bold text-neutral-900 dark:text-white">{{ total }}</p>
+          </div>
+          <div class="rounded-full bg-neutral-100 p-3 text-neutral-600 dark:bg-neutral-800 dark:text-neutral-300">
+            <i data-lucide="briefcase" class="h-6 w-6"></i>
+          </div>
         </div>
       </div>
-    </div>
 
-    <!-- Approved -->
-    <div class="rounded-2xl border border-neutral-200 bg-white p-6 shadow-sm dark:border-neutral-800 dark:bg-neutral-900">
-      <div class="flex items-center justify-between">
-        <div>
-          <p class="text-sm font-medium text-neutral-500 dark:text-neutral-400">Approved</p>
-          <p class="mt-2 text-3xl font-bold text-green-600 dark:text-green-400">{{ approved_count or 0 }}</p>
-        </div>
-        <div class="rounded-full bg-green-100 p-3 text-green-600 dark:bg-green-900/30 dark:text-green-400">
-          <i data-lucide="check-circle" class="h-6 w-6"></i>
+      <!-- Approved -->
+      <div class="rounded-2xl border border-neutral-200 bg-white p-6 shadow-sm dark:border-neutral-800 dark:bg-neutral-900">
+        <div class="flex items-center justify-between">
+          <div>
+            <p class="text-sm font-medium text-neutral-500 dark:text-neutral-400">Approved</p>
+            <p class="mt-2 text-3xl font-bold text-green-600 dark:text-green-400">{{ approved_count or 0 }}</p>
+          </div>
+          <div class="rounded-full bg-green-100 p-3 text-green-600 dark:bg-green-900/30 dark:text-green-400">
+            <i data-lucide="check-circle" class="h-6 w-6"></i>
+          </div>
         </div>
       </div>
-    </div>
 
-    <!-- Pending -->
-    <div class="rounded-2xl border border-neutral-200 bg-white p-6 shadow-sm dark:border-neutral-800 dark:bg-neutral-900">
-      <div class="flex items-center justify-between">
-        <div>
-          <p class="text-sm font-medium text-neutral-500 dark:text-neutral-400">Pending</p>
-          <p class="mt-2 text-3xl font-bold text-amber-600 dark:text-amber-400">{{ pending_count or 0 }}</p>
-        </div>
-        <div class="rounded-full bg-amber-100 p-3 text-amber-600 dark:bg-amber-900/30 dark:text-amber-400">
-          <i data-lucide="clock" class="h-6 w-6"></i>
-        </div>
-      </div>
-    </div>
-
-    <!-- Taken (Actually 'Declined' in this context often, but using Taken logic for consistency) -->
-    <div class="rounded-2xl border border-neutral-200 bg-white p-6 shadow-sm dark:border-neutral-800 dark:bg-neutral-900">
-      <div class="flex items-center justify-between">
-        <div>
-          <p class="text-sm font-medium text-neutral-500 dark:text-neutral-400">Declined</p>
-          <p class="mt-2 text-3xl font-bold text-red-600 dark:text-red-400">{{ taken_count or 0 }}</p>
-        </div>
-        <div class="rounded-full bg-red-100 p-3 text-red-600 dark:bg-red-900/30 dark:text-red-400">
-          <i data-lucide="x-circle" class="h-6 w-6"></i>
+      <!-- Pending -->
+      <div class="rounded-2xl border border-neutral-200 bg-white p-6 shadow-sm dark:border-neutral-800 dark:bg-neutral-900">
+        <div class="flex items-center justify-between">
+          <div>
+            <p class="text-sm font-medium text-neutral-500 dark:text-neutral-400">Pending</p>
+            <p class="mt-2 text-3xl font-bold text-amber-600 dark:text-amber-400">{{ pending_count or 0 }}</p>
+          </div>
+          <div class="rounded-full bg-amber-100 p-3 text-amber-600 dark:bg-amber-900/30 dark:text-amber-400">
+            <i data-lucide="clock" class="h-6 w-6"></i>
+          </div>
         </div>
       </div>
-    </div>
-  </section>
 
-  <!-- Approval Rate Bar -->
-  {% set approved = (approved_count or 0) %}
-  {% set total_safe = (total or 0) %}
-  {% set rate = (approved / total_safe * 100) if total_safe > 0 else 0 %}
-  <section class="mb-8 rounded-2xl border border-neutral-200 bg-white p-6 shadow-sm dark:border-neutral-800 dark:bg-neutral-900">
-    <div class="mb-3 flex items-center justify-between text-sm font-medium">
-      <span class="text-neutral-700 dark:text-neutral-300">Approval Rate</span>
-      <span class="text-neutral-900 dark:text-white">{{ '%.0f' % rate }}%</span>
-    </div>
-    <div class="h-3 w-full overflow-hidden rounded-full bg-neutral-100 dark:bg-neutral-800">
-      <div class="h-full bg-emerald-500 transition-all duration-500" style="width: {{ rate }}%"></div>
-    </div>
-  </section>
-
-  {% if jobs and jobs|length %}
-    <!-- Controls -->
-    <section class="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-      <div class="relative w-full sm:w-72">
-        <input id="search" type="search" placeholder="Search jobs..." class="w-full rounded-xl border border-neutral-200 bg-white p-2.5 pl-10 text-sm placeholder:text-neutral-400 focus:border-blue-600 focus:outline-none focus:ring-1 focus:ring-blue-600 dark:border-neutral-700 dark:bg-neutral-900 dark:text-white" />
-        <i data-lucide="search" class="absolute left-3 top-3 h-4 w-4 text-neutral-400"></i>
+      <!-- Taken (Actually 'Declined' in this context often, but using Taken logic for consistency) -->
+      <div class="rounded-2xl border border-neutral-200 bg-white p-6 shadow-sm dark:border-neutral-800 dark:bg-neutral-900">
+        <div class="flex items-center justify-between">
+          <div>
+            <p class="text-sm font-medium text-neutral-500 dark:text-neutral-400">Declined</p>
+            <p class="mt-2 text-3xl font-bold text-red-600 dark:text-red-400">{{ taken_count or 0 }}</p>
+          </div>
+          <div class="rounded-full bg-red-100 p-3 text-red-600 dark:bg-red-900/30 dark:text-red-400">
+            <i data-lucide="x-circle" class="h-6 w-6"></i>
+          </div>
+        </div>
       </div>
-      <div class="flex items-center gap-2">
-        <label for="statusFilter" class="text-sm font-medium text-neutral-700 dark:text-neutral-300">Filter Status:</label>
-        <div class="relative">
-            <select id="statusFilter" class="appearance-none rounded-xl border border-neutral-200 bg-white py-2.5 pl-3 pr-8 text-sm focus:border-blue-600 focus:outline-none focus:ring-1 focus:ring-blue-600 dark:border-neutral-700 dark:bg-neutral-900 dark:text-white">
+    </section>
+
+    <!-- Approval Rate Bar -->
+    {% set approved = (approved_count or 0) %}
+    {% set total_safe = (total or 0) %}
+    {% set rate = (approved / total_safe * 100) if total_safe > 0 else 0 %}
+    <section class="mb-8 rounded-2xl border border-neutral-200 bg-white p-6 shadow-sm dark:border-neutral-800 dark:bg-neutral-900">
+      <div class="mb-3 flex items-center justify-between text-sm font-medium">
+        <span class="text-neutral-700 dark:text-neutral-300">Approval Rate</span>
+        <span class="text-neutral-900 dark:text-white">{{ '%.0f' % rate }}%</span>
+      </div>
+      <div class="h-3 w-full overflow-hidden rounded-full bg-neutral-100 dark:bg-neutral-800">
+        <div class="h-full bg-emerald-500 transition-all duration-500" style="width: {{ rate }}%"></div>
+      </div>
+    </section>
+
+    {% if jobs and jobs|length %}
+      <!-- Controls -->
+      <section class="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+        <div class="relative w-full sm:w-72">
+          <input id="search" type="search" placeholder="Search jobs..." class="w-full rounded-xl border border-neutral-200 bg-white p-2.5 pl-10 text-sm placeholder:text-neutral-400 focus:border-blue-600 focus:ring-1 focus:ring-blue-600 focus:outline-none dark:border-neutral-700 dark:bg-neutral-900 dark:text-white" />
+          <i data-lucide="search" class="absolute top-3 left-3 h-4 w-4 text-neutral-400"></i>
+        </div>
+        <div class="flex items-center gap-2">
+          <label for="statusFilter" class="text-sm font-medium text-neutral-700 dark:text-neutral-300">Filter Status:</label>
+          <div class="relative">
+            <select id="statusFilter" class="appearance-none rounded-xl border border-neutral-200 bg-white py-2.5 pr-8 pl-3 text-sm focus:border-blue-600 focus:ring-1 focus:ring-blue-600 focus:outline-none dark:border-neutral-700 dark:bg-neutral-900 dark:text-white">
               <option value="">All Jobs</option>
               <option value="0">Pending</option>
               <option value="1">Approved</option>
               <option value="2">Declined</option>
             </select>
-            <i data-lucide="chevron-down" class="absolute right-2 top-3 h-4 w-4 text-neutral-400 pointer-events-none"></i>
+            <i data-lucide="chevron-down" class="pointer-events-none absolute top-3 right-2 h-4 w-4 text-neutral-400"></i>
+          </div>
         </div>
-      </div>
-    </section>
+      </section>
 
-    <!-- Table -->
-    <div class="overflow-hidden rounded-2xl border border-neutral-200 bg-white shadow-sm dark:border-neutral-800 dark:bg-neutral-900">
-      <div class="overflow-x-auto">
-        <table id="jobsTable" class="w-full text-left text-sm">
-          <thead class="bg-neutral-50 border-b border-neutral-200 dark:bg-neutral-800/50 dark:border-neutral-800">
-            <tr>
-              <th data-sort="number" class="cursor-pointer px-6 py-4 text-xs font-bold uppercase tracking-wider text-neutral-500 dark:text-neutral-400 select-none hover:text-neutral-700 dark:hover:text-neutral-200">ID</th>
-              <th data-sort="text" class="cursor-pointer px-6 py-4 text-xs font-bold uppercase tracking-wider text-neutral-500 dark:text-neutral-400 select-none hover:text-neutral-700 dark:hover:text-neutral-200">Title</th>
-              <th data-sort="number" class="cursor-pointer px-6 py-4 text-xs font-bold uppercase tracking-wider text-neutral-500 dark:text-neutral-400 select-none hover:text-neutral-700 dark:hover:text-neutral-200">Status</th>
-              <th data-sort="date" class="cursor-pointer px-6 py-4 text-xs font-bold uppercase tracking-wider text-neutral-500 dark:text-neutral-400 select-none hover:text-neutral-700 dark:hover:text-neutral-200">Created</th>
-              <th class="px-6 py-4 text-xs font-bold uppercase tracking-wider text-neutral-500 dark:text-neutral-400">Links</th>
-              <th class="px-6 py-4 text-xs font-bold uppercase tracking-wider text-neutral-500 dark:text-neutral-400">Action</th>
-            </tr>
-          </thead>
-          <tbody class="divide-y divide-neutral-200 dark:divide-neutral-800">
-            {% for j in jobs %}
-              <tr class="group hover:bg-neutral-50 dark:hover:bg-neutral-800/50" data-status="{{ j.status }}" data-job-id="{{ j.id }}">
-                <td class="px-6 py-4 text-neutral-500 dark:text-neutral-400" data-value="{{ j.id }}">#{{ j.id }}</td>
-                <td class="px-6 py-4" data-value="{{ j.title }}">
-                  <div class="font-semibold text-neutral-900 dark:text-white">{{ j.title or ('Job #' ~ j.id) }}</div>
-                  <div class="line-clamp-1 text-xs text-neutral-500 dark:text-neutral-400 max-w-xs">{{ j.description }}</div>
-                </td>
-                <td class="px-6 py-4" data-value="{{ j.status }}">
-                  {% if j.status == 2 %}
-                    <span class="inline-flex items-center rounded-full bg-red-100 px-2.5 py-0.5 text-xs font-medium text-red-700 dark:bg-red-900/30 dark:text-red-400">Declined</span>
-                  {% elif j.status == 1 %}
-                    <span class="inline-flex items-center rounded-full bg-green-100 px-2.5 py-0.5 text-xs font-medium text-green-700 dark:bg-green-900/30 dark:text-green-400">Approved</span>
-                  {% else %}
-                    <span class="inline-flex items-center rounded-full bg-amber-100 px-2.5 py-0.5 text-xs font-medium text-amber-800 dark:bg-amber-900/30 dark:text-amber-400">Pending</span>
-                  {% endif %}
-                </td>
-                <td class="px-6 py-4 text-neutral-600 dark:text-neutral-400">
-                  <time class="js-relative-time" datetime="{{ (j.created_at)|string }}">{{ j.created_at or '' }}</time>
-                </td>
-                <td class="px-6 py-4 text-neutral-600 dark:text-neutral-400">
-                  {% if j.apply_link %}
-                    <a class="inline-flex items-center gap-1 text-neutral-400 hover:text-blue-600 dark:hover:text-blue-400" href="{{ j.apply_link }}" target="_blank" rel="noopener" title="External Link">
-                      <i data-lucide="globe" class="h-4 w-4"></i>
-                    </a>
-                  {% else %}
-                    <span class="text-xs text-neutral-300 dark:text-neutral-700">—</span>
-                  {% endif %}
-                </td>
-                <td class="px-6 py-4 text-sm">
-                  <div class="flex items-center gap-2">
-                    <a href="{{ url_for('job_page', job_id=j.id) }}" class="inline-flex items-center gap-1 rounded-lg border border-neutral-200 px-3 py-1.5 text-xs font-medium text-neutral-700 hover:bg-neutral-50 dark:border-neutral-700 dark:text-neutral-300 dark:hover:bg-neutral-800">
-                      View
-                    </a>
-                    <div class="relative">
-                        <select class="js-status-select appearance-none rounded-lg border border-neutral-200 bg-white py-1.5 pl-2 pr-6 text-xs focus:border-blue-500 focus:outline-none dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-300">
+      <!-- Table -->
+      <div class="overflow-hidden rounded-2xl border border-neutral-200 bg-white shadow-sm dark:border-neutral-800 dark:bg-neutral-900">
+        <div class="overflow-x-auto">
+          <table id="jobsTable" class="w-full text-left text-sm">
+            <thead class="border-b border-neutral-200 bg-neutral-50 dark:border-neutral-800 dark:bg-neutral-800/50">
+              <tr>
+                <th data-sort="number" class="cursor-pointer px-6 py-4 text-xs font-bold tracking-wider text-neutral-500 uppercase select-none hover:text-neutral-700 dark:text-neutral-400 dark:hover:text-neutral-200">ID</th>
+                <th data-sort="text" class="cursor-pointer px-6 py-4 text-xs font-bold tracking-wider text-neutral-500 uppercase select-none hover:text-neutral-700 dark:text-neutral-400 dark:hover:text-neutral-200">Title</th>
+                <th data-sort="number" class="cursor-pointer px-6 py-4 text-xs font-bold tracking-wider text-neutral-500 uppercase select-none hover:text-neutral-700 dark:text-neutral-400 dark:hover:text-neutral-200">Status</th>
+                <th data-sort="date" class="cursor-pointer px-6 py-4 text-xs font-bold tracking-wider text-neutral-500 uppercase select-none hover:text-neutral-700 dark:text-neutral-400 dark:hover:text-neutral-200">Created</th>
+                <th class="px-6 py-4 text-xs font-bold tracking-wider text-neutral-500 uppercase dark:text-neutral-400">Links</th>
+                <th class="px-6 py-4 text-xs font-bold tracking-wider text-neutral-500 uppercase dark:text-neutral-400">Action</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-neutral-200 dark:divide-neutral-800">
+              {% for j in jobs %}
+                <tr class="group hover:bg-neutral-50 dark:hover:bg-neutral-800/50" data-status="{{ j.status }}" data-job-id="{{ j.id }}">
+                  <td class="px-6 py-4 text-neutral-500 dark:text-neutral-400" data-value="{{ j.id }}">#{{ j.id }}</td>
+                  <td class="px-6 py-4" data-value="{{ j.title }}">
+                    <div class="font-semibold text-neutral-900 dark:text-white">{{ j.title or ('Job #' ~ j.id) }}</div>
+                    <div class="line-clamp-1 max-w-xs text-xs text-neutral-500 dark:text-neutral-400">{{ j.description }}</div>
+                  </td>
+                  <td class="px-6 py-4" data-value="{{ j.status }}">
+                    {% if j.status == 2 %}
+                      <span class="inline-flex items-center rounded-full bg-red-100 px-2.5 py-0.5 text-xs font-medium text-red-700 dark:bg-red-900/30 dark:text-red-400">Declined</span>
+                    {% elif j.status == 1 %}
+                      <span class="inline-flex items-center rounded-full bg-green-100 px-2.5 py-0.5 text-xs font-medium text-green-700 dark:bg-green-900/30 dark:text-green-400">Approved</span>
+                    {% else %}
+                      <span class="inline-flex items-center rounded-full bg-amber-100 px-2.5 py-0.5 text-xs font-medium text-amber-800 dark:bg-amber-900/30 dark:text-amber-400">Pending</span>
+                    {% endif %}
+                  </td>
+                  <td class="px-6 py-4 text-neutral-600 dark:text-neutral-400">
+                    <time class="js-relative-time" datetime="{{ (j.created_at)|string }}">{{ j.created_at or '' }}</time>
+                  </td>
+                  <td class="px-6 py-4 text-neutral-600 dark:text-neutral-400">
+                    {% if j.apply_link %}
+                      <a class="inline-flex items-center gap-1 text-neutral-400 hover:text-blue-600 dark:hover:text-blue-400" href="{{ j.apply_link }}" target="_blank" rel="noopener" title="External Link">
+                        <i data-lucide="globe" class="h-4 w-4"></i>
+                      </a>
+                    {% else %}
+                      <span class="text-xs text-neutral-300 dark:text-neutral-700">—</span>
+                    {% endif %}
+                  </td>
+                  <td class="px-6 py-4 text-sm">
+                    <div class="flex items-center gap-2">
+                      <a href="{{ url_for('job_page', job_id=j.id) }}" class="inline-flex items-center gap-1 rounded-lg border border-neutral-200 px-3 py-1.5 text-xs font-medium text-neutral-700 hover:bg-neutral-50 dark:border-neutral-700 dark:text-neutral-300 dark:hover:bg-neutral-800"> View </a>
+                      <div class="relative">
+                        <select class="js-status-select appearance-none rounded-lg border border-neutral-200 bg-white py-1.5 pr-6 pl-2 text-xs focus:border-blue-500 focus:outline-none dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-300">
                           <option value="0" {% if j.status == 0 %}selected{% endif %}>Pending</option>
                           <option value="1" {% if j.status == 1 %}selected{% endif %}>Approved</option>
                           <option value="2" {% if j.status == 2 %}selected{% endif %}>Declined</option>
                         </select>
-                        <i data-lucide="chevron-down" class="absolute right-1 top-2 h-3 w-3 text-neutral-400 pointer-events-none"></i>
-                    </div>
-                    <button type="button" class="js-status-save rounded-lg bg-neutral-900 px-3 py-1.5 text-xs font-bold text-white hover:bg-neutral-700 dark:bg-white dark:text-neutral-900 dark:hover:bg-neutral-200">Save</button>
-                    <button type="button" class="js-delete-job rounded-lg border border-red-200 bg-red-50 px-2 py-1.5 text-xs text-red-600 hover:bg-red-100 dark:border-red-900/30 dark:bg-red-900/10 dark:text-red-400 dark:hover:bg-red-900/20">
+                        <i data-lucide="chevron-down" class="pointer-events-none absolute top-2 right-1 h-3 w-3 text-neutral-400"></i>
+                      </div>
+                      <button type="button" class="js-status-save rounded-lg bg-neutral-900 px-3 py-1.5 text-xs font-bold text-white hover:bg-neutral-700 dark:bg-white dark:text-neutral-900 dark:hover:bg-neutral-200">Save</button>
+                      <button type="button" class="js-delete-job rounded-lg border border-red-200 bg-red-50 px-2 py-1.5 text-xs text-red-600 hover:bg-red-100 dark:border-red-900/30 dark:bg-red-900/10 dark:text-red-400 dark:hover:bg-red-900/20">
                         <i data-lucide="trash-2" class="h-3 w-3"></i>
-                    </button>
-                  </div>
-                </td>
-              </tr>
-            {% endfor %}
-          </tbody>
-        </table>
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
       </div>
-    </div>
-  {% else %}
-    <div class="flex flex-col items-center justify-center rounded-2xl border border-dashed border-neutral-300 bg-neutral-50 py-16 text-center dark:border-neutral-800 dark:bg-neutral-900">
-      <div class="mb-4 rounded-full bg-neutral-100 p-4 dark:bg-neutral-800">
-        <i data-lucide="briefcase" class="h-8 w-8 text-neutral-400"></i>
+    {% else %}
+      <div class="flex flex-col items-center justify-center rounded-2xl border border-dashed border-neutral-300 bg-neutral-50 py-16 text-center dark:border-neutral-800 dark:bg-neutral-900">
+        <div class="mb-4 rounded-full bg-neutral-100 p-4 dark:bg-neutral-800">
+          <i data-lucide="briefcase" class="h-8 w-8 text-neutral-400"></i>
+        </div>
+        <h3 class="text-lg font-semibold text-neutral-900 dark:text-white">No jobs found</h3>
+        <p class="text-neutral-500 dark:text-neutral-400">There are no job postings in the system to review.</p>
       </div>
-      <h3 class="text-lg font-semibold text-neutral-900 dark:text-white">No jobs found</h3>
-      <p class="text-neutral-500 dark:text-neutral-400">There are no job postings in the system to review.</p>
-    </div>
-  {% endif %}
+    {% endif %}
 
-  <!-- Pagination -->
-  {% if total_pages > 1 %}
-    {% set window = 2 %}
-    {% set start = page - window if page - window > 1 else 1 %}
-    {% set end = page + window if page + window < total_pages else total_pages %}
+    <!-- Pagination -->
+    {% if total_pages > 1 %}
+      {% set window = 2 %}
+      {% set start = page - window if page - window > 1 else 1 %}
+      {% set end = page + window if page + window < total_pages else total_pages %}
 
-    <nav class="mt-8 flex flex-col items-center justify-between gap-4 sm:flex-row" aria-label="Pagination">
-      <div class="text-sm text-neutral-600 dark:text-neutral-400">
-        Page <span class="font-semibold text-neutral-900 dark:text-white">{{ page }}</span> of <span class="font-semibold">{{ total_pages }}</span>
-      </div>
+      <nav class="mt-8 flex flex-col items-center justify-between gap-4 sm:flex-row" aria-label="Pagination">
+        <div class="text-sm text-neutral-600 dark:text-neutral-400">Page <span class="font-semibold text-neutral-900 dark:text-white">{{ page }}</span> of <span class="font-semibold">{{ total_pages }}</span></div>
 
-      <div class="flex items-center gap-2">
-        <!-- First -->
-        <a href="{{ url_for('adminjobs', page=1) }}" class="rounded-lg border border-neutral-200 bg-white px-3 py-2 text-sm font-medium text-neutral-700 hover:bg-neutral-50 disabled:opacity-50 dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-300 dark:hover:bg-neutral-700 {{ 'pointer-events-none opacity-50' if page == 1 }}">First</a>
+        <div class="flex items-center gap-2">
+          <!-- First -->
+          <a href="{{ url_for('adminjobs', page=1) }}" class="{{ 'pointer-events-none opacity-50' if page == 1 }} rounded-lg border border-neutral-200 bg-white px-3 py-2 text-sm font-medium text-neutral-700 hover:bg-neutral-50 disabled:opacity-50 dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-300 dark:hover:bg-neutral-700">First</a>
 
-        <!-- Prev -->
-        <a href="{{ url_for('adminjobs', page=page-1) }}" class="rounded-lg border border-neutral-200 bg-white px-3 py-2 text-sm font-medium text-neutral-700 hover:bg-neutral-50 disabled:opacity-50 dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-300 dark:hover:bg-neutral-700 {{ 'pointer-events-none opacity-50' if page == 1 }}">Prev</a>
+          <!-- Prev -->
+          <a href="{{ url_for('adminjobs', page=page-1) }}" class="{{ 'pointer-events-none opacity-50' if page == 1 }} rounded-lg border border-neutral-200 bg-white px-3 py-2 text-sm font-medium text-neutral-700 hover:bg-neutral-50 disabled:opacity-50 dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-300 dark:hover:bg-neutral-700">Prev</a>
 
-        <div class="hidden sm:flex sm:gap-1">
+          <div class="hidden sm:flex sm:gap-1">
             {% if start > 1 %}
               <a href="{{ url_for('adminjobs', page=1) }}" class="rounded-lg border border-neutral-200 px-3 py-2 text-sm hover:bg-neutral-50 dark:border-neutral-700 dark:text-neutral-300 dark:hover:bg-neutral-800">1</a>
               {% if start > 2 %}<span class="px-2 py-2 text-neutral-400">...</span>{% endif %}
@@ -218,206 +211,206 @@
               {% if end < total_pages - 1 %}<span class="px-2 py-2 text-neutral-400">...</span>{% endif %}
               <a href="{{ url_for('adminjobs', page=total_pages) }}" class="rounded-lg border border-neutral-200 px-3 py-2 text-sm hover:bg-neutral-50 dark:border-neutral-700 dark:text-neutral-300 dark:hover:bg-neutral-800">{{ total_pages }}</a>
             {% endif %}
+          </div>
+
+          <!-- Next -->
+          <a href="{{ url_for('adminjobs', page=page+1) }}" class="{{ 'pointer-events-none opacity-50' if page == total_pages }} rounded-lg border border-neutral-200 bg-white px-3 py-2 text-sm font-medium text-neutral-700 hover:bg-neutral-50 disabled:opacity-50 dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-300 dark:hover:bg-neutral-700">Next</a>
+
+          <!-- Last -->
+          <a href="{{ url_for('adminjobs', page=total_pages) }}" class="{{ 'pointer-events-none opacity-50' if page == total_pages }} rounded-lg border border-neutral-200 bg-white px-3 py-2 text-sm font-medium text-neutral-700 hover:bg-neutral-50 disabled:opacity-50 dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-300 dark:hover:bg-neutral-700">Last</a>
         </div>
+      </nav>
+    {% endif %}
 
-        <!-- Next -->
-        <a href="{{ url_for('adminjobs', page=page+1) }}" class="rounded-lg border border-neutral-200 bg-white px-3 py-2 text-sm font-medium text-neutral-700 hover:bg-neutral-50 disabled:opacity-50 dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-300 dark:hover:bg-neutral-700 {{ 'pointer-events-none opacity-50' if page == total_pages }}">Next</a>
+    <!-- Client-Side Scripts -->
+    <script>
+      (function () {
+        const table = document.getElementById("jobsTable");
+        const tbody = table?.querySelector("tbody");
+        const search = document.getElementById("search");
+        const statusFilter = document.getElementById("statusFilter");
 
-        <!-- Last -->
-        <a href="{{ url_for('adminjobs', page=total_pages) }}" class="rounded-lg border border-neutral-200 bg-white px-3 py-2 text-sm font-medium text-neutral-700 hover:bg-neutral-50 disabled:opacity-50 dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-300 dark:hover:bg-neutral-700 {{ 'pointer-events-none opacity-50' if page == total_pages }}">Last</a>
-      </div>
-    </nav>
-  {% endif %}
+        const getText = (el) => (el?.textContent || "").toLowerCase();
 
-  <!-- Client-Side Scripts -->
-  <script>
-    (function () {
-      const table = document.getElementById("jobsTable");
-      const tbody = table?.querySelector("tbody");
-      const search = document.getElementById("search");
-      const statusFilter = document.getElementById("statusFilter");
+        function applyFilters() {
+          const q = (search?.value || "").toLowerCase();
+          const status = statusFilter?.value || "";
+          if (!tbody) return;
+          Array.from(tbody.rows).forEach((row) => {
+            const id = row.querySelector("td:nth-child(1)")?.textContent || "";
+            const nameCell = row.querySelector("td:nth-child(2)");
+            const name = getText(nameCell.querySelector(".font-semibold"));
+            const desc = getText(nameCell.querySelector(".line-clamp-1"));
+            const rowStatus = row.getAttribute("data-status") || "";
 
-      const getText = (el) => (el?.textContent || "").toLowerCase();
+            const matchesQ = !q || id.includes(q) || name.includes(q) || desc.includes(q);
+            const matchesStatus = !status || rowStatus === status;
 
-      function applyFilters() {
-        const q = (search?.value || "").toLowerCase();
-        const status = statusFilter?.value || "";
-        if (!tbody) return;
-        Array.from(tbody.rows).forEach((row) => {
-          const id = row.querySelector("td:nth-child(1)")?.textContent || "";
-          const nameCell = row.querySelector("td:nth-child(2)");
-          const name = getText(nameCell.querySelector(".font-semibold"));
-          const desc = getText(nameCell.querySelector(".line-clamp-1"));
-          const rowStatus = row.getAttribute("data-status") || "";
-          
-          const matchesQ = !q || id.includes(q) || name.includes(q) || desc.includes(q);
-          const matchesStatus = !status || rowStatus === status;
-          
-          row.style.display = matchesQ && matchesStatus ? "" : "none";
-        });
-      }
-
-      search?.addEventListener("input", () => window.requestAnimationFrame(applyFilters));
-      statusFilter?.addEventListener("change", applyFilters);
-
-      // Sorting Logic
-      const comparators = {
-        number: (a, b) => (parseFloat(a) || 0) - (parseFloat(b) || 0),
-        text: (a, b) => a.localeCompare(b),
-        date: (a, b) => new Date(a).getTime() - new Date(b).getTime(),
-      };
-
-      function sortBy(th) {
-        if (!tbody) return;
-        const type = th.getAttribute("data-sort") || "text";
-        const idx = Array.from(th.parentElement.children).indexOf(th);
-        // Toggle direction
-        const currentDir = th.getAttribute("data-dir");
-        const dir = currentDir === "asc" ? "desc" : "asc";
-        
-        // Reset indicators
-        table.querySelectorAll("th").forEach(h => h.removeAttribute("data-dir"));
-        th.setAttribute("data-dir", dir);
-
-        const rows = Array.from(tbody.rows).filter((r) => r.style.display !== "none");
-        rows.sort((r1, r2) => {
-          const v1 = r1.cells[idx].getAttribute("data-value") || r1.cells[idx].textContent.trim();
-          const v2 = r2.cells[idx].getAttribute("data-value") || r2.cells[idx].textContent.trim();
-          
-          const sv1 = String(v1).toLowerCase();
-          const sv2 = String(v2).toLowerCase();
-          
-          const cmp = (comparators[type] || comparators.text)(sv1, sv2);
-          return dir === "asc" ? cmp : -cmp;
-        });
-        
-        rows.forEach((r) => tbody.appendChild(r));
-      }
-
-      table?.querySelectorAll("thead th[data-sort]").forEach((th) => th.addEventListener("click", () => sortBy(th)));
-
-      // Admin actions: update status + delete
-      function encodeForm(data) {
-        return Object.entries(data)
-          .map(([k, v]) => `${encodeURIComponent(k)}=${encodeURIComponent(v)}`)
-          .join("&");
-      }
-
-      async function updateStatus(row) {
-        const jobId = row.getAttribute("data-job-id");
-        const select = row.querySelector(".js-status-select");
-        if (!jobId || !select) return;
-        const status = select.value;
-        try {
-          const res = await fetch(`/admin/jobs/${jobId}/update`, {
-            method: "POST",
-            headers: { "Content-Type": "application/x-www-form-urlencoded" },
-            credentials: "same-origin",
-            body: encodeForm({ status }),
+            row.style.display = matchesQ && matchesStatus ? "" : "none";
           });
-          const text = await res.text();
-          let data = null;
+        }
+
+        search?.addEventListener("input", () => window.requestAnimationFrame(applyFilters));
+        statusFilter?.addEventListener("change", applyFilters);
+
+        // Sorting Logic
+        const comparators = {
+          number: (a, b) => (parseFloat(a) || 0) - (parseFloat(b) || 0),
+          text: (a, b) => a.localeCompare(b),
+          date: (a, b) => new Date(a).getTime() - new Date(b).getTime(),
+        };
+
+        function sortBy(th) {
+          if (!tbody) return;
+          const type = th.getAttribute("data-sort") || "text";
+          const idx = Array.from(th.parentElement.children).indexOf(th);
+          // Toggle direction
+          const currentDir = th.getAttribute("data-dir");
+          const dir = currentDir === "asc" ? "desc" : "asc";
+
+          // Reset indicators
+          table.querySelectorAll("th").forEach((h) => h.removeAttribute("data-dir"));
+          th.setAttribute("data-dir", dir);
+
+          const rows = Array.from(tbody.rows).filter((r) => r.style.display !== "none");
+          rows.sort((r1, r2) => {
+            const v1 = r1.cells[idx].getAttribute("data-value") || r1.cells[idx].textContent.trim();
+            const v2 = r2.cells[idx].getAttribute("data-value") || r2.cells[idx].textContent.trim();
+
+            const sv1 = String(v1).toLowerCase();
+            const sv2 = String(v2).toLowerCase();
+
+            const cmp = (comparators[type] || comparators.text)(sv1, sv2);
+            return dir === "asc" ? cmp : -cmp;
+          });
+
+          rows.forEach((r) => tbody.appendChild(r));
+        }
+
+        table?.querySelectorAll("thead th[data-sort]").forEach((th) => th.addEventListener("click", () => sortBy(th)));
+
+        // Admin actions: update status + delete
+        function encodeForm(data) {
+          return Object.entries(data)
+            .map(([k, v]) => `${encodeURIComponent(k)}=${encodeURIComponent(v)}`)
+            .join("&");
+        }
+
+        async function updateStatus(row) {
+          const jobId = row.getAttribute("data-job-id");
+          const select = row.querySelector(".js-status-select");
+          if (!jobId || !select) return;
+          const status = select.value;
           try {
-            data = JSON.parse(text);
-          } catch {}
-          if (!res.ok) {
-            const msg = (data && (data.error || data.message)) || `HTTP ${res.status}`;
-            throw new Error(msg);
-          }
-          // Update badge + filter attr
-          row.setAttribute("data-status", String(status));
-          const statusCell = row.cells[2];
-          if (statusCell) {
-            const s = Number(status);
-            let html = "";
-            if (s === 1) {
-                html = '<span class="inline-flex items-center rounded-md border border-green-200 bg-green-50 px-2 py-0.5 text-xs font-medium text-green-700 dark:border-green-900/50 dark:bg-green-900/30 dark:text-green-300">Approved</span>';
-            } else if (s === 2) {
-                html = '<span class="inline-flex items-center rounded-md border border-red-200 bg-red-50 px-2 py-0.5 text-xs font-medium text-red-700 dark:border-red-900/50 dark:bg-red-900/30 dark:text-red-400">Declined</span>';
-            } else {
-                html = '<span class="inline-flex items-center rounded-md border border-amber-200 bg-amber-50 px-2 py-0.5 text-xs font-medium text-amber-800 dark:border-amber-900/50 dark:bg-amber-900/30 dark:text-amber-300">Pending</span>';
+            const res = await fetch(`/admin/jobs/${jobId}/update`, {
+              method: "POST",
+              headers: { "Content-Type": "application/x-www-form-urlencoded" },
+              credentials: "same-origin",
+              body: encodeForm({ status }),
+            });
+            const text = await res.text();
+            let data = null;
+            try {
+              data = JSON.parse(text);
+            } catch {}
+            if (!res.ok) {
+              const msg = (data && (data.error || data.message)) || `HTTP ${res.status}`;
+              throw new Error(msg);
             }
-            statusCell.innerHTML = html;
+            // Update badge + filter attr
+            row.setAttribute("data-status", String(status));
+            const statusCell = row.cells[2];
+            if (statusCell) {
+              const s = Number(status);
+              let html = "";
+              if (s === 1) {
+                html = '<span class="inline-flex items-center rounded-md border border-green-200 bg-green-50 px-2 py-0.5 text-xs font-medium text-green-700 dark:border-green-900/50 dark:bg-green-900/30 dark:text-green-300">Approved</span>';
+              } else if (s === 2) {
+                html = '<span class="inline-flex items-center rounded-md border border-red-200 bg-red-50 px-2 py-0.5 text-xs font-medium text-red-700 dark:border-red-900/50 dark:bg-red-900/30 dark:text-red-400">Declined</span>';
+              } else {
+                html = '<span class="inline-flex items-center rounded-md border border-amber-200 bg-amber-50 px-2 py-0.5 text-xs font-medium text-amber-800 dark:border-amber-900/50 dark:bg-amber-900/30 dark:text-amber-300">Pending</span>';
+              }
+              statusCell.innerHTML = html;
+            }
+            // Brief visual feedback
+            const btn = row.querySelector(".js-status-save");
+            if (btn) {
+              const old = btn.textContent;
+              btn.textContent = "Saved";
+              setTimeout(() => {
+                btn.textContent = old;
+              }, 800);
+            }
+          } catch (e) {
+            alert(`Failed to update status. ${e?.message || ""}`.trim());
           }
-          // Brief visual feedback
-          const btn = row.querySelector(".js-status-save");
-          if (btn) {
-            const old = btn.textContent;
-            btn.textContent = "Saved";
-            setTimeout(() => {
-              btn.textContent = old;
-            }, 800);
-          }
-        } catch (e) {
-          alert(`Failed to update status. ${e?.message || ""}`.trim());
         }
-      }
 
-      async function deleteJob(row) {
-        const jobId = row.getAttribute("data-job-id");
-        if (!jobId) return;
-        if (!confirm("Are you sure you want to delete this job?")) return;
-        try {
-          const res = await fetch(`/admin/jobs/${jobId}/delete`, { method: "POST", credentials: "same-origin" });
-          const text = await res.text();
-          let data = null;
+        async function deleteJob(row) {
+          const jobId = row.getAttribute("data-job-id");
+          if (!jobId) return;
+          if (!confirm("Are you sure you want to delete this job?")) return;
           try {
-            data = JSON.parse(text);
-          } catch {}
-          if (!res.ok) {
-            const msg = (data && (data.error || data.message)) || `HTTP ${res.status}`;
-            throw new Error(msg);
+            const res = await fetch(`/admin/jobs/${jobId}/delete`, { method: "POST", credentials: "same-origin" });
+            const text = await res.text();
+            let data = null;
+            try {
+              data = JSON.parse(text);
+            } catch {}
+            if (!res.ok) {
+              const msg = (data && (data.error || data.message)) || `HTTP ${res.status}`;
+              throw new Error(msg);
+            }
+            row.remove();
+          } catch (e) {
+            alert(`Failed to delete job. ${e?.message || ""}`.trim());
           }
-          row.remove();
-        } catch (e) {
-          alert(`Failed to delete job. ${e?.message || ""}`.trim());
         }
-      }
 
-      tbody?.addEventListener("click", (ev) => {
-        const target = ev.target;
-        // Handle clicks on Lucide icons inside buttons by finding closest button
-        const btn = target.closest('button');
-        if (!btn) return;
-        
-        if (btn.classList.contains("js-status-save")) {
-          ev.preventDefault();
-          const row = btn.closest("tr");
-          if (row) updateStatus(row);
-        }
-        if (btn.classList.contains("js-delete-job")) {
-          ev.preventDefault();
-          const row = btn.closest("tr");
-          if (row) deleteJob(row);
-        }
-      });
+        tbody?.addEventListener("click", (ev) => {
+          const target = ev.target;
+          // Handle clicks on Lucide icons inside buttons by finding closest button
+          const btn = target.closest("button");
+          if (!btn) return;
 
-      // Relative Time Logic
-      function timeAgo(ts) {
-        const t = new Date(ts);
-        if (isNaN(t)) return "";
-        const s = Math.floor((Date.now() - t.getTime()) / 1000);
-        if (s < 60) return "Just now";
-        const m = Math.floor(s / 60);
-        if (m < 60) return `${m}m ago`;
-        const h = Math.floor(m / 60);
-        if (h < 24) return `${h}h ago`;
-        const d = Math.floor(h / 24);
-        if (d < 30) return `${d}d ago`;
-        return t.toLocaleDateString();
-      }
-
-      function refreshTimes() {
-        document.querySelectorAll(".js-relative-time").forEach((el) => {
-          const ts = el.getAttribute("datetime");
-          const rel = timeAgo(ts);
-          if (rel) el.textContent = rel;
+          if (btn.classList.contains("js-status-save")) {
+            ev.preventDefault();
+            const row = btn.closest("tr");
+            if (row) updateStatus(row);
+          }
+          if (btn.classList.contains("js-delete-job")) {
+            ev.preventDefault();
+            const row = btn.closest("tr");
+            if (row) deleteJob(row);
+          }
         });
-      }
-      
-      refreshTimes();
-      setInterval(refreshTimes, 60000);
-    })();
-  </script>
-</div>
+
+        // Relative Time Logic
+        function timeAgo(ts) {
+          const t = new Date(ts);
+          if (isNaN(t)) return "";
+          const s = Math.floor((Date.now() - t.getTime()) / 1000);
+          if (s < 60) return "Just now";
+          const m = Math.floor(s / 60);
+          if (m < 60) return `${m}m ago`;
+          const h = Math.floor(m / 60);
+          if (h < 24) return `${h}h ago`;
+          const d = Math.floor(h / 24);
+          if (d < 30) return `${d}d ago`;
+          return t.toLocaleDateString();
+        }
+
+        function refreshTimes() {
+          document.querySelectorAll(".js-relative-time").forEach((el) => {
+            const ts = el.getAttribute("datetime");
+            const rel = timeAgo(ts);
+            if (rel) el.textContent = rel;
+          });
+        }
+
+        refreshTimes();
+        setInterval(refreshTimes, 60000);
+      })();
+    </script>
+  </div>
 {% endblock %}

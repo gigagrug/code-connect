@@ -90,6 +90,10 @@ def serve_upload(project_name, filename):
 
 @app.route('/admin')
 def admin_index():
+    if 'user_id' not in session or session.get('role') != 10:
+        flash("Access denied. You must be an admin to view this page.", "danger")
+        return redirect(url_for('admin_login'))
+
     page = request.args.get('page', default=1, type=int) or 1
     per_page = 6
     projects, total, total_pages, pending_count, approved_count, taken_count = get_projects_paginated(engine, page=page, per_page=per_page)
@@ -111,9 +115,10 @@ def admin_login():
 
 @app.route('/admin/jobs', endpoint='adminjobs')
 def admin_jobs_index():
-    if 'user_id' not in session:
-        flash("You must be logged in to access admin jobs.", "warning")
-        return redirect(url_for('login'))
+    if 'user_id' not in session or session.get('role') != 10:
+        flash("You must be logged in as an admin to access admin jobs.", "warning")
+        return redirect(url_for('admin_login'))
+
     page = request.args.get('page', default=1, type=int) or 1
     per_page = 6
     jobs, total, total_pages, pending_count, approved_count, taken_count = get_jobs_paginated(engine, page=page, per_page=per_page)
@@ -123,23 +128,29 @@ def admin_jobs_index():
 
 @app.route('/admin/users', endpoint='adminusers')
 def admin_users_index():
+    if 'user_id' not in session or session.get('role') != 10:
+        flash("Access denied. Admins only.", "danger")
+        return redirect(url_for('admin_login'))
+
     page = request.args.get('page', default=1, type=int) or 1
     per_page = 6
     users, total, total_pages, pending_count, approved_count, taken_count = get_users_paginated(engine, page=page, per_page=per_page)
     return render_template('/admin/adminusers.html', users=users, page=page, per_page=per_page, total=total, total_pages=total_pages, pending_count=pending_count, approved_count=approved_count, taken_count=taken_count)
-# Users
+
 @app.route('/admin/messages', endpoint='adminmessages')
 def admin_messages_index():
-    if 'user_id' not in session:
-        flash("You must be logged in to view admin messages.", "warning")
-        return redirect(url_for('login'))
+    if 'user_id' not in session or session.get('role') != 10:
+        flash("You must be logged in as an admin to view admin messages.", "warning")
+        return redirect(url_for('admin_login'))
+
     messages = get_admin_messages(engine)
     return render_template('/admin/adminmessages.html', admin_messages=messages)
 
 @app.route('/admin/jobs/<int:job_id>/update', methods=['POST'])
 def admin_job_update(job_id):
-    if 'user_id' not in session:
+    if 'user_id' not in session or session.get('role') != 10:
         return jsonify({"error": "Unauthorized"}), 403
+
     status = request.form.get('status', type=int)
     if status not in (0, 1, 2):
         return jsonify({"error": "Invalid status"}), 400
@@ -150,13 +161,15 @@ def admin_job_update(job_id):
 
 @app.route('/admin/jobs/<int:job_id>/delete', methods=['POST'])
 def admin_job_delete(job_id):
-    if 'user_id' not in session:
+    if 'user_id' not in session or session.get('role') != 10:
         return jsonify({"error": "Unauthorized"}), 403
+
     ok = admin_delete_job(engine, job_id)
     if not ok:
         return jsonify({"error": "Delete failed"}), 500
     return jsonify({"ok": True, "job_id": job_id})
 
+# Users
 @app.route('/', methods=['GET'])
 def index():
     if 'user_id' in session:
