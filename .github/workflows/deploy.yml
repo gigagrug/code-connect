@@ -1,0 +1,28 @@
+name: Deploy to Server
+
+on:
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Deploy via SSH
+        uses: appleboy/ssh-action@v1.2.4
+        with:
+          host: ${{ secrets.HOST }}
+          username: ${{ secrets.USER }}
+          password: ${{ secrets.PASSWORD }}
+          port: 22
+          script: |
+            # Navigate to the project directory
+            cd code-connect/
+
+            # Stop the running containers
+            docker compose down
+
+            # Pull the latest changes from GitHub
+            git pull origin main
+
+            # Rebuild and start the containers in detached mode
+            docker compose up -d --build
