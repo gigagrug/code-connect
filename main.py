@@ -65,7 +65,6 @@ def manage_database_on_startup():
         try:
             execute_raw_sql(engine, DROP_SCHEMA_SQL)
             execute_raw_sql(engine, CREATE_SCHEMA_SQL)
-            seed_data(engine) 
             print("\n🎉 Database has been successfully **RESET and SEEDED**! 🎉\n")
         except Exception as e:
             print(f"\n🔥 Database reset failed: {e} 🔥")
