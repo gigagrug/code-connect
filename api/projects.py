@@ -5,6 +5,8 @@ from flask import flash, redirect, url_for, session, request, render_template, c
 from werkzeug.utils import secure_filename
 import resend
 
+# the page showing all projects, viewable by admins
+
 RESEND_KEY = os.environ.get('RESEND_KEY')
 RESEND_EMAIL = os.environ.get('RESEND_EMAIL')
 
