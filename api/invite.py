@@ -1,6 +1,10 @@
 from flask import request, redirect, url_for, flash, session
 from sqlalchemy import text
 
+# located within a student's profile, if they are not already assigned an instructor, this allows
+# a student to request an instructor
+
+
 def send_instructor_request(engine):
     if 'user_id' not in session or session.get('role') != 3:
         flash("Only students can send requests.", "danger")

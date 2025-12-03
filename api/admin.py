@@ -2,6 +2,8 @@ import bcrypt
 from sqlalchemy import text
 from flask import flash, redirect, url_for, session
 
+# the login and registration page for administrators
+
 def register_admin(request, engine):
     email = request.form.get('email')
     password = request.form.get('password')

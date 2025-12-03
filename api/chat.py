@@ -6,6 +6,8 @@ from sqlalchemy import text
 from .projects import check_if_user_can_chat, get_project_by_id, _get_upload_paths
 from .job import check_if_user_can_chat_application, _get_application_upload_path
 
+# chat log for communication between teams
+
 def init_chat(socketio, engine):
     @socketio.on('join')
     def on_join(data):
