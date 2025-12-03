@@ -105,7 +105,7 @@ def get_projects_paginated(engine, page: int = 1, per_page: int = 6, q: str | No
     params = {}
 
     if q:
-        where.append("(title LIKE :q OR description LIKE :q)")
+        where.append("(name LIKE :q OR description LIKE :q)")
         params["q"] = f"%{q}%"
 
     if status:
@@ -115,7 +115,7 @@ def get_projects_paginated(engine, page: int = 1, per_page: int = 6, q: str | No
     where_sql = ("WHERE " + " AND ".join(where)) if where else ""
 
     with engine.connect() as conn:
-        total = conn.execute(text(f"SELECT COUNT(*) FROM jobs {where_sql}"), params).scalar() or 0
+        total = conn.execute(text(f"SELECT COUNT(*) FROM projects {where_sql}"), params).scalar() or 0
 
         counts = conn.execute(text(
             """
@@ -123,7 +123,7 @@ def get_projects_paginated(engine, page: int = 1, per_page: int = 6, q: str | No
               SUM(CASE WHEN status = 0 THEN 1 ELSE 0 END) AS pending_count,
               SUM(CASE WHEN status = 1 THEN 1 ELSE 0 END) AS approved_count,
               SUM(CASE WHEN status = 2 THEN 1 ELSE 0 END) AS taken_count
-            FROM jobs
+            FROM projects
             """
         )).mappings().first() or {"pending_count": 0, "approved_count": 0, "taken_count": 0}
 
@@ -131,24 +131,16 @@ def get_projects_paginated(engine, page: int = 1, per_page: int = 6, q: str | No
             rows = conn.execute(
                 text(f"""
                     SELECT *
-                    FROM jobs
+                    FROM projects
                     {where_sql}
                     ORDER BY id ASC
                     LIMIT :limit OFFSET :offset
                 """),
                 {**params, "limit": per_page, "offset": offset},
             ).mappings().all()
-        except Exception:
-            rows = conn.execute(
-                text(f"""
-                    SELECT *
-                    FROM jobs
-                    {where_sql}
-                    ORDER BY id ASC
-                    LIMIT :limit OFFSET :offset
-                """),
-                {**params, "limit": per_page, "offset": offset},
-            ).mappings().all()
+        except Exception as e:
+            print(f"Error fetching projects: {e}")
+            rows = []
 
     total_pages = max(1, (total + per_page - 1) // per_page)
     return rows, total, total_pages, counts.get("pending_count", 0), counts.get("approved_count", 0), counts.get("taken_count", 0)
