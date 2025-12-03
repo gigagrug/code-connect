@@ -13,7 +13,6 @@ from api.admin import register_admin, login_admin, get_projects_paginated, get_u
 from api.adminjobs import *
 from api.adminmessages import *
 from api.job import *
-from schema.dummydata import seed_data
 from schema.schema import DROP_SCHEMA_SQL, CREATE_SCHEMA_SQL
 
 app = Flask(__name__)
@@ -61,11 +60,11 @@ def manage_database_on_startup():
     if app.debug and os.environ.get("WERKZEUG_RUN_MAIN") != "true":
         return
     if app.debug:
-        print("🚀 Starting **DEBUG** database reset (Drop/Create/Seed)...")
+        print("🚀 Starting **DEBUG** database reset (Drop/Create)...")
         try:
             execute_raw_sql(engine, DROP_SCHEMA_SQL)
             execute_raw_sql(engine, CREATE_SCHEMA_SQL)
-            print("\n🎉 Database has been successfully **RESET and SEEDED**! 🎉\n")
+            print("\n🎉 Database has been successfully **RESET! 🎉\n")
         except Exception as e:
             print(f"\n🔥 Database reset failed: {e} 🔥")
     else:
