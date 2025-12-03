@@ -181,15 +181,13 @@
         <div class="text-sm text-neutral-600 dark:text-neutral-400">Page <span class="font-semibold text-neutral-900 dark:text-white">{{ page }}</span> of <span class="font-semibold">{{ total_pages }}</span></div>
 
         <div class="flex items-center gap-2">
-          <!-- First -->
-          <a href="{{ url_for('admin', page=1) }}" class="{{ 'pointer-events-none opacity-50' if page == 1 }} rounded-lg border border-neutral-200 bg-white px-3 py-2 text-sm font-medium text-neutral-700 hover:bg-neutral-50 disabled:opacity-50 dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-300 dark:hover:bg-neutral-700">First</a>
+          <a href="{{ url_for('admin_index', page=1) }}" class="{{ 'pointer-events-none opacity-50' if page == 1 }} rounded-lg border border-neutral-200 bg-white px-3 py-2 text-sm font-medium text-neutral-700 hover:bg-neutral-50 disabled:opacity-50 dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-300 dark:hover:bg-neutral-700">First</a>
 
-          <!-- Prev -->
-          <a href="{{ url_for('admin', page=page-1) }}" class="{{ 'pointer-events-none opacity-50' if page == 1 }} rounded-lg border border-neutral-200 bg-white px-3 py-2 text-sm font-medium text-neutral-700 hover:bg-neutral-50 disabled:opacity-50 dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-300 dark:hover:bg-neutral-700">Prev</a>
+          <a href="{{ url_for('admin_index', page=page-1) }}" class="{{ 'pointer-events-none opacity-50' if page == 1 }} rounded-lg border border-neutral-200 bg-white px-3 py-2 text-sm font-medium text-neutral-700 hover:bg-neutral-50 disabled:opacity-50 dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-300 dark:hover:bg-neutral-700">Prev</a>
 
           <div class="hidden sm:flex sm:gap-1">
             {% if start > 1 %}
-              <a href="{{ url_for('admin', page=1) }}" class="rounded-lg border border-neutral-200 px-3 py-2 text-sm hover:bg-neutral-50 dark:border-neutral-700 dark:text-neutral-300 dark:hover:bg-neutral-800">1</a>
+              <a href="{{ url_for('admin_index', page=1) }}" class="rounded-lg border border-neutral-200 px-3 py-2 text-sm hover:bg-neutral-50 dark:border-neutral-700 dark:text-neutral-300 dark:hover:bg-neutral-800">1</a>
               {% if start > 2 %}<span class="px-2 py-2 text-neutral-400">...</span>{% endif %}
             {% endif %}
 
@@ -197,25 +195,22 @@
               {% if pnum == page %}
                 <span class="rounded-lg bg-neutral-900 px-3 py-2 text-sm font-bold text-white dark:bg-white dark:text-neutral-900">{{ pnum }}</span>
               {% else %}
-                <a href="{{ url_for('admin', page=pnum) }}" class="rounded-lg border border-neutral-200 px-3 py-2 text-sm hover:bg-neutral-50 dark:border-neutral-700 dark:text-neutral-300 dark:hover:bg-neutral-800">{{ pnum }}</a>
+                <a href="{{ url_for('admin_index', page=pnum) }}" class="rounded-lg border border-neutral-200 px-3 py-2 text-sm hover:bg-neutral-50 dark:border-neutral-700 dark:text-neutral-300 dark:hover:bg-neutral-800">{{ pnum }}</a>
               {% endif %}
             {% endfor %}
 
             {% if end < total_pages %}
               {% if end < total_pages - 1 %}<span class="px-2 py-2 text-neutral-400">...</span>{% endif %}
-              <a href="{{ url_for('admin', page=total_pages) }}" class="rounded-lg border border-neutral-200 px-3 py-2 text-sm hover:bg-neutral-50 dark:border-neutral-700 dark:text-neutral-300 dark:hover:bg-neutral-800">{{ total_pages }}</a>
+              <a href="{{ url_for('admin_index', page=total_pages) }}" class="rounded-lg border border-neutral-200 px-3 py-2 text-sm hover:bg-neutral-50 dark:border-neutral-700 dark:text-neutral-300 dark:hover:bg-neutral-800">{{ total_pages }}</a>
             {% endif %}
           </div>
 
-          <!-- Next -->
-          <a href="{{ url_for('admin', page=page+1) }}" class="{{ 'pointer-events-none opacity-50' if page == total_pages }} rounded-lg border border-neutral-200 bg-white px-3 py-2 text-sm font-medium text-neutral-700 hover:bg-neutral-50 disabled:opacity-50 dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-300 dark:hover:bg-neutral-700">Next</a>
+          <a href="{{ url_for('admin_index', page=page+1) }}" class="{{ 'pointer-events-none opacity-50' if page == total_pages }} rounded-lg border border-neutral-200 bg-white px-3 py-2 text-sm font-medium text-neutral-700 hover:bg-neutral-50 disabled:opacity-50 dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-300 dark:hover:bg-neutral-700">Next</a>
 
-          <!-- Last -->
-          <a href="{{ url_for('admin', page=total_pages) }}" class="{{ 'pointer-events-none opacity-50' if page == total_pages }} rounded-lg border border-neutral-200 bg-white px-3 py-2 text-sm font-medium text-neutral-700 hover:bg-neutral-50 disabled:opacity-50 dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-300 dark:hover:bg-neutral-700">Last</a>
+          <a href="{{ url_for('admin_index', page=total_pages) }}" class="{{ 'pointer-events-none opacity-50' if page == total_pages }} rounded-lg border border-neutral-200 bg-white px-3 py-2 text-sm font-medium text-neutral-700 hover:bg-neutral-50 disabled:opacity-50 dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-300 dark:hover:bg-neutral-700">Last</a>
         </div>
       </nav>
     {% endif %}
-
     <!-- Client-Side Scripts -->
     <script>
       (function () {

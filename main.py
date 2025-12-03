@@ -14,6 +14,8 @@ from api.adminjobs import *
 from api.adminmessages import *
 from api.job import *
 from schema.schema import DROP_SCHEMA_SQL, CREATE_SCHEMA_SQL
+from schema.dummydata import seed_data
+
 
 app = Flask(__name__)
 app.secret_key = os.getenv("FLASK_SECRET_KEY")
@@ -64,6 +66,7 @@ def manage_database_on_startup():
         try:
             execute_raw_sql(engine, DROP_SCHEMA_SQL)
             execute_raw_sql(engine, CREATE_SCHEMA_SQL)
+            seed_data(engine)
             print("\n🎉 Database has been successfully **RESET! 🎉\n")
         except Exception as e:
             print(f"\n🔥 Database reset failed: {e} 🔥")
