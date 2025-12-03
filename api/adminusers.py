@@ -22,6 +22,7 @@ def get_jobs_paginated(engine, page: int = 1, per_page: int = 6, q: str | None =
         total = conn.execute(text(f"SELECT COUNT(*) FROM users {where_sql}"), params).scalar() or 0
 
         # Global role counts (not affected by filters)
+        # Determines the status of a Job
         counts = conn.execute(text(
             """
             SELECT 

@@ -1,5 +1,7 @@
 from sqlalchemy import text
 
+# a page with every single job in the database and their relevant information
+
 def get_jobs_paginated(engine, page: int = 1, per_page: int = 6, q: str | None = None, status: str | None = None):
     page = max(int(page or 1), 1)
     per_page = max(int(per_page or 1), 1)
@@ -22,6 +24,7 @@ def get_jobs_paginated(engine, page: int = 1, per_page: int = 6, q: str | None =
         total = conn.execute(text(f"SELECT COUNT(*) FROM jobs {where_sql}"), params).scalar() or 0
 
         # Global status counts (not affected by filters)
+        # determines the status of a job
         counts = conn.execute(text(
             """
             SELECT 

@@ -3,6 +3,8 @@ from sqlalchemy import text
 from flask import flash, redirect, url_for, session, render_template, current_app
 from werkzeug.utils import secure_filename
 
+# job creation process (for businesses only)
+
 def _get_application_upload_path(job_id, user_id, original_filename):
     safe_filename = secure_filename(original_filename)
     path_segment = f"job_{job_id}/user_{user_id}"
