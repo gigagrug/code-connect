@@ -238,7 +238,42 @@
             </div>
           {% endif %}
         </div>
+        {% if teams %}
+          <div class="rounded-2xl border border-neutral-200 bg-white p-8 shadow-sm dark:border-neutral-800 dark:bg-neutral-900">
+            <h3 class="mb-6 flex items-center gap-2 text-xl font-bold text-neutral-900 dark:text-white"><i data-lucide="users" class="h-5 w-5 text-blue-500"></i> Project Teams</h3>
 
+            <div class="grid grid-cols-1 gap-6 md:grid-cols-2">
+              {% for team in teams %}
+                <div class="rounded-xl border border-neutral-100 bg-neutral-50 p-4 dark:border-neutral-800 dark:bg-neutral-800/50">
+                  <div class="mb-3 flex items-center justify-between border-b border-neutral-200 pb-2 dark:border-neutral-700">
+                    <h4 class="font-bold text-neutral-900 dark:text-white">{{ team.name }}</h4>
+                    <span class="rounded-full bg-white px-2 py-0.5 text-xs font-medium text-neutral-500 shadow-sm dark:bg-neutral-700 dark:text-neutral-400">{{ team.members|length }} Members</span>
+                  </div>
+
+                  {% if team.members %}
+                    <div class="space-y-3">
+                      {% for member in team.members %}
+                        <div class="flex items-center gap-3">
+                          <div class="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-blue-100 text-xs font-bold text-blue-600 dark:bg-blue-900/50 dark:text-blue-400">{{ member.email[0]|upper }}</div>
+                          <div class="overflow-hidden">
+                            {% if member.name %}
+                              <div class="truncate text-sm font-semibold text-neutral-900 dark:text-white">{{ member.name }}</div>
+                              <div class="truncate text-xs text-neutral-500 dark:text-neutral-400">{{ member.email }}</div>
+                            {% else %}
+                              <div class="truncate text-sm font-medium text-neutral-900 dark:text-white">{{ member.email }}</div>
+                            {% endif %}
+                          </div>
+                        </div>
+                      {% endfor %}
+                    </div>
+                  {% else %}
+                    <p class="text-sm text-neutral-400 italic">No members assigned.</p>
+                  {% endif %}
+                </div>
+              {% endfor %}
+            </div>
+          </div>
+        {% endif %}
         <!-- Comments Section -->
         <div class="space-y-6">
           <h3 class="text-2xl font-bold text-neutral-900 dark:text-white">Comments</h3>

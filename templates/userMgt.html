@@ -134,8 +134,12 @@
                     <div class="relative">
                       <select name="project_id" class="w-full appearance-none rounded-lg border border-neutral-200 bg-white py-2 pr-8 pl-3 text-sm focus:border-blue-600 focus:ring-1 focus:ring-blue-600 focus:outline-none dark:border-neutral-700 dark:bg-neutral-800" onchange="this.form.submit()">
                         <option value="" disabled {% if not team.project_id %}selected{% endif %}>Assign Project</option>
+
+                        {% if team.project_id %}
+                          <option value="{{ team.project_id }}" selected>{{ team.project_name }}</option>
+                        {% endif %}
                         {% for project in projects %}
-                          <option value="{{ project.id }}" {% if team.project_id == project.id %}selected{% endif %}>{{ project.name }}</option>
+                          <option value="{{ project.id }}">{{ project.name }}</option>
                         {% endfor %}
                       </select>
                       <i data-lucide="chevron-down" class="pointer-events-none absolute top-2.5 right-2 h-4 w-4 text-neutral-400"></i>

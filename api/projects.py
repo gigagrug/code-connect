@@ -452,7 +452,7 @@ def get_teams_for_project(project_id, engine):
             teams_result = conn.execute(teams_query, {"project_id": project_id}).mappings().all()
             teams_with_members = []
             for team in teams_result:
-                members_query = text("SELECT u.email FROM team_members tm JOIN users u ON tm.user_id = u.id WHERE tm.team_id = :team_id ORDER BY u.email")
+                members_query = text("SELECT u.name, u.email FROM team_members tm JOIN users u ON tm.user_id = u.id WHERE tm.team_id = :team_id ORDER BY u.email")
                 members_result = conn.execute(members_query, {"team_id": team['id']}).mappings().all()
                 teams_with_members.append({"name": team['name'], "members": members_result})
             return teams_with_members
