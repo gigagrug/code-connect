@@ -183,6 +183,9 @@ def index():
             if student_projects:
                 first_project_id = student_projects[0]['project_id']
                 return redirect(url_for('project_page', project_id=first_project_id))
+
+        if session.get('role') == 10:        
+            return redirect(url_for('admin_index'))
         
         # Get Params for initial load if present in URL
         search = request.args.get('search', None)
