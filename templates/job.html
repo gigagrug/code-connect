@@ -56,6 +56,10 @@
                   <textarea name="description" id="description" class="min-h-[150px] w-full rounded-xl border border-neutral-200 bg-transparent p-3 text-sm placeholder:text-neutral-400 focus:border-blue-600 focus:ring-1 focus:ring-blue-600 focus:outline-none dark:border-neutral-700 dark:bg-neutral-800 dark:text-white" required>{{ job.description }}</textarea>
                 </div>
                 <div>
+                  <label for="link" class="mb-1.5 block text-sm font-bold text-neutral-700 dark:text-neutral-300">Job External Link</label>
+                  <input type="text" name="link" id="link" value="{{ job.link }}" class="w-full rounded-xl border border-neutral-200 bg-transparent p-3 text-sm placeholder:text-neutral-400 focus:border-blue-600 focus:ring-1 focus:ring-blue-600 focus:outline-none dark:border-neutral-700 dark:bg-neutral-800 dark:text-white" />
+                </div>
+                <div>
                   <label for="status" class="mb-1.5 block text-sm font-bold text-neutral-700 dark:text-neutral-300">Status</label>
                   <div class="relative">
                     <select name="status" id="status" class="w-full appearance-none rounded-xl border border-neutral-200 bg-transparent p-3 pr-10 pl-4 text-sm focus:border-blue-600 focus:ring-1 focus:ring-blue-600 focus:outline-none dark:border-neutral-700 dark:bg-neutral-800 dark:text-white">

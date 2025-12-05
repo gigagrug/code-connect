@@ -98,6 +98,7 @@ def update_job(job_id, request, engine):
 
     new_title = request.form.get('title')
     new_description = request.form.get('description')
+    new_link = request.form.get('link')
     new_status = request.form.get('status', type=int)
 
     if not new_title or not new_description:
@@ -111,11 +112,12 @@ def update_job(job_id, request, engine):
     try:
         with engine.connect() as connection:
             update_query = text(
-                "UPDATE jobs SET title = :title, description = :description, status = :status WHERE id = :job_id"
+                "UPDATE jobs SET title = :title, description = :description, link = :new_link, status = :status WHERE id = :job_id"
             )
             params = {
                 "title": new_title,
                 "description": new_description,
+                "link": new_link,
                 "status": new_status,
                 "job_id": job_id
             }
