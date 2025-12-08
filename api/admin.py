@@ -2,8 +2,6 @@ import bcrypt
 from sqlalchemy import text
 from flask import flash, redirect, url_for, session
 
-# the login and registration page for administrators
-
 def register_admin(request, engine):
     email = request.form.get('email')
     password = request.form.get('password')
@@ -22,11 +20,6 @@ def register_admin(request, engine):
         return redirect(url_for('admin_register'))
 
     try:
-        db_password = ""
-        password_bytes = password.encode('utf-8')
-        salt = bcrypt.gensalt()
-        db_password = bcrypt.hashpw(password_bytes, salt).decode('utf-8')
-
         with engine.connect() as connection:
             query = text("SELECT email FROM users WHERE email = :email")
             result = connection.execute(query, {"email": email}).fetchone()
@@ -34,6 +27,10 @@ def register_admin(request, engine):
             if result:
                 flash('An account with this email already exists.', 'warning')
             else:
+                password_bytes = password.encode('utf-8')
+                salt = bcrypt.gensalt()
+                db_password = bcrypt.hashpw(password_bytes, salt).decode('utf-8')
+
                 insert_query = text(
                     "INSERT INTO users (email, password, role, permission) VALUES (:email, :password, :role, :permission)"
                 )
@@ -74,12 +71,10 @@ def login_admin(request, engine):
             result = connection.execute(query, {"email": email}).mappings().first()
 
             if result:
-                password_matches = False
                 hashed_password_from_db = result.password.encode('utf-8')
                 submitted_password_bytes = password.encode('utf-8')
-                password_matches = bcrypt.checkpw(submitted_password_bytes, hashed_password_from_db)
-
-                if password_matches:
+                
+                if bcrypt.checkpw(submitted_password_bytes, hashed_password_from_db):
                     session.clear()
                     session['user_id'] = result.id
                     session['email'] = result.email
@@ -95,6 +90,7 @@ def login_admin(request, engine):
         flash("An error occurred during login. Please try again later.", "danger")
 
     return redirect(url_for('admin_login'))
+
 
 def get_projects_paginated(engine, page: int = 1, per_page: int = 6, q: str | None = None, status: str | None = None):
     page = max(int(page or 1), 1)
@@ -114,20 +110,20 @@ def get_projects_paginated(engine, page: int = 1, per_page: int = 6, q: str | No
 
     where_sql = ("WHERE " + " AND ".join(where)) if where else ""
 
-    with engine.connect() as conn:
-        total = conn.execute(text(f"SELECT COUNT(*) FROM projects {where_sql}"), params).scalar() or 0
+    try:
+        with engine.connect() as conn:
+            total = conn.execute(text(f"SELECT COUNT(*) FROM projects {where_sql}"), params).scalar() or 0
 
-        counts = conn.execute(text(
-            """
-            SELECT 
-              SUM(CASE WHEN status = 0 THEN 1 ELSE 0 END) AS pending_count,
-              SUM(CASE WHEN status = 1 THEN 1 ELSE 0 END) AS approved_count,
-              SUM(CASE WHEN status = 2 THEN 1 ELSE 0 END) AS taken_count
-            FROM projects
-            """
-        )).mappings().first() or {"pending_count": 0, "approved_count": 0, "taken_count": 0}
+            counts = conn.execute(text(
+                """
+                SELECT 
+                  SUM(CASE WHEN status = 0 THEN 1 ELSE 0 END) AS pending_count,
+                  SUM(CASE WHEN status = 1 THEN 1 ELSE 0 END) AS approved_count,
+                  SUM(CASE WHEN status = 2 THEN 1 ELSE 0 END) AS taken_count
+                FROM projects
+                """
+            )).mappings().first() or {"pending_count": 0, "approved_count": 0, "taken_count": 0}
 
-        try:
             rows = conn.execute(
                 text(f"""
                     SELECT *
@@ -138,12 +134,15 @@ def get_projects_paginated(engine, page: int = 1, per_page: int = 6, q: str | No
                 """),
                 {**params, "limit": per_page, "offset": offset},
             ).mappings().all()
-        except Exception as e:
-            print(f"Error fetching projects: {e}")
-            rows = []
 
-    total_pages = max(1, (total + per_page - 1) // per_page)
-    return rows, total, total_pages, counts.get("pending_count", 0), counts.get("approved_count", 0), counts.get("taken_count", 0)
+            total_pages = max(1, (total + per_page - 1) // per_page)
+            
+            return rows, total, total_pages, counts.get("pending_count", 0), counts.get("approved_count", 0), counts.get("taken_count", 0)
+
+    except Exception as e:
+        print(f"Error fetching projects: {e}")
+        return [], 0, 1, 0, 0, 0
+
 
 def get_users_paginated(engine, page: int = 1, per_page: int = 6, q: str | None = None, status: str | None = None):
     page = max(int(page or 1), 1)
@@ -154,40 +153,29 @@ def get_users_paginated(engine, page: int = 1, per_page: int = 6, q: str | None 
     params = {}
 
     if q:
-        where.append("(title LIKE :q OR description LIKE :q)")
+        where.append("(name LIKE :q OR email LIKE :q)")
         params["q"] = f"%{q}%"
 
     if status:
-        where.append("status = :status")
+        where.append("role = :status")
         params["status"] = status
 
     where_sql = ("WHERE " + " AND ".join(where)) if where else ""
 
-    with engine.connect() as conn:
-        total = conn.execute(text(f"SELECT COUNT(*) FROM users {where_sql}"), params).scalar() or 0
+    try:
+        with engine.connect() as conn:
+            total = conn.execute(text(f"SELECT COUNT(*) FROM users {where_sql}"), params).scalar() or 0
 
-        counts = conn.execute(text(
-            """
-            SELECT 
-              SUM(CASE WHEN role = 0 THEN 1 ELSE 0 END) AS pending_count,
-              SUM(CASE WHEN role = 1 THEN 1 ELSE 0 END) AS approved_count,
-              SUM(CASE WHEN role = 2 THEN 1 ELSE 0 END) AS taken_count
-            FROM users
-            """
-        )).mappings().first() or {"pending_count": 0, "approved_count": 0, "taken_count": 0}
+            counts = conn.execute(text(
+                """
+                SELECT 
+                  SUM(CASE WHEN role = 0 THEN 1 ELSE 0 END) AS pending_count,
+                  SUM(CASE WHEN role = 1 THEN 1 ELSE 0 END) AS approved_count,
+                  SUM(CASE WHEN role = 2 THEN 1 ELSE 0 END) AS taken_count
+                FROM users
+                """
+            )).mappings().first() or {"pending_count": 0, "approved_count": 0, "taken_count": 0}
 
-        try:
-            rows = conn.execute(
-                text(f"""
-                    SELECT *
-                    FROM users
-                    {where_sql}
-                    ORDER BY id ASC
-                    LIMIT :limit OFFSET :offset
-                """),
-                {**params, "limit": per_page, "offset": offset},
-            ).mappings().all()
-        except Exception:
             rows = conn.execute(
                 text(f"""
                     SELECT *
@@ -199,5 +187,10 @@ def get_users_paginated(engine, page: int = 1, per_page: int = 6, q: str | None 
                 {**params, "limit": per_page, "offset": offset},
             ).mappings().all()
 
-    total_pages = max(1, (total + per_page - 1) // per_page)
-    return rows, total, total_pages, counts.get("pending_count", 0), counts.get("approved_count", 0), counts.get("taken_count", 0)
+            total_pages = max(1, (total + per_page - 1) // per_page)
+
+            return rows, total, total_pages, counts.get("pending_count", 0), counts.get("approved_count", 0), counts.get("taken_count", 0)
+
+    except Exception as e:
+        print(f"Error fetching users: {e}")
+        return [], 0, 1, 0, 0, 0

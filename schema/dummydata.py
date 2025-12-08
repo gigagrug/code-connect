@@ -35,8 +35,8 @@ def seed_data(engine):
                 # 2. SEED PROJECTS
                 print("Seeding projects...")
                 insert_projects_sql = text("""
-                    INSERT INTO `projects`
-                        (`user_id`, `name`, `description`, `status`, `project_link`, `github_link`)
+                    INSERT INTO projects
+                        (user_id, name, description, status, project_link, github_link)
                     VALUES
                         (3, 'E-commerce Recommendation Engine', 'A machine learning model that provides personalized product recommendations to online shoppers.', 0, 'https://example.com/project-ecom-rec', 'https://github.com/innovatecorp/ecom-rec'),
                         (4, 'Supply Chain Optimization Dashboard', 'A real-time analytics platform to monitor and optimize logistics, from manufacturing to final delivery.', 0, 'https://example.com/project-supply-chain', 'https://github.com/datadriven/supply-chain'),
@@ -71,15 +71,15 @@ def seed_data(engine):
                 # 3. SEED JOBS
                 print("Seeding jobs...")
                 insert_jobs_sql = text("""
-                    INSERT INTO `jobs`
-                        (`user_id`, `title`, `description`, `link`, `status`)
+                    INSERT INTO jobs
+                        (user_id, title, description, link, status)
                     VALUES
                         (3, 'Senior Frontend Developer (React)', 'Innovate Corp is seeking an experienced React developer to lead the development of our new project management platform. You will be responsible for building a high-performance, responsive UI and mentoring junior developers.', 'https://www.example.com', 1),
                         (4, 'Data Scientist - Machine Learning', 'DataDriven Inc. is looking for a Data Scientist with expertise in machine learning and Python. You will work on our predictive analytics models, including customer churn and fraud detection systems.', 'https://www.example.com', 1),
                         (3, 'Mobile Developer (iOS/Swift)', 'Join our mobile team at Innovate Corp to build our next-generation mobile banking and telemedicine applications. Strong experience with Swift and building secure, scalable apps is required.', '', 1),
                         (4, 'Business Intelligence Analyst', 'We need a BI Analyst to join our team at DataDriven Inc. You will be responsible for creating dashboards (Tableau/Power BI), analyzing supply chain data, and providing actionable insights to our clients.', '', 1),
                         (3, 'Cloud Infrastructure Engineer (AWS)', 'Innovate Corp is hiring a Cloud Engineer to manage our growing AWS infrastructure. You will be responsible for CI/CD pipelines, container orchestration (Kubernetes), and ensuring high availability for all our platforms.', 'https://www.example.com', 1),
-                        (4, 'Junior Data Analyst', 'This is an-level position at DataDriven Inc. for a recent graduate. You will assist our senior analysts with data cleaning, report generation, and market basket analysis. (This is a draft and not yet open).', 'https://www.example.com', 0);
+                        (4, 'Junior Data Analyst', 'This is an entry-level position at DataDriven Inc. for a recent graduate. You will assist our senior analysts with data cleaning, report generation, and market basket analysis. (This is a draft and not yet open).', 'https://www.example.com', 0);
                 """)
                 result = connection.execute(insert_jobs_sql)
                 print(f"✅ Inserted {result.rowcount} jobs.")

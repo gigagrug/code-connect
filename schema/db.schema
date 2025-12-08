@@ -1,2 +1,0 @@
-db = "mysql"
-url = env("SCHEMA_DB_URL")

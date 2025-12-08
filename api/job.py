@@ -3,8 +3,6 @@ from sqlalchemy import text
 from flask import flash, redirect, url_for, session, render_template, current_app
 from werkzeug.utils import secure_filename
 
-# job creation process (for businesses only)
-
 def _get_application_upload_path(job_id, user_id, original_filename):
     safe_filename = secure_filename(original_filename)
     path_segment = f"job_{job_id}/user_{user_id}"
@@ -112,7 +110,7 @@ def update_job(job_id, request, engine):
     try:
         with engine.connect() as connection:
             update_query = text(
-                "UPDATE jobs SET title = :title, description = :description, link = :new_link, status = :status WHERE id = :job_id"
+                "UPDATE jobs SET title = :title, description = :description, link = :link, status = :status WHERE id = :job_id"
             )
             params = {
                 "title": new_title,
@@ -218,7 +216,6 @@ def apply_to_job(job_id, request, engine):
     resume_path = None
     cover_letter_path = None
 
-    # Handle resume upload
     if resume_file and resume_file.filename:
         try:
             fs_save_path, url_path = _get_application_upload_path(job_id, user_id, resume_file.filename)
@@ -228,7 +225,6 @@ def apply_to_job(job_id, request, engine):
             flash(f"Error saving resume: {e}", "danger")
             return redirect(url_for('job_page', job_id=job_id))
     
-    # Handle cover letter upload
     if cover_letter_file and cover_letter_file.filename:
         try:
             fs_save_path, url_path = _get_application_upload_path(job_id, user_id, cover_letter_file.filename)
@@ -253,7 +249,8 @@ def apply_to_job(job_id, request, engine):
             conn.commit()
         flash("You have successfully applied for this job!", "success")
     except Exception as e:
-        if 'unique_application' in str(e).lower():
+        error_str = str(e).lower()
+        if 'unique' in error_str or 'duplicate' in error_str:
             flash("You have already applied for this job.", "warning")
         else:
             flash(f"An error occurred while applying: {e}", "danger")
@@ -275,7 +272,6 @@ def get_job_applications(job_id, engine):
         return []
 
 def get_my_applications(user_id, engine):
-    """Gets all applications submitted by the current user."""
     try:
         with engine.connect() as conn:
             query = text("""
@@ -292,10 +288,6 @@ def get_my_applications(user_id, engine):
         return []
 
 def get_application_by_id(application_id, engine):
-    """
-    Gets a single application and its related job/user info.
-    Crucially, this also checks if the session user has permission to view it.
-    """
     user_id = session.get('user_id')
     try:
         with engine.connect() as conn:
@@ -315,13 +307,12 @@ def get_application_by_id(application_id, engine):
             app_data = conn.execute(query, {"application_id": application_id}).mappings().first()
             
             if not app_data:
-                return None # Not found
+                return None 
             
-            # Permission Check:
             if user_id == app_data.applicant_id or user_id == app_data.job_owner_id:
                 return app_data
             else:
-                return None # Permission denied
+                return None 
                 
     except Exception as e:
         print(f"Error fetching application: {e}")
@@ -331,7 +322,7 @@ def check_if_user_can_chat_application(user_id, application_id, engine):
     if not user_id:
         return False
     
-    app_data = get_application_by_id(application_id, engine) # This already checks permissions
+    app_data = get_application_by_id(application_id, engine) 
     return app_data is not None
 
 def get_application_chat_history(application_id, engine):

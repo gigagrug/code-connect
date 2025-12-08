@@ -125,32 +125,25 @@ def handle_forgot_password(request, engine):
         try:
             with engine.connect() as conn:
                 with conn.begin():
-                    # Find user by email
                     user_query = text("SELECT id FROM users WHERE email = :email")
                     user = conn.execute(user_query, {"email": email}).mappings().first()
 
                     if user:
-                        # 1. Generate a secure token
                         token = secrets.token_urlsafe(32)
-                        expires_at = datetime.utcnow() + timedelta(hours=1) # Token valid for 1 hour
+                        expires_at = datetime.utcnow() + timedelta(hours=1)
                         user_id = user.id
 
-                        # 2. Store the token in the database (still inside transaction)
-                        # Invalidate any old tokens for this user
                         delete_old_tokens = text("DELETE FROM password_reset_tokens WHERE user_id = :user_id")
                         conn.execute(delete_old_tokens, {"user_id": user_id})
                         
-                        # Insert the new token
                         insert_token = text("""
                             INSERT INTO password_reset_tokens (user_id, token, expires_at)
                             VALUES (:user_id, :token, :expires_at)
                         """)
                         conn.execute(insert_token, {"user_id": user_id, "token": token, "expires_at": expires_at})
 
-                        # 3. Create the reset link
                         reset_url = url_for('reset_password', token=token, _external=True)
 
-                        # 4. Send the email (STILL inside transaction)
                         html_content = f"""
                         <p>Hello,</p>
                         <p>You requested a password reset for your account. Click the link below to set a new password:</p>
@@ -195,55 +188,46 @@ def handle_reset_password(request, engine, token):
 
             if not token_data:
                 flash("Invalid password reset link.", "danger")
-                conn.rollback() # Rollback the autobegin transaction
                 return redirect(url_for('login'))
 
             if datetime.utcnow() > token_data.expires_at:
                 flash("Your password reset link has expired. Please request a new one.", "danger")
                 
-                # We are already in a transaction. Just execute and commit.
                 delete_query = text("DELETE FROM password_reset_tokens WHERE token = :token")
                 conn.execute(delete_query, {"token": token})
-                conn.commit() # Commit the token deletion
+                conn.commit()
                 
                 return redirect(url_for('login'))
             
             user_id = token_data.user_id
 
-            # If it's a POST request, handle the form submission
             if request.method == 'POST':
                 password = request.form.get('password')
                 password2 = request.form.get('password2')
 
                 if not password or not password2:
                     flash("Both password fields are required.", "danger")
-                    conn.rollback() # Rollback the autobegin transaction
-                    return render_template('reset_password.html', token=token) # Re-render form
+                    return render_template('reset_password.html', token=token) 
 
                 if password != password2:
                     flash("Passwords do not match.", "danger")
-                    conn.rollback() # Rollback the autobegin transaction
                     return render_template('reset_password.html', token=token)
 
-                # Hash the new password
                 password_bytes = password.encode('utf-8')
                 salt = bcrypt.gensalt()
                 db_password = bcrypt.hashpw(password_bytes, salt).decode('utf-8')
 
-                # We are still in the original transaction.
-                # Execute update and delete, then commit.
                 update_pass_query = text("UPDATE users SET password = :password WHERE id = :user_id")
                 conn.execute(update_pass_query, {"password": db_password, "user_id": user_id})
 
                 delete_token_query = text("DELETE FROM password_reset_tokens WHERE token = :token")
                 conn.execute(delete_token_query, {"token": token})
                 
-                conn.commit() # Commit password update and token deletion
+                conn.commit()
                 
                 flash("Your password has been updated successfully! You can now log in.", "success")
                 return redirect(url_for('login'))
 
-            conn.rollback()
             return render_template('reset_password.html', token=token)
 
     except Exception as e:
@@ -352,12 +336,12 @@ def get_profile_data(engine):
         assignments = get_projects_for_student(engine)
         applications = get_my_applications(user_id, engine)
         return render_template('profile.html', 
-                                assignments=assignments, 
-                                student_info=student_info,
-                                instructors=instructors,
-                                pending_request=pending_request,
-                                user_data=user_data,
-                                applications=applications) # Pass applications
+                               assignments=assignments, 
+                               student_info=student_info,
+                               instructors=instructors,
+                               pending_request=pending_request,
+                               user_data=user_data,
+                               applications=applications) 
 
     elif user_role == 0:
         with engine.connect() as conn:

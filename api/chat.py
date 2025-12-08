@@ -6,8 +6,6 @@ from sqlalchemy import text
 from .projects import check_if_user_can_chat, get_project_by_id, _get_upload_paths
 from .job import check_if_user_can_chat_application, _get_application_upload_path
 
-# chat log for communication between teams
-
 def init_chat(socketio, engine):
     @socketio.on('join')
     def on_join(data):
@@ -31,7 +29,6 @@ def init_chat(socketio, engine):
 
         if not all([project_id, user_id, email]):
             return
-        # Allow message if either text OR file exists
         if not message_text and not file_data:
             return 
         if not check_if_user_can_chat(user_id, project_id, engine):
@@ -48,7 +45,6 @@ def init_chat(socketio, engine):
                 with current_app.app_context(): 
                     fs_save_path, url_path = _get_upload_paths(project.name, original_filename)
                 
-                # Remove header if present (e.g., "data:image/png;base64,")
                 if ',' in file_data:
                     file_content = base64.b64decode(file_data.split(',')[1])
                 else:
@@ -107,7 +103,6 @@ def init_chat(socketio, engine):
                         if message.attachment_path:
                             try:
                                 base_upload_dir = current_app.config['UPLOAD_DIR']
-                                # Extract relative path from URL
                                 if '/uploads/' in message.attachment_path:
                                     relative_path = message.attachment_path.split('/uploads/', 1)[-1]
                                     file_path = os.path.join(base_upload_dir, relative_path)
@@ -149,7 +144,6 @@ def init_application_chat(socketio, engine):
         if not all([application_id, user_id, email]):
             return
         
-        # Allow if text OR file exists
         if not message_text and not file_data:
             return
 
@@ -158,16 +152,9 @@ def init_application_chat(socketio, engine):
 
         attachment_path = None 
         
-        # Handle File Upload
         if file_data and original_filename:
             try:
                 with current_app.app_context():
-                    # Get Job ID from application to verify path structure or just store by application/user
-                    # Ideally, _get_application_upload_path needs job_id. 
-                    # We can fetch job_id from application_id if needed, but let's try a simpler path if that function isn't imported fully or requires args we don't have handy in `data`.
-                    # Assuming _get_application_upload_path is imported from .job
-                    
-                    # Fetch job_id for the path structure
                     with engine.connect() as conn:
                         res = conn.execute(text("SELECT job_id FROM job_applications WHERE id = :id"), {"id": application_id}).first()
                         job_id = res.job_id if res else 0

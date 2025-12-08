@@ -5,8 +5,6 @@ from flask import flash, redirect, url_for, session, request, render_template, c
 from werkzeug.utils import secure_filename
 import resend
 
-# the page showing all projects, viewable by admins
-
 RESEND_KEY = os.environ.get('RESEND_KEY')
 RESEND_EMAIL = os.environ.get('RESEND_EMAIL')
 
@@ -39,7 +37,6 @@ def _get_project_participants_emails(project_id, engine):
     try:
         with engine.connect() as conn:
             query = text("""
-                -- 1. Project Owner
                 SELECT u.email
                 FROM users u
                 JOIN projects p ON u.id = p.user_id
@@ -47,7 +44,6 @@ def _get_project_participants_emails(project_id, engine):
 
                 UNION
 
-                -- 2. Students on Teams
                 SELECT u.email
                 FROM users u
                 JOIN team_members tm ON u.id = tm.user_id
@@ -56,7 +52,6 @@ def _get_project_participants_emails(project_id, engine):
 
                 UNION
 
-                -- 3. Instructors directly linked to the project
                 SELECT u.email
                 FROM users u
                 JOIN instructor_projects ip ON u.id = ip.instructor_id
@@ -64,7 +59,6 @@ def _get_project_participants_emails(project_id, engine):
 
                 UNION
 
-                -- 4. Instructors of the students on the teams
                 SELECT i.email
                 FROM users i
                 JOIN users s ON i.id = s.instructor_id
@@ -74,7 +68,7 @@ def _get_project_participants_emails(project_id, engine):
             """)
             result = conn.execute(query, {"project_id": project_id}).mappings().all()
             for row in result:
-                emails.add(row.email)
+                emails.add(row['email'])
     except Exception as e:
         print(f"Error getting project participant emails: {e}")
     
@@ -171,7 +165,7 @@ def approve_project(project_id, engine):
 
     try:
         with engine.connect() as connection:
-            with connection.begin(): # Start transaction
+            with connection.begin():
                 if new_status == 2:
                     clear_other_instructors_query = text("""
                         DELETE FROM instructor_projects
@@ -185,7 +179,7 @@ def approve_project(project_id, engine):
                     upsert_query = text("""
                         INSERT INTO instructor_projects (instructor_id, project_id, status)
                         VALUES (:instructor_id, :project_id, :status)
-                        ON DUPLICATE KEY UPDATE status = :status
+                        ON CONFLICT(instructor_id, project_id) DO UPDATE SET status = :status
                     """)
                     connection.execute(upsert_query, {
                         "instructor_id": instructor_id,
@@ -197,7 +191,7 @@ def approve_project(project_id, engine):
                     upsert_query = text("""
                         INSERT INTO instructor_projects (instructor_id, project_id, status)
                         VALUES (:instructor_id, :project_id, :status)
-                        ON DUPLICATE KEY UPDATE status = :status
+                        ON CONFLICT(instructor_id, project_id) DO UPDATE SET status = :status
                     """)
                     connection.execute(upsert_query, {
                         "instructor_id": instructor_id,
@@ -206,11 +200,14 @@ def approve_project(project_id, engine):
                     })
                 elif new_status == 4:
                     update_students_query = text("""
-                    UPDATE users u
-                    JOIN team_members tm ON u.id = tm.user_id
-                    JOIN teams t ON tm.team_id = t.id
-                    SET u.role = 2
-                    WHERE t.project_id = :project_id AND u.role = 3
+                        UPDATE users 
+                        SET role = 2
+                        WHERE role = 3 AND id IN (
+                            SELECT tm.user_id 
+                            FROM team_members tm 
+                            JOIN teams t ON tm.team_id = t.id 
+                            WHERE t.project_id = :project_id
+                        )
                     """)
                     connection.execute(update_students_query, {"project_id": project_id})
 
@@ -257,7 +254,7 @@ def get_projects_for_user(engine):
                 JOIN users u ON p.user_id = u.id
                 LEFT JOIN teams t ON p.id = t.project_id
                 WHERE p.user_id = :user_id
-                GROUP BY p.id, u.email, u.role
+                GROUP BY p.id
                 ORDER BY p.id DESC
             """)
             projects = connection.execute(project_query, {"user_id": user_id}).mappings().all()
@@ -273,7 +270,6 @@ def get_all_projects(engine, session, page=1, per_page=12, search_query=None, st
         user_role = session.get('role')
         user_id = session.get('user_id')
         
-        # --- Filter Construction ---
         where_clauses = []
         params = {
             "per_page": per_page,
@@ -285,22 +281,17 @@ def get_all_projects(engine, session, page=1, per_page=12, search_query=None, st
             params["search"] = f"%{search_query}%"
 
         if status_filter is not None and status_filter != '':
-            # If status is "all" (or similar empty string logic in JS), we just don't add this clause
-            # But if it's a specific number string:
             try:
                 status_val = int(status_filter)
                 where_clauses.append("p.status = :status_val")
                 params["status_val"] = status_val
             except ValueError:
-                pass # Ignore invalid status filters
+                pass 
 
-        # --- Sorting Construction ---
-        # Security: Whitelist sort direction
         direction = "ASC" if sort_order == 'asc' else "DESC"
         order_by_clause = f"ORDER BY p.id {direction}"
 
         if user_role == 3:
-            # --- Student View (Filtered by Instructor logic) ---
             with engine.connect() as conn:
                 instructor_query = text("SELECT instructor_id FROM users WHERE id = :user_id")
                 result = conn.execute(instructor_query, {"user_id": user_id}).first()
@@ -311,7 +302,6 @@ def get_all_projects(engine, session, page=1, per_page=12, search_query=None, st
                 instructor_id = result.instructor_id
                 params["instructor_id"] = instructor_id
 
-            # Base Constraint: Must be approved by student's instructor
             where_clauses.append("ip.instructor_id = :instructor_id")
             where_clauses.append("ip.status = 2")
 
@@ -326,16 +316,7 @@ def get_all_projects(engine, session, page=1, per_page=12, search_query=None, st
                 LIMIT :per_page OFFSET :offset
             """
         else:
-            # --- General View (Public / Business / Instructor Browsing) ---
-            # Base Constraint: Status must be 0 or 1 (unless overridden by filter?)
-            # Standard logic was "p.status IN (0, 1)".
-            # If a user explicitly filters for "Finished" (4), they won't see it if we hardcode 0,1.
-            # However, usually public index only shows Available (1) or Unlisted/Pending (0).
-            # Let's respect the filter if provided, otherwise default to 0,1.
-            
             if status_filter is not None and status_filter != '':
-                 # If filtering, we trust the filter (and the WHERE logic added above)
-                 # But we should likely still prevent seeing deleted stuff if that existed.
                  pass 
             else:
                  where_clauses.append("p.status IN (0, 1)")
@@ -426,7 +407,7 @@ def get_projects_for_student(engine):
         with engine.connect() as conn:
             student_teams_query = text("""
                 SELECT p.id as project_id, p.name as project_name, p.description as project_description,
-                        t.id as team_id, t.name as team_name
+                       t.id as team_id, t.name as team_name
                 FROM team_members tm
                 JOIN teams t ON tm.team_id = t.id
                 JOIN projects p ON t.project_id = p.id
@@ -563,9 +544,8 @@ def delete_project(project_id, engine):
             
             if os.path.isdir(fs_upload_dir):
                 shutil.rmtree(fs_upload_dir)
-                print(f"Successfully deleted directory: {fs_upload_dir}")
             else:
-                print(f"Directory not found, skipping deletion: {fs_upload_dir}")
+                pass
                 
         except Exception as file_e:
             print(f"Error deleting project directory: {file_e}")
@@ -781,10 +761,8 @@ def add_comment_to_project(project_id, request, engine):
 
     try:
         if not RESEND_KEY:
-            print("Warning: RESEND_KEY not set. Skipping comment notification email.")
             return redirect(url_for('project_page', project_id=project_id))
         
-        # 1. Get commenter's details
         commenter_name = ""
         commenter_email = ""
         with engine.connect() as conn:
@@ -794,10 +772,8 @@ def add_comment_to_project(project_id, request, engine):
                 commenter_name = commenter.name if commenter.name else commenter.email
                 commenter_email = commenter.email
 
-        # 2. Get all participant emails
         recipients = _get_project_participants_emails(project_id, engine)
         
-        # 3. Remove the person who just commented
         recipients.discard(commenter_email)
 
         if recipients:
@@ -805,7 +781,6 @@ def add_comment_to_project(project_id, request, engine):
             project_name = project.name
             subject = f"New comment on project: {project_name}"
             
-            # Create a nice HTML email
             html_content = f"""
             <p>Hello,</p>
             <p><strong>{commenter_name}</strong> just posted a new comment on the project: <strong>{project_name}</strong>.</p>
@@ -819,16 +794,14 @@ def add_comment_to_project(project_id, request, engine):
             <p>The Project Portal</p>
             """
             
-            # Send the email
             resend.api_key = RESEND_KEY
             r = resend.Emails.send({
                 "from": RESEND_EMAIL,
-                "to": RESEND_EMAIL, # Send to self (or a no-reply address)
-                "bcc": list(recipients), # Use BCC to protect recipient privacy
+                "to": RESEND_EMAIL, 
+                "bcc": list(recipients), 
                 "subject": subject,
                 "html": html_content
             })
-            print(f"Comment notification email sent to {len(recipients)} recipients for project {project_id}.")
         
     except Exception as e:
         print(f"CRITICAL: Comment saved but email notification failed: {e}")

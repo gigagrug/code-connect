@@ -2,8 +2,6 @@ import bcrypt
 from flask import request, redirect, url_for, flash, session, jsonify, render_template
 from sqlalchemy import text
 
-# the page that handles instructor assigning students to groups
-
 def instructor_only():
     if 'role' not in session or session['role'] != 0:
         flash("You do not have permission to perform this action.", "danger")

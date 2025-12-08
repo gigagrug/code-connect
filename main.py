@@ -1,85 +1,99 @@
 import os
 import sqlalchemy
-import time
-from sqlalchemy import text
+from sqlalchemy import text, event
 from flask import Flask, render_template, request, redirect, url_for, flash, session, send_from_directory, jsonify
 from flask_socketio import SocketIO
-from api.auth import *
-from api.projects import *
-from api.mgt import *
-from api.invite import *
+from api.auth import (
+    register_user, login_user, handle_forgot_password, handle_reset_password, 
+    get_profile_data, update_profile, create_admin_message, get_business_profile_data
+)
+from api.projects import (
+    create_project, update_project, delete_project, approve_project, 
+    update_project_links, get_projects_for_student, get_all_projects, 
+    load_projects_html, get_project_by_id, check_if_user_can_chat, 
+    check_if_user_can_edit_links, check_if_user_can_comment, 
+    get_teams_for_project, get_comments_for_project, add_comment_to_project, 
+    delete_comment_on_project, instructor_manage_files, rename_project_attachment
+)
+from api.mgt import (
+    create_user_by_instructor, create_group, assign_user_to_team, 
+    assign_project_to_group, delete_user, delete_group, update_group, 
+    get_user_mgt_data
+)
+from api.invite import (
+    send_instructor_request, cancel_instructor_request, 
+    handle_instructor_request, dismiss_denied_request
+)
 from api.chat import init_chat, init_application_chat
-from api.admin import register_admin, login_admin, get_projects_paginated, get_users_paginated
-from api.adminjobs import *
-from api.adminmessages import *
-from api.job import *
+from api.admin import (
+    register_admin, login_admin, get_projects_paginated, get_users_paginated
+)
+from api.adminjobs import (
+    get_jobs_paginated, admin_update_job_status, admin_delete_job
+)
+from api.adminmessages import get_admin_messages
+from api.job import (
+    get_open_jobs, create_job, get_job_by_id, get_job_applications, 
+    update_job, delete_job, apply_to_job, get_business_jobs_data, 
+    get_application_by_id, get_application_chat_history
+)
 from schema.schema import DROP_SCHEMA_SQL, CREATE_SCHEMA_SQL
 from schema.dummydata import seed_data
 
-
 app = Flask(__name__)
-app.secret_key = os.getenv("FLASK_SECRET_KEY")
+app.secret_key = os.getenv("FLASK_SECRET_KEY", "dev_secret_key")
 UPLOAD_DIR = os.path.join(os.path.abspath(os.path.dirname(__file__)), 'uploads')
 app.config['UPLOAD_DIR'] = UPLOAD_DIR
 app.debug = os.getenv("FLASK_DEBUG", "0") == "1"
 db_url = os.getenv("DB_URL")
-
-if not db_url:
-    raise ValueError("Error: DB_URL environment variable is not set.")
 engine = None
-while engine is None:
-    try:
-        engine = sqlalchemy.create_engine(db_url)
-        with engine.connect() as connection:
-            print("Successfully connected to the database! 👍")
-    except Exception as e:
-        print(f"An error occurred while connecting to the database: {e}")
-        print("Retrying connection in 5 seconds...")
-        engine = None
-        time.sleep(5)
+
+try:
+    engine = sqlalchemy.create_engine(db_url, pool_pre_ping=True)
+    @event.listens_for(engine, "connect")
+    def set_sqlite_pragma(dbapi_connection, connection_record):
+        cursor = dbapi_connection.cursor()
+        cursor.execute("PRAGMA foreign_keys=ON")
+        cursor.close()
+    print(f"Successfully connected to SQLite database at {db_url}")
+except Exception as e:
+    print(f"An error occurred while connecting to the database: {e}")
+    raise
 
 def execute_raw_sql(db_engine, sql_script):
     statements = [stmt.strip() for stmt in sql_script.split(';') if stmt.strip()]
     if not statements:
-        print("🤔 No statements found. Skipping.")
         return
     try:
         with db_engine.connect() as connection:
-            with connection.begin() as transaction:
-                connection.execute(text("SET FOREIGN_KEY_CHECKS = 0;"))
-                for statement in statements:
-                    connection.execute(text(statement))
-                connection.execute(text("SET FOREIGN_KEY_CHECKS = 1;"))
-                print("✅ Successfully executed SQL batch.")
+            connection.execute(text("PRAGMA foreign_keys = OFF;"))
+            for statement in statements:
+                connection.execute(text(statement))
+            connection.execute(text("PRAGMA foreign_keys = ON;"))
+            connection.commit()
     except Exception as e:
-        print(f"❌ Could not execute SQL batch. Error: {e}")
+        print(f"Could not execute SQL batch. Error: {e}")
         raise
 
 def manage_database_on_startup():
     if not engine:
-        print("❌ Database engine not initialized. Skipping schema management.")
         return
     if app.debug and os.environ.get("WERKZEUG_RUN_MAIN") != "true":
         return
     if app.debug:
-        print("🚀 Starting **DEBUG** database reset (Drop/Create)...")
         try:
             execute_raw_sql(engine, DROP_SCHEMA_SQL)
             execute_raw_sql(engine, CREATE_SCHEMA_SQL)
             seed_data(engine)
-            print("\n🎉 Database has been successfully **RESET! 🎉\n")
         except Exception as e:
-            print(f"\n🔥 Database reset failed: {e} 🔥")
+            print(f"Database reset failed: {e}")
     else:
-        print("Production mode detected (FLASK_DEBUG=0). Starting **CREATE ONLY** schema run.")
         try:
             execute_raw_sql(engine, CREATE_SCHEMA_SQL)
-            print("✅ CREATE_SCHEMA_SQL executed. Existing data preserved.")
         except Exception as e:
-            print(f"⚠️ Could not execute CREATE_SCHEMA_SQL. Check database logs for details: {e}")
+            print(f"Could not execute CREATE_SCHEMA_SQL: {e}")
 
 manage_database_on_startup() 
-
 socketio = SocketIO(app)
 init_chat(socketio, engine)
 init_application_chat(socketio, engine) 
@@ -170,7 +184,6 @@ def admin_job_delete(job_id):
         return jsonify({"error": "Delete failed"}), 500
     return jsonify({"ok": True, "job_id": job_id})
 
-# Users
 @app.route('/', methods=['GET'])
 def index():
     if 'user_id' in session:
@@ -187,7 +200,6 @@ def index():
         if session.get('role') == 10:        
             return redirect(url_for('admin_index'))
         
-        # Get Params for initial load if present in URL
         search = request.args.get('search', None)
         status_filter = request.args.get('status', None)
         sort = request.args.get('sort', 'desc')
@@ -476,4 +488,4 @@ def dismiss_request_route(request_id):
 
 if __name__ == '__main__':
     debug_mode = os.getenv("FLASK_DEBUG", "0") == "1"
-    app.run(host='0.0.0.0', port=5000, debug=debug_mode)
+    socketio.run(app, host='0.0.0.0', port=5000, debug=debug_mode)
