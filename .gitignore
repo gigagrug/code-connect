@@ -5,3 +5,4 @@ uploads
 .idea
 __pycache__
 .env
+*.db

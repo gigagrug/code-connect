@@ -2,7 +2,7 @@ services:
   web:
     build: .
     ports:
-      - "80:5000"
+      - "5000:5000"
     environment:
       - FLASK_DEBUG=${FLASK_DEBUG:-0}
       - DB_URL=${DB_URL}
@@ -14,7 +14,7 @@ services:
     develop:
       watch:
         - action: sync
-          path: ./main.py
-          target: /app/main.py
+          path: ./app.py
+          target: /app/app.py
         - action: rebuild
           path: ./requirements.txt
