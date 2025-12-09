@@ -2,7 +2,7 @@ services:
   web:
     build: .
     ports:
-      - "5000:5000"
+      - "80:5000"
     environment:
       - FLASK_DEBUG=${FLASK_DEBUG:-0}
       - DB_URL=${DB_URL}
