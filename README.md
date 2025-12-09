@@ -23,4 +23,15 @@ docker compose up -w
 ```
 
 ## TODO
-- [ ]  Add support for messages to notify user what happened (ex. Success and Error)
+- [ ]  Add sendgrid support
+- [ ]  Add email verification
+- [ ]  Add emailing for every comment post
+- [ ]  Add emailing for custom messages on projects
+- [ ]  Add emailing for when job is applied. A confirmation email for applier. And notifaction email for the business
+- [ ]  There's probably a bunch of permission issues such as having access to things users shouldn't
+- [ ]  There's probably some other security flaws
+- [ ]  You can definitely better abstract things out (ex. Uploads, Emails, Project file structure).
+- [ ]  Add support for alert messages to notify user what happened (ex. Success and Error)
+- [ ]  Replace POST with also PUT, PATCH, DELETE where it applies. (Functional no different but is more inline with modern standards)
+- [ ]  Remove the unnecessary page refreshes to be more inline with modern web practices
+- [ ]  You should probably use ```{{ url_for('') }}``` in your HTML. (Shouldn't make a difference but is more idiomatic)

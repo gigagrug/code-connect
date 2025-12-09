@@ -11,17 +11,13 @@ jobs:
         uses: appleboy/ssh-action@v1.2.4
         env:
           DB_URL: ${{ secrets.DB_URL }}
-          MYSQL_PASSWORD: ${{ secrets.MYSQL_PASSWORD }}
-          MYSQL_USER: ${{ secrets.MYSQL_USER }}
-          MYSQL_DATABASE: ${{ secrets.MYSQL_DATABASE }}
-          MYSQL_ROOT_PASSWORD: ${{ secrets.MYSQL_ROOT_PASSWORD }}
           FLASK_SECRET_KEY: ${{ secrets.FLASK_SECRET_KEY }}
         with:
           host: ${{ secrets.HOST }}
           username: ${{ secrets.USER }}
           password: ${{ secrets.PASSWORD }}
           port: 22
-          envs: DB_URL,MYSQL_PASSWORD,MYSQL_USER,MYSQL_DATABASE,MYSQL_ROOT_PASSWORD,FLASK_SECRET_KEY
+          envs: DB_URL,FLASK_SECRET_KEY
           script: |
             cd code-connect/
             git pull origin main

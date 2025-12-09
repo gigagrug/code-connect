@@ -38,7 +38,7 @@ from api.job import (
     get_application_by_id, get_application_chat_history
 )
 from schema.schema import CREATE_SCHEMA_SQL
-# from schema.dummydata import seed_data
+# from schema.dummydata import seed_data # Creates dummydata
 
 app = Flask(__name__)
 app.secret_key = os.getenv("FLASK_SECRET_KEY", "dev_secret_key")
@@ -83,7 +83,7 @@ def manage_database_on_startup():
     if app.debug:
         try:
             execute_raw_sql(engine, CREATE_SCHEMA_SQL)
-            # seed_data(engine)
+            # seed_data(engine)  # Creates dummydata
         except Exception as e:
             print(f"Database reset failed: {e}")
     else:
