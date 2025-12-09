@@ -21,6 +21,9 @@ jobs:
           script: |
             cd code-connect/
             git pull origin main
+            sudo touch sqlite.db
+            sudo chmod 666 sqlite.db
+            sudo chmod 777 .
             docker compose build
             docker compose up -d
             docker image prune -f
