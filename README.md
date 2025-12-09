@@ -33,6 +33,7 @@ http://localhost
 - [ ]  There's probably a bunch of permission issues such as having access to things users shouldn't
 - [ ]  There's probably some other security flaws
 - [ ]  When cookie is invaild server crashes. It should delete the cookie in browser.
+- [ ]  Bug: I think I messed up the permssions for file upload for students.
 - [ ]  You can definitely better abstract things out (ex. Uploads, Emails, Project file structure).
 - [ ]  Add support for alert messages to notify user what happened (ex. Success and Error)
 - [ ]  Replace POST with also PUT, PATCH, DELETE where it applies. (Functional no different but is more inline with modern standards)
