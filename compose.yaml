@@ -6,8 +6,8 @@ services:
     environment:
       - FLASK_DEBUG=${FLASK_DEBUG:-0}
       - DB_URL=${DB_URL}
-      - RESEND_KEY=${RESEND_KEY}
-      - RESEND_EMAIL=${RESEND_EMAIL}
+      - SENDGRID_KEY=${SENDGRID_KEY}
+      - SENDGRID_EMAIL=${SENDGRID_EMAIL}
       - FLASK_SECRET_KEY=${FLASK_SECRET_KEY}
     volumes:
       - .:/app

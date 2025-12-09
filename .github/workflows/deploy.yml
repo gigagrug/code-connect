@@ -17,7 +17,7 @@ jobs:
           username: ${{ secrets.USER }}
           password: ${{ secrets.PASSWORD }}
           port: 22
-          envs: DB_URL,FLASK_SECRET_KEY
+          envs: DB_URL,FLASK_DEBUG,SENDGRID_KEY,SENDGRID_EMAIL,FLASK_SECRET_KEY
           script: |
             cd code-connect/
             git pull origin main

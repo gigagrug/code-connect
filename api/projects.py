@@ -5,8 +5,8 @@ from flask import flash, redirect, url_for, session, request, render_template, c
 from werkzeug.utils import secure_filename
 import resend
 
-RESEND_KEY = os.environ.get('RESEND_KEY')
-RESEND_EMAIL = os.environ.get('RESEND_EMAIL')
+SENDGRID_KEY = os.environ.get('SENDGRID_KEY')
+SENDGRID_EMAIL = os.environ.get('SENDGRID_EMAIL')
 
 def _check_and_get_unique_path(fs_save_path):
     if not os.path.exists(fs_save_path):
@@ -760,7 +760,7 @@ def add_comment_to_project(project_id, request, engine):
         return redirect(url_for('project_page', project_id=project_id))
 
     try:
-        if not RESEND_KEY:
+        if not SENDGRID_KEY:
             return redirect(url_for('project_page', project_id=project_id))
         
         commenter_name = ""
@@ -794,10 +794,10 @@ def add_comment_to_project(project_id, request, engine):
             <p>The Project Portal</p>
             """
             
-            resend.api_key = RESEND_KEY
+            resend.api_key = SENDGRID_KEY
             r = resend.Emails.send({
-                "from": RESEND_EMAIL,
-                "to": RESEND_EMAIL, 
+                "from": SENDGRID_EMAIL,
+                "to": SENDGRID_EMAIL, 
                 "bcc": list(recipients), 
                 "subject": subject,
                 "html": html_content

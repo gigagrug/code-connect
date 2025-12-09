@@ -8,8 +8,8 @@ import resend
 import secrets
 from datetime import datetime, timedelta
 
-RESEND_KEY = os.environ.get('RESEND_KEY')
-RESEND_EMAIL = os.environ.get('RESEND_EMAIL') 
+SENDGRID_KEY = os.environ.get('SENDGRID_KEY')
+SENDGRID_EMAIL = os.environ.get('SENDGRID_EMAIL') 
 
 def register_user(request, engine):
     email = request.form.get('email')
@@ -117,8 +117,8 @@ def handle_forgot_password(request, engine):
             flash("Email address is required.", "danger")
             return redirect(url_for('forgot_password'))
 
-        if not RESEND_KEY:
-            print("RESEND_KEY environment variable not set. Cannot send password reset email.")
+        if not SENDGRID_KEY:
+            print("SENDGRID_KEY environment variable not set. Cannot send password reset email.")
             flash("Email service is not configured. Please contact support.", "danger")
             return redirect(url_for('forgot_password'))
 
@@ -153,9 +153,9 @@ def handle_forgot_password(request, engine):
                         """
                         
                         try:
-                            resend.api_key = RESEND_KEY
+                            resend.api_key = SENDGRID_KEY
                             r = resend.Emails.send({
-                                "from": RESEND_EMAIL,
+                                "from": SENDGRID_EMAIL,
                                 "to": email,
                                 "subject": "Your Password Reset Request",
                                 "html": html_content
